@@ -176,7 +176,7 @@ class QTrapOverlay(pg.ScatterPlotItem):
         if self._selected is not None:
             self._selected.r = position
         # grow rubber band selection
-        else:
+        elif self.selection.isVisible():
             self.growSelection(position)
 
     def mouseRelease(self, event: QEvent) -> None:
