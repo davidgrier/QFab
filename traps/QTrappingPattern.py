@@ -1,5 +1,5 @@
-from QFab.traps.QTrapGroup import QTrapGroup
-from QFab.traps.QTrap import QTrap
+from .QTrapGroup import QTrapGroup
+from .QTrap import QTrap
 from pyqtgraph.Qt.QtCore import (QPointF, QRect, QRectF, pyqtSignal)
 import logging
 
@@ -45,14 +45,13 @@ class QTrappingPattern(QTrapGroup):
         self.add(group)
 
     def breakGroup(self, group: QTrapGroup | None) -> None:
-        '''Breaks group and adds raises traps into the pattern'''
+        '''Breaks group and moves traps into the pattern'''
         if not isinstance(group, QTrapGroup):
             logger.debug('breakTrapGroup: nothing to break')
             return
         for trap in group:
             group.remove(trap)
             self.add(trap)
-        del group
 
     def groupOf(self, trap: QTrap) -> QTrap:
         '''Returns top-level TrapGroup containing this trap'''

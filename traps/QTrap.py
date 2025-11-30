@@ -1,10 +1,8 @@
-from pyqtgraph.Qt.QtCore import (QObject, QPoint, QPointF,
-                                 pyqtSignal, pyqtSlot, pyqtProperty)
+from pyqtgraph.Qt.QtCore import (QObject, QPointF, pyqtSignal, pyqtProperty)
 from pyqtgraph.Qt.QtGui import (QVector3D, QBrush)
 from pyqtgraph import (mkBrush, mkPen)
 from enum import Enum
-from typing import ClassVar
-from collections.abc import (Iterable, Callable)
+from collections.abc import Iterable
 import numpy as np
 
 

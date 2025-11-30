@@ -1,6 +1,5 @@
-from QFab.traps.QTrap import QTrap
-from pyqtgraph.Qt.QtCore import (pyqtProperty, pyqtSlot, QPointF, QRectF)
-from pyqtgraph.Qt.QtGui import QVector3D
+from .QTrap import QTrap
+from pyqtgraph.Qt.QtCore import (pyqtSlot, QRectF)
 from collections.abc import (Iterable, Iterator)
 import numpy as np
 
@@ -53,8 +52,8 @@ class QTrapGroup(QTrap):
         self.stateChanged.emit()
 
     @QTrap.r.setter
-    def r(self, pos: QVector3D) -> None:
-        QTrap.r.fset(self, pos)
+    def r(self, position: QTrap.Position) -> None:
+        QTrap.r.fset(self, position)
         dr = self.r - self.origin
         for child in self:
             child.r += dr
