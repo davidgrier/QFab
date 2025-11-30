@@ -1,6 +1,6 @@
 from pyqtgraph import ScatterPlotItem
 from pyqtgraph.Qt.QtCore import (Qt, pyqtSlot, QEvent, QSize,
-                                 QPoint, QPointF, QRect)
+                                 QPoint, QPointF, QRect, QRectF)
 from pyqtgraph.Qt.QtGui import QVector3D
 from .QTrap import QTrap
 from .QTrapGroup import QTrapGroup
@@ -154,7 +154,7 @@ class QTrapOverlay(ScatterPlotItem):
         if group is None:
             return False
         logger.debug('Selecting trap group at' + self._fmt(pos))
-        group.origin = self.mapFromScene(pos)
+        group.origin = pos  # self.mapFromScene(pos)
         group.setState(group.State.SELECTED)
         self._selected = group
         return True
@@ -165,17 +165,17 @@ class QTrapOverlay(ScatterPlotItem):
         # dispatch mouse press event to appropriate handler
         signature = (event.buttons(), event.modifiers())
         handler = self.pressHandler.get(signature, self.selectGroup)
-        position = self.mapFromScene(event.position())
-        if not handler(position):
+        position = event.position()
+        if not handler(self.mapFromScene(position)):
             self.startSelection(position)
 
     def mouseMove(self, event: QEvent) -> None:
         if event.buttons() != Qt.MouseButton.LeftButton:
             return
-        position = self.mapFromScene(event.position())
+        position = event.position()
         # move selected trap group
         if self._selected is not None:
-            self._selected.r = position
+            self._selected.r = self.mapFromScene(position)
         # grow rubber band selection
         elif self.selection.isVisible():
             self.growSelection(position)
@@ -206,6 +206,9 @@ class QTrapOverlay(ScatterPlotItem):
     def growSelection(self, pos: QPointF) -> None:
         rectangle = QRect(self.origin, pos.toPoint())
         self.selection.setGeometry(rectangle)
+        origin = self.mapFromScene(QPointF(self.origin))
+        point = self.mapFromScene(pos)
+        rectangle = QRectF(origin, point)
         self._grouping = self.pattern.groupTraps(rectangle)
 
     def endSelection(self) -> None:
