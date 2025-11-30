@@ -1,4 +1,5 @@
-from pyqtgraph.Qt.QtCore import (QObject, QPointF, pyqtSignal, pyqtProperty)
+from pyqtgraph.Qt.QtCore import (QObject, QPointF, QRectF,
+                                 pyqtSignal, pyqtProperty)
 from pyqtgraph.Qt.QtGui import (QVector3D, QBrush)
 from pyqtgraph import (mkBrush, mkPen)
 from enum import Enum
@@ -127,6 +128,9 @@ class QTrap(QObject):
         '''Returns a visual representation of the trap'''
         self._spot['pos'] = self.pos()
         return self._spot
+
+    def isWithin(self, rect: QRectF) -> bool:
+        return rect.contains(self.pos())
 
 
 def example() -> None:

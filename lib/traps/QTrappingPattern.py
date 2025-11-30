@@ -33,10 +33,10 @@ class QTrappingPattern(QTrapGroup):
         self.remove(trap)
         self.changed.emit()
 
-    def makeTrapGroup(self, traps: QTrap | None) -> None:
+    def makeGroup(self, traps: QTrap | None) -> None:
         '''Combines traps into a group and adds group to the pattern'''
         if (traps is None) or (len(traps) < 2):
-            logger.debug('makeTrapGroup: not enough traps to group')
+            logger.debug('makeGroup: not enough traps to group')
             return
         group = QTrapGroup()
         for trap in traps:
@@ -62,8 +62,8 @@ class QTrappingPattern(QTrapGroup):
     def groupTraps(self, rect: QRect | QRectF) -> list[QTrap]:
         '''Labels traps that are being grouped and returns the list '''
         traps = []
-        for trap in self:
-            if QRectF(rect).contains(trap.pos()):
+        for trap in self.traps():
+            if trap.isWithin(QRectF(rect)):
                 trap.setState(trap.State.GROUPING)
                 traps.append(trap)
             else:

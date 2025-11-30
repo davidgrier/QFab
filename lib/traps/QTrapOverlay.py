@@ -181,7 +181,7 @@ class QTrapOverlay(ScatterPlotItem):
             self.growSelection(position)
 
     def mouseRelease(self, event: QEvent) -> None:
-        self.pattern.makeTrapGroup(self._grouping)
+        self.pattern.makeGroup(self._grouping)
         self.pattern.setState(self.pattern.State.NORMAL)
         self.endSelection()
 
