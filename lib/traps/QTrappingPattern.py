@@ -42,6 +42,8 @@ class QTrappingPattern(QTrapGroup):
         for trap in traps:
             self.remove(trap)
             group.add(trap)
+        group.origin = trap.r
+        group.r = trap.r
         self.add(group)
 
     def breakGroup(self, group: QTrapGroup | None) -> None:
@@ -62,7 +64,7 @@ class QTrappingPattern(QTrapGroup):
     def groupTraps(self, rect: QRect | QRectF) -> list[QTrap]:
         '''Labels traps that are being grouped and returns the list '''
         traps = []
-        for trap in self.traps():
+        for trap in self:
             if trap.isWithin(QRectF(rect)):
                 trap.setState(trap.State.GROUPING)
                 traps.append(trap)

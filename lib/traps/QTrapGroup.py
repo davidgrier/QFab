@@ -53,11 +53,11 @@ class QTrapGroup(QTrap):
 
     @QTrap.r.setter
     def r(self, position: QTrap.Position) -> None:
-        QTrap.r.fset(self, position)
-        dr = self.r - self.origin
-        for child in self:
+        self._r = self._toQVector3D(position)
+        dr = self._r - self.origin
+        for child in self.traps():
             child.r += dr
-        self.origin = self.r
+        self.origin = self._r
 
     def setState(self, state: QTrap.State) -> None:
         '''Sets the state of every member of group'''
