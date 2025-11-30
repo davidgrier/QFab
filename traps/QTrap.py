@@ -55,6 +55,8 @@ class QTrap(QObject):
                       'pen': mkPen('w', width=0.2),
                       'brush': self.brush[self.State.NORMAL],
                       'symbol': 'o'}
+        self._needsStructure = False
+        self._needsField = False
 
     def __repr__(self) -> str:
         name = type(self).__name__
@@ -83,6 +85,7 @@ class QTrap(QObject):
     @r.setter
     def r(self, r: Position) -> None:
         self._r = self._toQVector3D(r)
+        self._needsField = True
         self.changed.emit()
 
     @pyqtProperty(QVector3D)
