@@ -1,5 +1,5 @@
 from QVideo.lib import (QVideoScreen, QCamera)
-from QFab.traps.QTrapOverlay import QTrapOverlay
+from QFab.lib.traps.QTrapOverlay import QTrapOverlay
 from pyqtgraph.Qt.QtCore import (pyqtSlot, QEvent)
 import numpy as np
 import logging
