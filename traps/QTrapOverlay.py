@@ -1,5 +1,6 @@
 from pyqtgraph.Qt.QtCore import (Qt, pyqtSlot, QEvent, QSize,
                                  QPoint, QPointF, QRect)
+from pyqtgraph.Qt.QtGui import QVector3D
 import pyqtgraph as pg
 from .QTrap import QTrap
 from .QTrapGroup import QTrapGroup
@@ -186,7 +187,12 @@ class QTrapOverlay(pg.ScatterPlotItem):
 
     def wheel(self, event: QEvent) -> None:
         '''Handles mouse wheel events'''
-        pass
+        position = self.mapFromScene(event.position())
+        group = self.groupAt(position)
+        if group is None:
+            return
+        dz = event.angleDelta().y()/120.
+        group.r += QVector3D(0., 0., dz)
 
     # Rubber band selection
 
