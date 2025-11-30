@@ -1,7 +1,7 @@
+from pyqtgraph import ScatterPlotItem
 from pyqtgraph.Qt.QtCore import (Qt, pyqtSlot, QEvent, QSize,
                                  QPoint, QPointF, QRect)
 from pyqtgraph.Qt.QtGui import QVector3D
-import pyqtgraph as pg
 from .QTrap import QTrap
 from .QTrapGroup import QTrapGroup
 from .QTrappingPattern import QTrappingPattern
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 
-class QTrapOverlay(pg.ScatterPlotItem):
+class QTrapOverlay(ScatterPlotItem):
 
     '''Graphical overlay for interacting with traps
 
