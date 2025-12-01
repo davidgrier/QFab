@@ -41,7 +41,7 @@ class CGH(QObject):
     _matrixlist = []
     _geometrylist = []
     matrix = QMatrix4x4()
-    shape: tuple = (512, 512)    # dimensions of SLM [phixels]
+    shape: tuple = (512, 512)    # dimensions of SLM [pixels]
     wavelength: float = 1.064    # vacuum wavelength [um]
     n_m: float = 1.340           # refractive index of medium
     magnification: float = 100.  # magnification of objective lens
