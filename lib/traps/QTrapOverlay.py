@@ -1,6 +1,6 @@
 from pyqtgraph import ScatterPlotItem
-from pyqtgraph.Qt.QtCore import (Qt, pyqtSlot, QEvent, QSize,
-                                 QPoint, QPointF, QRect, QRectF)
+from pyqtgraph.Qt.QtCore import (Qt, pyqtSlot, QEvent,
+                                 QSize, QPoint, QPointF, QRect, QRectF)
 from pyqtgraph.Qt.QtGui import QVector3D
 from .QTrap import QTrap
 from .QTrapGroup import QTrapGroup
@@ -66,6 +66,7 @@ class QTrapOverlay(ScatterPlotItem):
     def _connectSignals(self) -> None:
         self.pattern.changed.connect(self._setRedraw)
         self.pattern.stateChanged.connect(self._setRedraw)
+        self.changed = self.pattern.changed
 
     def _configureHandlers(self, descriptions: Descriptions) -> None:
         mappings = [self._mapping(d) for d in descriptions]
@@ -120,6 +121,10 @@ class QTrapOverlay(ScatterPlotItem):
         return self.pattern.groupOf(trap)
 
     # Operations on traps
+
+    def traps(self) -> list[QTrap]:
+        '''Returns a list of traps in the trapping pattern.'''
+        return self.overlay.traps()
 
     def _fmt(self, pos: QPointF) -> str:
         return f' ({pos.x():.2f}, {pos.y():.2f})'

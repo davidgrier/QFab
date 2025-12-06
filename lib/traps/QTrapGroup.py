@@ -20,7 +20,7 @@ class QTrapGroup(QTrap):
         return iter(self.children())
 
     def add(self, trap: QTrap | Iterable[QTrap]) -> None:
-        '''Adds one or more traps to the group'''
+        '''Adds one or more traps to the group.'''
         if isinstance(trap, QTrap):
             if trap not in self.children():
                 trap.setParent(self)
@@ -31,7 +31,7 @@ class QTrapGroup(QTrap):
                 self.add(child)
 
     def remove(self, trap: QTrap) -> None:
-        '''Removes a trap from the group'''
+        '''Removes a trap from the group.'''
         if trap in self:
             trap.changed.disconnect(self.emitChanged)
             trap.stateChanged.disconnect(self.emitStateChanged)
@@ -60,7 +60,7 @@ class QTrapGroup(QTrap):
         self.origin = self._r
 
     def setState(self, state: QTrap.State) -> None:
-        '''Sets the state of every member of group'''
+        '''Sets the state of every member of group.'''
         for child in self:
             oldstate = child.blockSignals(True)
             child.setState(state)
@@ -68,11 +68,11 @@ class QTrapGroup(QTrap):
         self.stateChanged.emit()
 
     def isWithin(self, rect: QRectF) -> bool:
-        '''Returns True if all members of group are within the rectangle'''
+        '''Returns True if group is entirely within the rectangle.'''
         return np.all([child.isWithin(rect) for child in self])
 
     def traps(self) -> list[QTrap]:
-        '''Returns the list of traps in the group'''
+        '''Returns the list of traps in the group.'''
         return [trap for trap in self.findChildren(QTrap)
                 if not isinstance(trap, QTrapGroup)]
 

@@ -21,7 +21,7 @@ class QTrappingPattern(QTrapGroup):
     def addTrap(self,
                 pos: QPointF,
                 trap: QTrap | None = None) -> None:
-        '''Adds a trap at the specified position'''
+        '''Adds a trap at the specified position.'''
         trap = trap or QTrap()
         trap.r = pos
         self.add(trap)
@@ -34,7 +34,7 @@ class QTrappingPattern(QTrapGroup):
         self.changed.emit()
 
     def makeGroup(self, traps: QTrap | None) -> None:
-        '''Combines traps into a group and adds group to the pattern'''
+        '''Combines traps into a group and adds group to the pattern.'''
         if (traps is None) or (len(traps) < 2):
             logger.debug('makeGroup: not enough traps to group')
             return
@@ -47,7 +47,7 @@ class QTrappingPattern(QTrapGroup):
         self.add(group)
 
     def breakGroup(self, group: QTrapGroup | None) -> None:
-        '''Breaks group and moves traps into the pattern'''
+        '''Breaks group and moves traps into the pattern.'''
         if not isinstance(group, QTrapGroup):
             logger.debug('breakTrapGroup: nothing to break')
             return
@@ -56,13 +56,13 @@ class QTrappingPattern(QTrapGroup):
             self.add(trap)
 
     def groupOf(self, trap: QTrap) -> QTrap:
-        '''Returns top-level TrapGroup containing this trap'''
+        '''Returns top-level TrapGroup containing this trap.'''
         while trap.parent() is not self:
             trap = trap.parent()
         return trap
 
     def groupTraps(self, rect: QRect | QRectF) -> list[QTrap]:
-        '''Labels traps that are being grouped and returns the list '''
+        '''Labels traps that are being grouped and returns the list.'''
         traps = []
         for trap in self:
             if trap.isWithin(QRectF(rect)):
