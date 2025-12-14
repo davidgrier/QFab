@@ -1,5 +1,5 @@
 from pyqtgraph import ScatterPlotItem
-from pyqtgraph.Qt.QtCore import (Qt, pyqtSlot, QEvent,
+from pyqtgraph.Qt.QtCore import (Qt, pyqtSignal, pyqtSlot, QEvent,
                                  QSize, QPoint, QPointF, QRect, QRectF)
 from pyqtgraph.Qt.QtGui import QVector3D
 from .QTrap import QTrap
@@ -47,6 +47,8 @@ class QTrapOverlay(ScatterPlotItem):
                              (('left', 'ctrl|shift'), 'deleteTrap'),
                              (('left', 'alt|shift'), 'breakGroup'))
 
+    changed = pyqtSignal(list)
+
     def __init__(self, parent, *args,
                  descriptions: Descriptions = default,
                  **kwargs) -> None:
@@ -64,9 +66,9 @@ class QTrapOverlay(ScatterPlotItem):
         self._redraw = True
 
     def _connectSignals(self) -> None:
+        self.pattern.changed.connect(self._emitChanged)
         self.pattern.changed.connect(self._setRedraw)
         self.pattern.stateChanged.connect(self._setRedraw)
-        self.changed = self.pattern.changed
 
     def _configureHandlers(self, descriptions: Descriptions) -> None:
         mappings = [self._mapping(d) for d in descriptions]
@@ -81,6 +83,10 @@ class QTrapOverlay(ScatterPlotItem):
         signature = (button, modifier)
         handler = getattr(self, handler)
         return signature, handler
+
+    @pyqtSlot()
+    def _emitChanged(self) -> None:
+        self.changed.emit(self.pattern.traps())
 
     @pyqtSlot()
     def _setRedraw(self) -> None:

@@ -31,7 +31,6 @@ class QTrappingPattern(QTrapGroup):
         '''Deletes the specified trap'''
         logger.debug(f'deleting {trap}')
         self.remove(trap)
-        self.changed.emit()
 
     def makeGroup(self, traps: QTrap | None) -> None:
         '''Combines traps into a group and adds group to the pattern.'''
@@ -70,5 +69,4 @@ class QTrappingPattern(QTrapGroup):
                 traps.append(trap)
             else:
                 trap.setState(trap.State.NORMAL)
-        self.changed.emit()
         return traps

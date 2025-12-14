@@ -24,31 +24,33 @@ class QTrapGroup(QTrap):
         if isinstance(trap, QTrap):
             if trap not in self.children():
                 trap.setParent(self)
-                trap.changed.connect(self.emitChanged)
-                trap.stateChanged.connect(self.emitStateChanged)
+                trap.changed.connect(self._emitChanged)
+                trap.stateChanged.connect(self._emitStateChanged)
         else:
             for child in trap:
                 self.add(child)
+        self.changed.emit()
 
     def remove(self, trap: QTrap) -> None:
         '''Removes a trap from the group.'''
         if trap in self:
-            trap.changed.disconnect(self.emitChanged)
-            trap.stateChanged.disconnect(self.emitStateChanged)
+            trap.changed.disconnect(self._emitChanged)
+            trap.stateChanged.disconnect(self._emitStateChanged)
             trap.setParent(None)
-            return
-        for child in self:
-            if isinstance(child, QTrapGroup):
-                child.remove(trap)
-                if len(child) == 0:
-                    self.remove(child)
-
-    @pyqtSlot()
-    def emitChanged(self) -> None:
+        else:
+            for child in self:
+                if isinstance(child, QTrapGroup):
+                    child.remove(trap)
+                    if len(child) == 0:
+                        self.remove(child)
         self.changed.emit()
 
     @pyqtSlot()
-    def emitStateChanged(self) -> None:
+    def _emitChanged(self) -> None:
+        self.changed.emit()
+
+    @pyqtSlot()
+    def _emitStateChanged(self) -> None:
         self.stateChanged.emit()
 
     @QTrap.r.setter

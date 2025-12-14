@@ -24,7 +24,10 @@ class pyfab(QWidget):
         self.layout.addWidget(self.cameraWidget)
 
     def _connectSignals(self) -> None:
-        pass
+        self.screen.overlay.changed.connect(self._compute)
+
+    def _compute(self, traps) -> None:
+        print(len(traps))
 
     def closeEvent(self, event: QEvent) -> None:
         self.slm.close()
