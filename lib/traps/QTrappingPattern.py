@@ -34,31 +34,32 @@ class QTrappingPattern(QTrapGroup):
         self.remove(trap)
 
     def makeGroup(self, traps: QTrap | None) -> None:
-        '''Combines traps into a group and adds group to the pattern.'''
+        '''Combines traps into a group that is added to the pattern.'''
         with QSignalBlocker(self):
             if (traps is None) or (len(traps) < 2):
-                logger.debug('makeGroup: not enough traps to group')
+                logger.debug('not enough traps to group')
                 return
             group = QTrapGroup()
             for trap in traps:
                 self.remove(trap)
                 group.add(trap)
-                group.origin = trap.r
-                group.r = trap.r
+            group.origin = group.r = trap.r
             self.add(group)
 
     def breakGroup(self, group: QTrapGroup | None) -> None:
         '''Breaks group and moves traps into the pattern.'''
         with QSignalBlocker(self):
             if not isinstance(group, QTrapGroup):
-                logger.debug('breakTrapGroup: nothing to break')
+                logger.debug('nothing to break')
                 return
             for trap in group:
                 group.remove(trap)
                 self.add(trap)
 
-    def groupOf(self, trap: QTrap) -> QTrap:
+    def groupOf(self, trap: QTrap | None) -> QTrap | None:
         '''Returns top-level TrapGroup containing this trap.'''
+        if trap is None:
+            return None
         while trap.parent() is not self:
             trap = trap.parent()
         return trap

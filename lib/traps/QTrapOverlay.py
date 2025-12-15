@@ -122,8 +122,6 @@ class QTrapOverlay(ScatterPlotItem):
     def groupAt(self, pos: QPoint) -> QTrapGroup | None:
         '''Returns trap group nearest to position'''
         trap = self.trapAt(pos)
-        if trap is None:
-            return None
         return self.pattern.groupOf(trap)
 
     # Operations on traps
