@@ -1,6 +1,7 @@
 from .QTrapGroup import QTrapGroup
 from .QTrap import QTrap
-from pyqtgraph.Qt.QtCore import (QPointF, QRect, QRectF, pyqtSignal)
+from pyqtgraph.Qt.QtCore import (QPointF, QRect, QRectF,
+                                 pyqtSignal, QSignalBlocker)
 import logging
 
 
@@ -34,25 +35,27 @@ class QTrappingPattern(QTrapGroup):
 
     def makeGroup(self, traps: QTrap | None) -> None:
         '''Combines traps into a group and adds group to the pattern.'''
-        if (traps is None) or (len(traps) < 2):
-            logger.debug('makeGroup: not enough traps to group')
-            return
-        group = QTrapGroup()
-        for trap in traps:
-            self.remove(trap)
-            group.add(trap)
-        group.origin = trap.r
-        group.r = trap.r
-        self.add(group)
+        with QSignalBlocker(self):
+            if (traps is None) or (len(traps) < 2):
+                logger.debug('makeGroup: not enough traps to group')
+                return
+            group = QTrapGroup()
+            for trap in traps:
+                self.remove(trap)
+                group.add(trap)
+                group.origin = trap.r
+                group.r = trap.r
+            self.add(group)
 
     def breakGroup(self, group: QTrapGroup | None) -> None:
         '''Breaks group and moves traps into the pattern.'''
-        if not isinstance(group, QTrapGroup):
-            logger.debug('breakTrapGroup: nothing to break')
-            return
-        for trap in group:
-            group.remove(trap)
-            self.add(trap)
+        with QSignalBlocker(self):
+            if not isinstance(group, QTrapGroup):
+                logger.debug('breakTrapGroup: nothing to break')
+                return
+            for trap in group:
+                group.remove(trap)
+                self.add(trap)
 
     def groupOf(self, trap: QTrap) -> QTrap:
         '''Returns top-level TrapGroup containing this trap.'''
