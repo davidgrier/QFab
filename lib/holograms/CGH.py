@@ -184,13 +184,25 @@ class CGH(QObject):
         ey = np.exp(self.iqy*pos.y() + self.iqyz*pos.z())
         trap.field = np.outer(amplitude*ey, ex)
 
+    def fieldOf(self, trap: QTrap) -> np.ndarray[complex]
+       if trap.updateField:
+            amplitude = trap.amplitude * np.exp(1j*trap.phase)
+            pos = self.transform(trap.r)
+            ex = np.exp(self.iqx*pos.x() + self.iqxz*pos.z())
+            ey = np.exp(self.iqy*pos.y() + self.iqyz*pos.z())
+            trap.field = np.outer(amplitude*ey, ex)
+            trap.updateField = False
+        if trap.updateStructure:
+            trap.updateStructure = False
+        return trap.field * trap.structure
+
     @pyqtSlot(list)
     def compute(self, traps: list[QTrap]) -> None:
         '''Computes phase hologram for specified traps'''
         start = perf_counter()
         self.field.fill(0j)
         for trap in traps:
-            self.field += trap.field
+            self.field += self.fieldOf(trap)
         self.setPhase(self.quantize(self.field))
         self.time = perf_counter() - start
 

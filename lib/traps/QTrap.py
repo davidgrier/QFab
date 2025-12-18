@@ -49,15 +49,15 @@ class QTrap(QObject):
         self.r = r or (0., 0., 0.)
         self.amplitude = amplitude or 1.
         self.phase = phase or np.random.uniform(0., 2.*np.pi)
-        self.structure = 1.
         self.field = 1.
+        self.structure = 1.
         self._spot = {'pos': QPointF(),
                       'size': 10,
                       'pen': mkPen('w', width=0.2),
                       'brush': self.brush[self.State.NORMAL],
                       'symbol': 'o'}
-        self._needsStructure = False
-        self._needsField = False
+        self.updateField = True
+        self.updateStructure = False
 
     def __repr__(self) -> str:
         name = type(self).__name__
@@ -86,7 +86,7 @@ class QTrap(QObject):
     @r.setter
     def r(self, r: Position) -> None:
         self._r = self._toQVector3D(r)
-        self._needsField = True
+        self.updateField = True
         self.changed.emit()
 
     @pyqtProperty(QVector3D)
@@ -105,6 +105,7 @@ class QTrap(QObject):
     @amplitude.setter
     def amplitude(self, amplitude: float) -> None:
         self._amplitude = amplitude
+        self.updateField = True
         self.changed.emit()
 
     @pyqtProperty(float)
@@ -114,6 +115,7 @@ class QTrap(QObject):
     @phase.setter
     def phase(self, phase: float) -> None:
         self._phase = phase
+        self.updateField = True
         self.changed.emit()
 
     def pos(self) -> QPointF:
