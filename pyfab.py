@@ -10,7 +10,7 @@ class pyfab(QWidget):
 
     def __init__(self, cameraWidget: QCameraTree = None) -> None:
         super().__init__()
-        self.screen = QFabScreen(frameinterval=33)
+        self.screen = QFabScreen(framerate=30)
         self.cameraWidget = cameraWidget
         self.slm = QSLM(self)
         self.cgh = CGH(self.slm.shape)
