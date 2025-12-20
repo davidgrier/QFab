@@ -45,17 +45,6 @@ class QFabScreen(QVideoScreen):
         super().wheelEvent(event)
         self.overlay.wheel(event)
 
-    @classmethod
-    def example(cls) -> None:
-        import pyqtgraph as pg
-        from QVideo.cameras.Noise import QNoiseSource
-
-        app = pg.mkQApp()
-        screen = cls()
-        screen.source = QNoiseSource(blackLevel=48, whiteLevel=128).start()
-        screen.show()
-        pg.exec()
-
 
 if __name__ == '__main__':
     QFabScreen.example()
