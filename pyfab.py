@@ -10,7 +10,7 @@ class pyfab(QWidget):
 
     def __init__(self, cameraWidget: QCameraTree = None) -> None:
         super().__init__()
-        self.screen = QFabScreen()
+        self.screen = QFabScreen(frameinterval=33)
         self.cameraWidget = cameraWidget
         self.slm = QSLM(self)
         self.cgh = CGH(self.slm.shape)
@@ -27,7 +27,7 @@ class pyfab(QWidget):
         self.screen.overlay.changed.connect(self._compute)
 
     def _compute(self, traps) -> None:
-        print(len(traps))
+        pass
 
     def closeEvent(self, event: QEvent) -> None:
         self.slm.close()
