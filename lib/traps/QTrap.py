@@ -49,15 +49,15 @@ class QTrap(QObject):
         self.r = r or (0., 0., 0.)
         self.amplitude = amplitude or 1.
         self.phase = phase or np.random.uniform(0., 2.*np.pi)
-        self.field = 1.
-        self.structure = 1.
+        self._needsField = True
+        self._needsStructure = False
+        self._field = 1.
+        self._structure = 1.
         self._spot = {'pos': QPointF(),
                       'size': 10,
                       'pen': mkPen('w', width=0.2),
                       'brush': self.brush[self.State.NORMAL],
                       'symbol': 'o'}
-        self.updateField = True
-        self.updateStructure = False
 
     def __repr__(self) -> str:
         name = type(self).__name__
@@ -78,6 +78,32 @@ class QTrap(QObject):
                 raise ValueError('r must be a QVector3D')
         return r
 
+    @pyqtProperty(bool)
+    def needsField(self) -> bool:
+        return self._needsField
+
+    @pyqtProperty(bool)
+    def needsStructure(self) -> bool:
+        return self._needsStructure
+
+    @pyqtProperty(np.ndarray)
+    def field(self) -> np.ndarray:
+        return self._field
+
+    @field.setter
+    def field(self, field: np.ndarray) -> None:
+        self._field = field
+        self._needsField = False
+
+    @pyqtProperty(np.ndarray)
+    def structure(self) -> np.ndarray:
+        return self._structure
+
+    @structure.setter
+    def structure(self, structure: np.ndarray) -> None:
+        self._structure = structure
+        self._needsStructure = False
+
     @pyqtProperty(QVector3D)
     def r(self) -> QVector3D:
         '''Three-dimensional location of the trap [pixels]'''
@@ -86,7 +112,7 @@ class QTrap(QObject):
     @r.setter
     def r(self, r: Position) -> None:
         self._r = self._toQVector3D(r)
-        self.updateField = True
+        self._needsField = True
         self.changed.emit()
 
     @pyqtProperty(QVector3D)
@@ -105,7 +131,7 @@ class QTrap(QObject):
     @amplitude.setter
     def amplitude(self, amplitude: float) -> None:
         self._amplitude = amplitude
-        self.updateField = True
+        self._needsField = True
         self.changed.emit()
 
     @pyqtProperty(float)
@@ -115,7 +141,7 @@ class QTrap(QObject):
     @phase.setter
     def phase(self, phase: float) -> None:
         self._phase = phase
-        self.updateField = True
+        self._needsField = True
         self.changed.emit()
 
     def pos(self) -> QPointF:

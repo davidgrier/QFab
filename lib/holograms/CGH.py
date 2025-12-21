@@ -143,9 +143,9 @@ class CGH(QObject):
 
     # Methods for computing holograms
     @staticmethod
-    def quantize(psi: np.ndarray[complex]) -> np.ndarray[np.uint8]:
+    def quantize(field: np.ndarray[complex]) -> np.ndarray[np.uint8]:
         '''Computes the phase of the field, scaled to uint8'''
-        return ((128./np.pi)*np.angle(psi) + 127.).astype(np.uint8)
+        return ((128./np.pi)*np.angle(field) + 127.).astype(np.uint8)
 
     def window(self, r: QVector3D) -> float:
         '''Adjusts amplitude to account for aperture size'''
@@ -163,37 +163,15 @@ class CGH(QObject):
         r *= QVector3D(fac, fac, 1.)
         return r
 
-    def compute_displace(self,
-                         amplitude: float,
-                         pos: QPointF | QVector3D,
-                         buffer: np.ndarray[complex]) -> None:
-        '''Computes phase hologram to displace a trap with
-        a specified complex amplitude to a specified position
-        '''
-        pos = self.transform(pos)
-        ex = np.exp(self.iqx*pos.x() + self.iqxz*pos.z())
-        ey = np.exp(self.iqy*pos.y() + self.iqyz*pos.z())
-        np.outer(amplitude*ey, ex, buffer)
-
-    @pyqtSlot()
-    def displacement_field(self) -> None:
-        trap = self.sender()
-        amplitude = trap.amplitude * np.exp(1j*trap.phase)
-        pos = self.transform(trap.r)
-        ex = np.exp(self.iqx*pos.x() + self.iqxz*pos.z())
-        ey = np.exp(self.iqy*pos.y() + self.iqyz*pos.z())
-        trap.field = np.outer(amplitude*ey, ex)
-
-    def fieldOf(self, trap: QTrap) -> np.ndarray[complex]:
-        if trap.updateField:
+    def fieldof(self, trap: QTrap) -> np.ndarray[complex]:
+        if trap.needsField:
             amplitude = trap.amplitude * np.exp(1j*trap.phase)
             pos = self.transform(trap.r)
             ex = np.exp(self.iqx*pos.x() + self.iqxz*pos.z())
             ey = np.exp(self.iqy*pos.y() + self.iqyz*pos.z())
             trap.field = np.outer(amplitude*ey, ex)
-            trap.updateField = False
-        if trap.updateStructure:
-            trap.updateStructure = False
+        if trap.needsStructure:
+            pass
         return trap.field * trap.structure
 
     @pyqtSlot(list)
@@ -202,20 +180,16 @@ class CGH(QObject):
         start = perf_counter()
         self.field.fill(0j)
         for trap in traps:
-            self.field += self.fieldOf(trap)
-        self.setPhase(self.quantize(self.field))
+            self.field += self.fieldof(trap)
+        self.phase = self.quantize(self.field)
         self.time = perf_counter() - start
+        self.hologramReady.emit(self.phase)
 
     def bless(self, field: np.ndarray[complex]) -> np.ndarray[complex]:
         '''Ensures that field has correct type for compute'''
         if field is None:
             return None
         return field.astype(np.complex_)
-
-    def setPhase(self, phase: np.ndarray[np.uint8]) -> None:
-        '''Projects phase hologram without computation'''
-        self.phase = phase.astype(np.uint8)
-        self.hologramReady.emit(self.phase.T)
 
 
 def example():

@@ -24,10 +24,8 @@ class pyfab(QWidget):
         self.layout.addWidget(self.cameraWidget)
 
     def _connectSignals(self) -> None:
-        self.screen.overlay.changed.connect(self._compute)
-
-    def _compute(self, traps) -> None:
-        pass
+        self.screen.overlay.changed.connect(self.cgh.compute)
+        self.cgh.hologramReady.connect(self.slm.setData)
 
     def closeEvent(self, event: QEvent) -> None:
         self.slm.close()
