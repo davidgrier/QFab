@@ -142,6 +142,7 @@ class CGH(QObject):
         logger.info('stopping CGH pipeline')
 
     # Methods for computing holograms
+
     @staticmethod
     def quantize(field: np.ndarray[complex]) -> np.ndarray[np.uint8]:
         '''Computes the phase of the field, scaled to uint8'''
@@ -184,6 +185,7 @@ class CGH(QObject):
         self.phase = self.quantize(self.field)
         self.time = perf_counter() - start
         self.hologramReady.emit(self.phase)
+        return self.phase
 
     def bless(self, field: np.ndarray[complex]) -> np.ndarray[complex]:
         '''Ensures that field has correct type for compute'''

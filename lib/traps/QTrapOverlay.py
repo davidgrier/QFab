@@ -66,9 +66,9 @@ class QTrapOverlay(ScatterPlotItem):
         self._redraw = True
 
     def _connectSignals(self) -> None:
-        self.pattern.changed.connect(self._emitChanged)
-        self.pattern.changed.connect(self._setRedraw)
-        self.pattern.stateChanged.connect(self._setRedraw)
+        self.pattern.changed.connect(self.change)
+        self.pattern.changed.connect(self._draw)
+        self.pattern.stateChanged.connect(self._draw)
 
     def _configureHandlers(self, descriptions: Descriptions) -> None:
         mappings = [self._mapping(d) for d in descriptions]
@@ -85,11 +85,11 @@ class QTrapOverlay(ScatterPlotItem):
         return signature, handler
 
     @pyqtSlot()
-    def _emitChanged(self) -> None:
+    def change(self) -> None:
         self.changed.emit(self.pattern.traps())
 
     @pyqtSlot()
-    def _setRedraw(self) -> None:
+    def _draw(self) -> None:
         self._redraw = True
 
     def redraw(self) -> None:

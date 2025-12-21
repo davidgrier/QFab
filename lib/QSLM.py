@@ -32,6 +32,8 @@ class QSLM(QLabel):
         Sets the phase pattern to be displayed on the SLM.
     '''
 
+    Hologram = np.ndarray[np.uint8]
+
     def __init__(self, *args, fake: bool = False, **kwargs) -> None:
         super().__init__(None)
         screens = QGuiApplication.screens()
@@ -57,7 +59,7 @@ class QSLM(QLabel):
         return (self.height(), self.width())
 
     @pyqtSlot(np.ndarray)
-    def setData(self, data: np.ndarray[np.uint8]) -> None:
+    def setData(self, data: Hologram) -> None:
         self.data = data
 
     @pyqtProperty(np.ndarray)
@@ -65,7 +67,7 @@ class QSLM(QLabel):
         return self._data
 
     @data.setter
-    def data(self, d: np.ndarray[np.uint8]) -> None:
+    def data(self, d: Hologram) -> None:
         self._data = d
         self.qimage = QImage(d.data,
                              d.shape[1], d.shape[0], d.strides[0],
