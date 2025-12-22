@@ -1,5 +1,5 @@
 from pyqtgraph.Qt.QtCore import (QObject, QPointF, QRectF,
-                                 pyqtSignal, pyqtProperty)
+                                 pyqtSignal, pyqtSlot, pyqtProperty)
 from pyqtgraph.Qt.QtGui import (QVector3D, QBrush)
 from pyqtgraph import (mkBrush, mkPen)
 from enum import Enum
@@ -45,8 +45,9 @@ class QTrap(QObject):
                  phase: float | None = None,
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self._registerProperties()
         self.origin = r or (0., 0., 0.)
-        self.r = r or (0., 0., 0.)
+        self.r = self.origin
         self.amplitude = amplitude or 1.
         self.phase = phase or np.random.uniform(0., 2.*np.pi)
         self._needsField = True
@@ -115,6 +116,40 @@ class QTrap(QObject):
         self._needsField = True
         self.changed.emit()
 
+    @pyqtProperty(float)
+    def x(self) -> float:
+        return self._r.x()
+
+    @x.setter
+    def x(self, x: float) -> None:
+        self._r.setX(x)
+        self._needsField = True
+        self.changed.emit()
+
+    @pyqtProperty(float)
+    def y(self) -> float:
+        return self._r.y()
+
+    @x.setter
+    def y(self, y: float) -> None:
+        self._r.setY(y)
+        self._needsField = True
+        self.changed.emit()
+
+    @pyqtProperty(float)
+    def z(self) -> float:
+        return self._r.z()
+
+    @z.setter
+    def z(self, z: float) -> None:
+        self._r.setZ(z)
+        self._needsField = True
+        self.changed.emit()
+
+    def pos(self) -> QPointF:
+        '''Returns the in-plane coordinates of the trap'''
+        return QPointF(self.r.x(), self.r.y())
+
     @pyqtProperty(QVector3D)
     def origin(self) -> QVector3D:
         '''Origin position for relative trap coordinates'''
@@ -144,10 +179,6 @@ class QTrap(QObject):
         self._needsField = True
         self.changed.emit()
 
-    def pos(self) -> QPointF:
-        '''Returns the in-plane coordinates of the trap'''
-        return QPointF(self.r.x(), self.r.y())
-
     def setState(self, state: State) -> None:
         self._spot['brush'] = self.brush[state]
         self.stateChanged.emit()
@@ -160,10 +191,35 @@ class QTrap(QObject):
     def isWithin(self, rect: QRectF) -> bool:
         return rect.contains(self.pos())
 
+    # Methods for editing properties with QTrapWidget
+    def registerProperty(self, name,
+                         decimals=2,
+                         tooltip=False) -> None:
+        '''Register a property so that it can be edited'''
+        self.properties[name] = {'decimals': decimals,
+                                 'tooltip': tooltip}
+
+    @pyqtSlot(str, float)
+    def setProperty(self, name, value) -> None:
+        logger.debug(f'Setting {name}: {value}')
+        if name in self.properties:
+            setattr(self, name, value)
+
+    def _registerProperties(self) -> None:
+        self.properties = dict()
+        self.registerProperty('x')
+        self.registerProperty('y')
+        self.registerProperty('z')
+        self.registerProperty('amplitude')
+        self.registerProperty('phase')
+
+    def settings(self) -> dict[str, float]:
+        return {p: getattr(self, p) for p in self.properties.keys()}
+
     @classmethod
     def example(cls: 'QTrap') -> None:
         trap = cls(r=(10, 20, 30))
-        print(trap)
+        print(trap.settings())
 
 
 if __name__ == '__main__':
