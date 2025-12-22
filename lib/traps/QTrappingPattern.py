@@ -1,6 +1,6 @@
 from .QTrapGroup import QTrapGroup
 from .QTrap import QTrap
-from QFab.traps import (QTweezer, QVortex)
+from QFab.traps import (QTweezer, QVortex, QRingTrap)
 from pyqtgraph.Qt.QtCore import (QPointF, QRect, QRectF,
                                  pyqtSignal, QSignalBlocker)
 import logging
@@ -24,7 +24,7 @@ class QTrappingPattern(QTrapGroup):
                 pos: QPointF,
                 trap: QTrap | None = None) -> None:
         '''Adds a trap at the specified position.'''
-        trap = trap or QVortex(ell=10)  # QTweezer()
+        trap = trap or QRingTrap(radius=20)  # QTweezer()
         trap.r = pos
         self.add(trap)
         logger.debug(f'added {trap}')
