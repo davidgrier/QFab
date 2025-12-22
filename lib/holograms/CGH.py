@@ -172,7 +172,13 @@ class CGH(QObject):
             ey = np.exp(self.iqy*pos.y() + self.iqyz*pos.z())
             trap.field = np.outer(amplitude*ey, ex)
         if trap.needsStructure:
-            pass
+            print(trap.constructor())
+            exec('trap.structure = ' + trap.constructor(),
+                 globals(),
+                 {'self': self, 'trap': trap})
+            # exec(trap.constructor(),
+            #     globals(),
+            #     {'self': self})
         return trap.field * trap.structure
 
     @pyqtSlot(list)

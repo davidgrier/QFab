@@ -1,6 +1,6 @@
 from .QTrapGroup import QTrapGroup
 from .QTrap import QTrap
-from QFab.traps.QTweezer import QTweezer
+from QFab.traps import QTweezer
 from pyqtgraph.Qt.QtCore import (QPointF, QRect, QRectF,
                                  pyqtSignal, QSignalBlocker)
 import logging
