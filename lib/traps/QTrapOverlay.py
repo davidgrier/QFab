@@ -71,17 +71,16 @@ class QTrapOverlay(ScatterPlotItem):
         self.pattern.stateChanged.connect(self._draw)
 
     def _configureHandlers(self, descriptions: Descriptions) -> None:
-        mappings = [self._mapping(d) for d in descriptions]
-        self.pressHandler = {s: h for s, h in mappings}
+        self.handler = dict(self._mapping(d) for d in descriptions)
 
     def _mapping(self, description: Description) -> Mapping:
         '''Converts description to (signature, handler)'''
-        (button, modifier), handler = description
-        button = self.button[button]
-        mods = [self.modifier[m] for m in modifier.split('|')]
-        modifier = np.bitwise_or.reduce(mods)
-        signature = (button, modifier)
-        handler = getattr(self, handler)
+        (bname, mname), hname = description
+        button = self.button[bname]
+        mods = [self.modifier[m] for m in mname.split('|')]
+        modifiers = np.bitwise_or.reduce(mods)
+        signature = (button, modifiers)
+        handler = getattr(self, hname)
         return signature, handler
 
     @pyqtSlot()
@@ -174,7 +173,7 @@ class QTrapOverlay(ScatterPlotItem):
     def mousePress(self, event: QEvent) -> None:
         # dispatch mouse press event to appropriate handler
         signature = (event.buttons(), event.modifiers())
-        handler = self.pressHandler.get(signature, self.selectGroup)
+        handler = self.handler.get(signature, self.selectGroup)
         position = event.position()
         if not handler(self.mapFromScene(position)):
             self.startSelection(position)
