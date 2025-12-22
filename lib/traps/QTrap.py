@@ -160,11 +160,11 @@ class QTrap(QObject):
     def isWithin(self, rect: QRectF) -> bool:
         return rect.contains(self.pos())
 
-
-def example() -> None:
-    trap = QTrap(r=(10, 20, 30))
-    print(trap)
+    @classmethod
+    def example(cls: 'QTrap') -> None:
+        trap = cls(r=(10, 20, 30))
+        print(trap)
 
 
 if __name__ == '__main__':
-    example()
+    QTrap.example()
