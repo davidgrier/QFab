@@ -186,6 +186,7 @@ class QTrap(QObject):
     def spot(self) -> dict:
         '''Returns a visual representation of the trap'''
         self._spot['pos'] = self.pos()
+        self._spot['size'] = np.clip(15 - self.r.z()/20., 10, 40)
         return self._spot
 
     def isWithin(self, rect: QRectF) -> bool:
