@@ -9,6 +9,7 @@ class QRingTrap(QTrap):
                  ell: float = 0.,
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.setSymbol(self.letterSymbol('O'))
         self.radius = radius
         self.ell = ell
         self.registerProperty('radius', tooltip=True)

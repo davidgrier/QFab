@@ -8,6 +8,7 @@ class QVortex(QTrap):
                  ell: int = 0,
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.setSymbol(self.letterSymbol('V'))
         self.ell = ell
         self.registerProperty('ell', decimals=0, tooltip=True)
 

@@ -1,6 +1,7 @@
 from pyqtgraph.Qt.QtCore import (QObject, QPointF, QRectF,
                                  pyqtSignal, pyqtSlot, pyqtProperty)
-from pyqtgraph.Qt.QtGui import (QVector3D, QBrush)
+from pyqtgraph.Qt.QtGui import (QVector3D, QTransform,
+                                QBrush, QPainterPath, QFont)
 from pyqtgraph import (mkBrush, mkPen)
 from enum import Enum
 from collections.abc import Iterable
@@ -37,6 +38,18 @@ class QTrap(QObject):
         State.GROUPING: mkBrush(255, 255, 100, 120),
         State.SPECIAL: mkBrush(238, 130, 238, 120)}
 
+    @staticmethod
+    def letterSymbol(letter: str) -> QPainterPath:
+        symbol = QPainterPath()
+        font = QFont('Arial', 14, QFont.Weight.Bold)
+        symbol.addText(0, 0, font, letter)
+        box = symbol.boundingRect()
+        scale = 1. / max(box.width(), box.height())
+        tr = QTransform().scale(scale, scale)
+        tr.translate(-box.x() - box.width()/2.,
+                     -box.y() - box.height()/2.)
+        return tr.map(symbol)
+
     Position = QVector3D | QPointF | Iterable[float]
 
     def __init__(self, *args,
@@ -56,7 +69,7 @@ class QTrap(QObject):
         self._structure = 1.
         self._spot = {'pos': QPointF(),
                       'size': 10,
-                      'pen': mkPen('w', width=0.2),
+                      'pen': mkPen('k', width=1),
                       'brush': self.brush[self.State.NORMAL],
                       'symbol': 'o'}
 
@@ -186,8 +199,11 @@ class QTrap(QObject):
     def spot(self) -> dict:
         '''Returns a visual representation of the trap'''
         self._spot['pos'] = self.pos()
-        self._spot['size'] = np.clip(15 - self.r.z()/20., 10, 40)
+        self._spot['size'] = np.clip(15 - self.r.z()/20., 10, 35)
         return self._spot
+
+    def setSymbol(self, symbol: QPainterPath) -> None:
+        self._spot['symbol'] = symbol
 
     def isWithin(self, rect: QRectF) -> bool:
         return rect.contains(self.pos())
