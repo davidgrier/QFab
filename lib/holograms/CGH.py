@@ -47,9 +47,9 @@ class CGH(QObject):
     magnification: float = 100.  # magnification of objective lens
     focallength: float = 200.    # focal length of lens [um]
     camerapitch: float = 4.8     # camera pitch [um/pixel]
-    slmpitch: float = 8.         # SLM pitch [um/pixel]
+    slmpitch: float = 8.         # SLM pitch [um/phixel]
     scale: float = 3.            # SLM scale factor
-    splay: float = 0.01
+    splay: float = 0.01          # axial splay [degrees]
     xs: float = 0.               # coordinates of optical axis ...
     ys: float = 0.               # ... in SLM plane [phixels]
     phis: float = 8.             # tilt of SLM [degrees]

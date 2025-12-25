@@ -17,6 +17,7 @@ class QRingTrap(QTrap):
 
     @pyqtProperty(float)
     def radius(self) -> float:
+        '''Radius of the ring trap [pixels]'''
         return self._radius
 
     @radius.setter
@@ -27,6 +28,7 @@ class QRingTrap(QTrap):
 
     @pyqtProperty(float)
     def ell(self) -> float:
+        '''Topological charge of the ring trap'''
         return self._ell
 
     @ell.setter

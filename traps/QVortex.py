@@ -14,6 +14,7 @@ class QVortex(QTrap):
 
     @pyqtProperty(int)
     def ell(self) -> int:
+        '''Topological charge of the optical vortex'''
         return self._ell
 
     @ell.setter

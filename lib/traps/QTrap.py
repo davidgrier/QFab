@@ -40,6 +40,7 @@ class QTrap(QObject):
 
     @staticmethod
     def letterSymbol(letter: str) -> QPainterPath:
+        '''Returns the symbol for a trap in the shape of a letter'''
         symbol = QPainterPath()
         font = QFont('Arial', 14, QFont.Weight.Bold)
         symbol.addText(0, 0, font, letter)
@@ -101,7 +102,8 @@ class QTrap(QObject):
         return self._needsStructure
 
     @pyqtProperty(np.ndarray)
-    def field(self) -> np.ndarray:
+    def field(self) -> np.ndarray[complex]:
+        '''Field characterizing the 3D position of the trap'''
         return self._field
 
     @field.setter
@@ -110,7 +112,8 @@ class QTrap(QObject):
         self._needsField = False
 
     @pyqtProperty(np.ndarray)
-    def structure(self) -> np.ndarray:
+    def structure(self) -> np.ndarray[complex]:
+        '''Field characterizing the mode structure of a trap'''
         return self._structure
 
     @structure.setter
@@ -174,6 +177,7 @@ class QTrap(QObject):
 
     @pyqtProperty(float)
     def amplitude(self) -> float:
+        '''Relative amplitude of the trap field'''
         return self._amplitude
 
     @amplitude.setter
@@ -184,6 +188,7 @@ class QTrap(QObject):
 
     @pyqtProperty(float)
     def phase(self) -> float:
+        '''Relative phase of the trap field'''
         return self._phase
 
     @phase.setter
@@ -203,12 +208,15 @@ class QTrap(QObject):
         return self._spot
 
     def setSymbol(self, symbol: QPainterPath) -> None:
+        '''Sets the symbol representing a trap'''
         self._spot['symbol'] = symbol
 
     def isWithin(self, rect: QRectF) -> bool:
+        '''Returns True if the trap is within the specified rectangle'''
         return rect.contains(self.pos())
 
     # Methods for editing properties with QTrapWidget
+
     def registerProperty(self, name,
                          decimals=2,
                          tooltip=False) -> None:
