@@ -25,6 +25,7 @@ class Fab(QMainWindow):
     def _setupUI(self) -> None:
         uic.loadUi(self.UIFILE, self)
         self.videoTab.layout().addWidget(self.cameraTree)
+        self.screen.framerate = 30
         self.screen.source = self.source
         self.dvr.source = self.source
         self.cghTree.cgh = self.cgh
