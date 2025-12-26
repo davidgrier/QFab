@@ -7,7 +7,7 @@ import logging
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
 
 
 class QSLM(QLabel):
@@ -60,6 +60,7 @@ class QSLM(QLabel):
 
     @pyqtSlot(np.ndarray)
     def setData(self, data: Hologram) -> None:
+        logger.debug('Setting SLM data')
         self.data = data
 
     @pyqtProperty(np.ndarray)

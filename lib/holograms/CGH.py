@@ -10,7 +10,7 @@ import logging
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 @dataclass
@@ -40,8 +40,8 @@ class CGH(QObject):
 
     _matrixlist = []
     _geometrylist = []
+    shape: tuple[int, int] = (512, 512)
     matrix = QMatrix4x4()
-    shape: tuple = (512, 512)    # dimensions of SLM [pixels]
     wavelength: float = 1.064    # vacuum wavelength [um]
     n_m: float = 1.340           # refractive index of medium
     magnification: float = 100.  # magnification of objective lens
@@ -79,6 +79,7 @@ class CGH(QObject):
         Accounts for the position and orientation of
         the camera relative to the SLM
         '''
+        logger.debug('updating transformation matrix')
         self.matrix.setToIdentity()
         self.matrix.rotate(self.thetac, 0., 0., 1.)
         self.matrix.translate(-self.rc)
@@ -86,6 +87,7 @@ class CGH(QObject):
 
     def updateGeometry(self) -> None:
         '''Computes position-dependent properties in SLM plane'''
+        logger.debug('updating geometry')
         self.field = np.zeros(self.shape, dtype=np.complex_)
         alpha = np.cos(np.radians(self.phis))
         x = alpha*(np.arange(self.width) - self.xs)
@@ -179,6 +181,7 @@ class CGH(QObject):
     @pyqtSlot(list)
     def compute(self, traps: list[QTrap]) -> None:
         '''Computes phase hologram for specified traps'''
+        logger.debug(f'computing hologram for {len(traps)} traps')
         start = perf_counter()
         self.field.fill(0j)
         for trap in traps:

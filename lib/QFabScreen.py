@@ -29,6 +29,10 @@ class QFabScreen(QVideoScreen):
         super().setImage(image)
         self.overlay.redraw()
 
+    @pyqtSlot()
+    def clearTraps(self) -> None:
+        self.overlay.clearTraps()
+
     def mousePressEvent(self, event: QEvent) -> None:
         super().mousePressEvent(event)
         self.overlay.mousePress(event)

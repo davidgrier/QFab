@@ -1,6 +1,7 @@
 from pyqtgraph import ScatterPlotItem
 from pyqtgraph.Qt.QtCore import (Qt, pyqtSignal, pyqtSlot, QEvent,
-                                 QSize, QPoint, QPointF, QRect, QRectF)
+                                 QSize, QPoint, QPointF, QRect, QRectF,
+                                 QSignalBlocker)
 from pyqtgraph.Qt.QtGui import QVector3D
 from .QTrap import QTrap
 from .QTrapGroup import QTrapGroup
@@ -67,8 +68,7 @@ class QTrapOverlay(ScatterPlotItem):
 
     def _connectSignals(self) -> None:
         self.pattern.changed.connect(self.change)
-        self.pattern.changed.connect(self._draw)
-        self.pattern.stateChanged.connect(self._draw)
+        self.pattern.stateChanged.connect(self.draw)
 
     def _configureHandlers(self, descriptions: Descriptions) -> None:
         self.handler = dict(self._mapping(d) for d in descriptions)
@@ -84,17 +84,28 @@ class QTrapOverlay(ScatterPlotItem):
         return signature, handler
 
     @pyqtSlot()
+    def draw(self) -> None:
+        self._redraw = True
+
+    @pyqtSlot()
     def change(self) -> None:
+        logger.debug('Trap overlay changed')
+        self.draw()
         self.changed.emit(self.pattern.traps())
 
     @pyqtSlot()
-    def _draw(self) -> None:
-        self._redraw = True
+    def clearTraps(self) -> None:
+        '''Clears all traps from the trapping pattern'''
+        logger.debug('Clearing all traps')
+        with QSignalBlocker(self.pattern):
+            for trap in self.pattern:
+                self.pattern.remove(trap)
+        self.change()
 
     def redraw(self) -> None:
         if self._redraw:
             self.plotTraps()
-        self._redraw = False
+            self._redraw = False
 
     def plotTraps(self) -> None:
         spots = [trap.spot() for trap in self.pattern.traps()]

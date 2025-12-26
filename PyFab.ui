@@ -23,7 +23,7 @@
       <widget class="QFabScreen" name="screen"/>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="videoTab">
         <attribute name="title">
@@ -183,6 +183,9 @@
    <class>QFabScreen</class>
    <extends>QGraphicsView</extends>
    <header>QFab.lib.QFabScreen</header>
+   <slots>
+    <slot>clearTraps()</slot>
+   </slots>
   </customwidget>
   <customwidget>
    <class>QDVRWidget</class>
@@ -291,6 +294,22 @@
     <hint type="destinationlabel">
      <x>935</x>
      <y>110</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionClear_Traps</sender>
+   <signal>triggered()</signal>
+   <receiver>screen</receiver>
+   <slot>clearTraps()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>325</x>
+     <y>262</y>
     </hint>
    </hints>
   </connection>
