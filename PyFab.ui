@@ -76,6 +76,9 @@
               <property name="text">
                <string>Back</string>
               </property>
+              <property name="icon">
+               <iconset theme="QIcon::ThemeIcon::GoPrevious"/>
+              </property>
              </widget>
             </item>
             <item>
@@ -83,12 +86,21 @@
               <property name="text">
                <string>Home</string>
               </property>
+              <property name="icon">
+               <iconset theme="QIcon::ThemeIcon::GoHome"/>
+              </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="helpForward">
+              <property name="layoutDirection">
+               <enum>Qt::LayoutDirection::RightToLeft</enum>
+              </property>
               <property name="text">
                <string>Forward</string>
+              </property>
+              <property name="icon">
+               <iconset theme="QIcon::ThemeIcon::GoNext"/>
               </property>
              </widget>
             </item>
