@@ -14,7 +14,7 @@
    <string>PyFab</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
@@ -23,7 +23,7 @@
       <widget class="QFabScreen" name="screen"/>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="videoTab">
         <attribute name="title">
@@ -67,9 +67,36 @@
         <attribute name="title">
          <string>Help</string>
         </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <layout class="QVBoxLayout" name="verticalLayout">
          <item>
-          <widget class="QTextBrowser" name="help"/>
+          <widget class="QWidget" name="helpButtons" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QPushButton" name="helpBack">
+              <property name="text">
+               <string>Back</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="helpHome">
+              <property name="text">
+               <string>Home</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="helpForward">
+              <property name="text">
+               <string>Forward</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTextBrowser" name="helpBrowser"/>
          </item>
         </layout>
        </widget>
@@ -170,8 +197,88 @@
      <y>-1</y>
     </hint>
     <hint type="destinationlabel">
-     <x>379</x>
-     <y>245</y>
+     <x>510</x>
+     <y>257</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>helpBack</sender>
+   <signal>clicked()</signal>
+   <receiver>helpBrowser</receiver>
+   <slot>backward()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>763</x>
+     <y>110</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>851</x>
+     <y>297</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>helpHome</sender>
+   <signal>clicked()</signal>
+   <receiver>helpBrowser</receiver>
+   <slot>home()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>847</x>
+     <y>110</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>851</x>
+     <y>297</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>helpForward</sender>
+   <signal>clicked()</signal>
+   <receiver>helpBrowser</receiver>
+   <slot>forward()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>935</x>
+     <y>110</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>851</x>
+     <y>297</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>helpBrowser</sender>
+   <signal>backwardAvailable(bool)</signal>
+   <receiver>helpBack</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>851</x>
+     <y>297</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>763</x>
+     <y>110</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>helpBrowser</sender>
+   <signal>forwardAvailable(bool)</signal>
+   <receiver>helpForward</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>851</x>
+     <y>297</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>935</x>
+     <y>110</y>
     </hint>
    </hints>
   </connection>

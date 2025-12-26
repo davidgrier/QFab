@@ -1,6 +1,6 @@
 from pyqtgraph.Qt.QtWidgets import QMainWindow
 from pyqtgraph.Qt import uic
-from pyqtgraph.Qt.QtCore import (pyqtSlot, QEvent)
+from pyqtgraph.Qt.QtCore import (pyqtSlot, QEvent, QUrl)
 from pathlib import Path
 from QVideo.lib import (choose_camera, QCameraTree)
 from QFab.lib.QSLM import QSLM
@@ -10,6 +10,7 @@ from QFab.lib.holograms.CGH import CGH
 class Fab(QMainWindow):
 
     UIFILE = Path(__file__).parent / 'PyFab.ui'
+    HELPDIR = Path(__file__).parent / 'help'
 
     def __init__(self, cameraTree: QCameraTree,
                  *args, **kwargs) -> None:
@@ -27,6 +28,8 @@ class Fab(QMainWindow):
         self.screen.source = self.source
         self.dvr.source = self.source
         self.cghTree.cgh = self.cgh
+        self.helpBrowser.setSearchPaths([str(self.HELPDIR)])
+        self.helpBrowser.setSource(QUrl('index.html'))
 
     def _connectSignals(self) -> None:
         self.dvr.playing.connect(self.dvrPlayback)
