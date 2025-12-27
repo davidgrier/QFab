@@ -37,7 +37,7 @@ class Fab(QMainWindow):
         self.dvr.recording.connect(self.cameraTree.setDisabled)
         self.screen.overlay.changed.connect(self.cgh.compute)
         self.cgh.hologramReady.connect(self.slm.setData)
-        self.cgh.recalculate.connect(self.screen.overlay.change)
+        self.cgh.recalculate.connect(self.screen.overlay.recalculate)
 
     @pyqtSlot(bool)
     def dvrPlayback(self, playback: bool) -> None:

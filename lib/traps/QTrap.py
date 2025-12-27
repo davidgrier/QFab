@@ -93,13 +93,15 @@ class QTrap(QObject):
                 raise ValueError('r must be a QVector3D')
         return r
 
-    @pyqtProperty(bool)
     def needsField(self) -> bool:
         return self._needsField
 
-    @pyqtProperty(bool)
     def needsStructure(self) -> bool:
         return self._needsStructure
+
+    def recalculate(self) -> None:
+        self._needsField = True
+        self._needsStructure = True
 
     @pyqtProperty(np.ndarray)
     def field(self) -> np.ndarray[complex]:

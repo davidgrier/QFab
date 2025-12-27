@@ -10,7 +10,7 @@ import logging
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
 
 @dataclass
@@ -166,14 +166,14 @@ class CGH(QObject):
         r *= QVector3D(fac, fac, 1.)
         return r
 
-    def fieldof(self, trap: QTrap) -> np.ndarray[complex]:
-        if trap.needsField:
+    def fieldOf(self, trap: QTrap) -> np.ndarray[complex]:
+        if trap.needsField():
             amplitude = trap.amplitude * np.exp(1j*trap.phase)
-            pos = self.transform(trap.r)
-            ex = np.exp(self.iqx*pos.x() + self.iqxz*pos.z())
-            ey = np.exp(self.iqy*pos.y() + self.iqyz*pos.z())
+            r = self.transform(trap.r)
+            ex = np.exp(self.iqx * r.x() + self.iqxz * r.z())
+            ey = np.exp(self.iqy * r.y() + self.iqyz * r.z())
             trap.field = np.outer(amplitude*ey, ex)
-        if trap.needsStructure:
+        if trap.needsStructure():
             namespace = {'trap': trap, 'cgh': self}
             exec(trap.constructor(), namespace)
         return trap.field * trap.structure
@@ -185,7 +185,7 @@ class CGH(QObject):
         start = perf_counter()
         self.field.fill(0j)
         for trap in traps:
-            self.field += self.fieldof(trap)
+            self.field += self.fieldOf(trap)
         self.phase = self.quantize(self.field)
         self.time = perf_counter() - start
         self.hologramReady.emit(self.phase)

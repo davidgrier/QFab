@@ -2,7 +2,16 @@ from QFab.lib.traps import QTrap
 
 
 class QTweezer(QTrap):
-    pass
+
+    '''Optical tweezer
+
+    Inherits
+    --------
+    QTrap
+    '''
+
+    def needsStructure(self) -> bool:
+        return False
 
 
 if __name__ == '__main__':

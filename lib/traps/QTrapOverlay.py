@@ -94,6 +94,15 @@ class QTrapOverlay(ScatterPlotItem):
         self.changed.emit(self.pattern.traps())
 
     @pyqtSlot()
+    def recalculate(self) -> None:
+        '''Recalculates the trapping pattern'''
+        logger.debug('Recalculating trapping pattern')
+        traps = self.pattern.traps()
+        for trap in traps:
+            trap.recalculate()
+        self.changed.emit(traps)
+
+    @pyqtSlot()
     def clearTraps(self) -> None:
         '''Clears all traps from the trapping pattern'''
         logger.debug('Clearing all traps')
