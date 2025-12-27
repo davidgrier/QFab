@@ -152,8 +152,14 @@
     <property name="title">
      <string>Tasks</string>
     </property>
-    <addaction name="actionAdd_Trap"/>
-    <addaction name="actionClear_Traps"/>
+    <widget class="QTrapMenu" name="menuAddTrap">
+     <property name="title">
+      <string>Add Trap</string>
+     </property>
+     <addaction name="actionOpticalTweezer"/>
+    </widget>
+    <addaction name="menuAddTrap"/>
+    <addaction name="actionClearTraps"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTasks"/>
@@ -169,12 +175,7 @@
     <string>Quit</string>
    </property>
   </action>
-  <action name="actionAdd_Trap">
-   <property name="text">
-    <string>Add Trap</string>
-   </property>
-  </action>
-  <action name="actionClear_Traps">
+  <action name="actionClearTraps">
    <property name="text">
     <string>Clear Traps</string>
    </property>
@@ -187,6 +188,11 @@
   <action name="actionSave_Settings">
    <property name="text">
     <string>Save Settings ...</string>
+   </property>
+  </action>
+  <action name="actionOpticalTweezer">
+   <property name="text">
+    <string>Optical Tweezer</string>
    </property>
   </action>
  </widget>
@@ -215,6 +221,11 @@
    <extends>QFrame</extends>
    <header>QFab.lib.traps.QTrapWidget</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QTrapMenu</class>
+   <extends>QMenu</extends>
+   <header>QFab.lib.traps.QTrapMenu</header>
   </customwidget>
  </customwidgets>
  <resources/>
@@ -316,7 +327,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionClear_Traps</sender>
+   <sender>actionClearTraps</sender>
    <signal>triggered()</signal>
    <receiver>screen</receiver>
    <slot>clearTraps()</slot>

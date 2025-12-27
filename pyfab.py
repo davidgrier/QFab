@@ -37,8 +37,10 @@ class Fab(QMainWindow):
         self.dvr.recording.connect(self.cameraTree.setDisabled)
         overlay = self.screen.overlay
         overlay.changed.connect(self.cgh.compute)
-        overlay.pattern.trapAdded.connect(self.traps.registerTrap)
-        overlay.pattern.trapDeleted.connect(self.traps.unregisterTrap)
+        pattern = overlay.pattern
+        pattern.trapAdded.connect(self.traps.registerTrap)
+        pattern.trapDeleted.connect(self.traps.unregisterTrap)
+        self.menuAddTrap.addTrap.connect(pattern.addTrap)
         self.cgh.hologramReady.connect(self.slm.setData)
         self.cgh.recalculate.connect(self.screen.overlay.recalculate)
 

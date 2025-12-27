@@ -2,7 +2,7 @@ from .QTrapGroup import QTrapGroup
 from .QTrap import QTrap
 from QFab.traps import QTweezer
 from pyqtgraph.Qt.QtCore import (QPointF, QRect, QRectF,
-                                 pyqtSignal, QSignalBlocker)
+                                 pyqtSignal, pyqtSlot, QSignalBlocker)
 import logging
 
 
@@ -23,11 +23,13 @@ class QTrappingPattern(QTrapGroup):
     trapAdded = pyqtSignal(QTrap)
     trapDeleted = pyqtSignal(QTrap)
 
+    @pyqtSlot(QPointF, QTrap)
     def addTrap(self,
                 pos: QPointF,
                 trap: QTrap | None = None) -> None:
         '''Adds a trap at the specified position.'''
         trap = trap or QTweezer()
+        print(trap.__class__.__name__)
         trap.r = pos
         self.add(trap)
         self.trapAdded.emit(trap)

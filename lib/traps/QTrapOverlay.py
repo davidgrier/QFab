@@ -155,9 +155,9 @@ class QTrapOverlay(ScatterPlotItem):
     def _fmt(self, pos: QPointF) -> str:
         return f' ({pos.x():.2f}, {pos.y():.2f})'
 
-    def addTrap(self, pos: QPointF) -> bool:
-        logger.debug('Adding trap at' + self._fmt(pos))
-        self.pattern.addTrap(pos)
+    def addTrap(self, pos: QPointF, trap: QTrap | None = None) -> bool:
+        logger.debug(f'Adding trap at {self._fmt(pos)}')
+        self.pattern.addTrap(pos, trap)
         return True
 
     def deleteTrap(self, pos: QPointF) -> bool:
