@@ -156,7 +156,6 @@
      <property name="title">
       <string>Add Trap</string>
      </property>
-     <addaction name="actionOpticalTweezer"/>
     </widget>
     <addaction name="menuAddTrap"/>
     <addaction name="actionClearTraps"/>
@@ -190,7 +189,10 @@
     <string>Save Settings ...</string>
    </property>
   </action>
-  <action name="actionOpticalTweezer">
+  <action name="placeholder">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Optical Tweezer</string>
    </property>

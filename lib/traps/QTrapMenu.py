@@ -29,7 +29,6 @@ class QTrapMenu(QMenu):
         self._populateMenu()
 
     def _populateMenu(self) -> None:
-        self.clear()
         trapdir = Path(QFab.traps.__file__).parent
         for trapfile in trapdir.glob('Q*.py'):
             trapname = trapfile.stem
