@@ -23,7 +23,7 @@
       <widget class="QFabScreen" name="screen"/>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="videoTab">
         <attribute name="title">
@@ -46,6 +46,18 @@
         <attribute name="title">
          <string>Traps</string>
         </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QTrapWidget" name="traps">
+           <property name="frameShape">
+            <enum>QFrame::Shape::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Shadow::Raised</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
        <widget class="QWidget" name="cghTab">
         <attribute name="title">
@@ -197,6 +209,12 @@
    <class>CGHTree</class>
    <extends>QTreeWidget</extends>
    <header>QFab.lib.holograms.CGHTree</header>
+  </customwidget>
+  <customwidget>
+   <class>QTrapWidget</class>
+   <extends>QFrame</extends>
+   <header>QFab.lib.traps.QTrapWidget</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

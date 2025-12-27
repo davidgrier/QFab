@@ -35,7 +35,10 @@ class Fab(QMainWindow):
     def _connectSignals(self) -> None:
         self.dvr.playing.connect(self.dvrPlayback)
         self.dvr.recording.connect(self.cameraTree.setDisabled)
-        self.screen.overlay.changed.connect(self.cgh.compute)
+        overlay = self.screen.overlay
+        overlay.changed.connect(self.cgh.compute)
+        overlay.pattern.trapAdded.connect(self.traps.registerTrap)
+        overlay.pattern.trapDeleted.connect(self.traps.unregisterTrap)
         self.cgh.hologramReady.connect(self.slm.setData)
         self.cgh.recalculate.connect(self.screen.overlay.recalculate)
 

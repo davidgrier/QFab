@@ -20,6 +20,9 @@ class QTrappingPattern(QTrapGroup):
     QTrapGroup
     '''
 
+    trapAdded = pyqtSignal(QTrap)
+    trapDeleted = pyqtSignal(QTrap)
+
     def addTrap(self,
                 pos: QPointF,
                 trap: QTrap | None = None) -> None:
@@ -27,11 +30,13 @@ class QTrappingPattern(QTrapGroup):
         trap = trap or QTweezer()
         trap.r = pos
         self.add(trap)
+        self.trapAdded.emit(trap)
         logger.debug(f'added {trap}')
 
     def deleteTrap(self, trap: QTrap) -> None:
         '''Deletes the specified trap'''
         logger.debug(f'deleting {trap}')
+        self.trapDeleted.emit(trap)
         self.remove(trap)
 
     def makeGroup(self, traps: QTrap | None) -> None:

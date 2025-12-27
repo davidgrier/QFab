@@ -228,7 +228,6 @@ class QTrap(QObject):
 
     @pyqtSlot(str, float)
     def setProperty(self, name, value) -> None:
-        logger.debug(f'Setting {name}: {value}')
         if name in self.properties:
             setattr(self, name, value)
 
