@@ -18,14 +18,13 @@ class QConfiguration(QObject):
         self.configdir.mkdir(parents=True, exist_ok=True)
 
     def timestamp(self) -> str:
-        return datetime.now().strftime('%Y%b%d_%H%M%S')
+        return datetime.now().strftime('%Y%m%d_%H%M%S')
 
     def filename(self,
                  prefix: str | None = None,
                  suffix: str | None = None) -> str:
         prefix = prefix or self.classname
-        suffix = suffix or 'txt'
-        path = self.datadir / f'{prefix}_{self.timestamp()}.{suffix}'
+        path = self.datadir / f'{prefix}_{self.timestamp()}{suffix}'
         return str(path)
 
     def configname(self, obj: QObject) -> str:

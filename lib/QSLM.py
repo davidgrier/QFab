@@ -35,29 +35,29 @@ class QSLM(GraphicsLayoutWidget):
     Hologram = np.ndarray[np.uint8]
 
     def __init__(self, *args, fake: bool = False, **kwargs) -> None:
-        super().__init__(*args, **kwargs, show=True)
+        super().__init__(*args, **kwargs)
         self._setupUi()
 
     def _setupUi(self) -> None:
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.ci.layout.setContentsMargins(0, 0, 0, 0)
         self.view = self.addViewBox(enableMenu=False,
                                     enableMouse=False)
         self.view.setDefaultPadding(0)
-        self.image = ImageItem(axisOrder='row-major')
+        self.image = ImageItem()  # axisOrder='row-major')
         self.view.addItem(self.image)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
         screens = QGuiApplication.screens()
         if (len(screens) == 2) and not fake:
             logger.debug('Opening SLM on secondary screen')
             screen = screens[1]
             geometry = screen.genometry()
-
             self.showMaximized()
         else:
             x0, y0, w, h = 100, 100, 640, 480
             self.setGeometry(x0, y0, w, h)
             self.resize(w, h)
+            self.show()
         self.setData(np.zeros(self.shape, dtype=np.uint8))
 
     @pyqtProperty(tuple)

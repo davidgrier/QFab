@@ -1,13 +1,17 @@
 from pyqtgraph.Qt.QtWidgets import QMainWindow
 from pyqtgraph.Qt import uic
 from pyqtgraph.Qt.QtCore import (pyqtSlot, QEvent, QUrl)
+from pyqtgraph.exporters import ImageExporter
+import pyqtgraph as pg
 from pathlib import Path
 from QVideo.lib import (choose_camera, QCameraTree)
 from QFab.lib.QSLM import QSLM
 from QFab.lib.holograms.CGH import CGH
+from QFab.lib.QConfiguration import QConfiguration
+from QFab.lib.QSaveFile import QSaveFile
 
 
-class Fab(QMainWindow):
+class PyFab(QMainWindow):
 
     UIFILE = Path(__file__).parent / 'PyFab.ui'
     HELPDIR = Path(__file__).parent / 'help'
@@ -17,10 +21,13 @@ class Fab(QMainWindow):
         super().__init__(*args, **kwargs)
         self.cameraTree = cameraTree
         self.source = self.cameraTree.source
-        self.slm = QSLM(self)
+        self.slm = QSLM()
         self.cgh = CGH(self.slm.shape)
         self._setupUI()
         self._connectSignals()
+        self.configuration = QConfiguration(self)
+        # self.configuration.restore(self.cgh)
+        self.saveFile = QSaveFile(self)
 
     def _setupUI(self) -> None:
         uic.loadUi(self.UIFILE, self)
@@ -54,6 +61,22 @@ class Fab(QMainWindow):
             self.source.newFrame.connect(self.screen.setImage)
         self.cameraTree.setDisabled(playback)
 
+    @pyqtSlot()
+    def saveImage(self) -> None:
+        self.saveFile.saveImage()
+
+    @pyqtSlot()
+    def saveImageAs(self) -> None:
+        self.saveFile.saveImageAs()
+
+    @pyqtSlot()
+    def saveHologram(self) -> None:
+        self.saveFile.saveHologram()
+
+    @pyqtSlot()
+    def saveHologramAs(self) -> None:
+        self.saveFile.saveHologramAs()
+
     @pyqtSlot(str)
     def setStatus(self, message: str) -> None:
         self.statusBar().showMessage(message, 5000)
@@ -64,11 +87,9 @@ class Fab(QMainWindow):
 
 
 def main() -> None:
-    import pyqtgraph as pg
-
     app = pg.mkQApp('pyfab')
     cameraTree = choose_camera().start()
-    fab = Fab(cameraTree)
+    fab = PyFab(cameraTree)
     fab.show()
     pg.exec()
 
