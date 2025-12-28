@@ -29,12 +29,12 @@ class QTrappingPattern(QTrapGroup):
                 trap: QTrap | None = None) -> None:
         '''Adds a trap at the specified position.'''
         trap = trap or QTweezer()
-        print(trap.__class__.__name__)
         trap.r = pos
         self.add(trap)
         self.trapAdded.emit(trap)
         logger.debug(f'added {trap}')
 
+    @pyqtSlot(QTrap)
     def deleteTrap(self, trap: QTrap) -> None:
         '''Deletes the specified trap'''
         logger.debug(f'deleting {trap}')

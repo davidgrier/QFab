@@ -4,7 +4,6 @@ from pyqtgraph.Qt.QtCore import (pyqtSignal, pyqtSlot, pyqtProperty,
 from pyqtgraph.Qt.QtGui import (QVector3D, QMatrix4x4)
 from QFab.lib.traps.QTrap import QTrap
 import numpy as np
-from time import perf_counter
 import logging
 
 
@@ -15,7 +14,9 @@ logger.setLevel(logging.WARNING)
 
 @dataclass
 class CGH(QObject):
+
     '''Base class for computing computer-generated holograms.
+
     For each trap, the coordinate r obtained from the fabscreen
     is measured relative to the calibrated location rc of the
     zeroth-order focal point, which itself is measured relative to
@@ -29,10 +30,50 @@ class CGH(QObject):
     each other because the SLM is likely to be tilted relative to the
     optical axis.
 
-    NOTE: This version has thread-safe slots for setting parameters
-    (setProperty) and for triggering computations (setTraps).
-    It emits a thread-safe signal (sigHologramReady) to transfer
-    computed holograms.
+    Attributes
+    ----------
+    shape : tuple[int, int]
+        Shape of the hologram [height, width] in pixels
+    wavelength : float
+        Vacuum wavelength of trapping light [um]
+    n_m : float
+        Refractive index of medium
+    magnification : float
+        Magnification of objective lens
+    focallength : float
+        Focal length of lens [um]
+    camerapitch : float
+        Camera pixel pitch [um/pixel]
+    slmpitch : float
+        SLM pixel pitch [um/phixel]
+    scale : float
+        SLM scale factor
+    splay : float
+        Axial splay [degrees]
+    xs, ys : float
+        Coordinates of optical axis in SLM plane [phixels]
+    phis : float
+        Tilt of SLM [degrees]
+    xc, yc, zc : float
+        Coordinates of optical axis in camera plane pixels^3
+    thetac : float
+        Orientation of camera [degrees]
+
+    Signals
+    -------
+    hologramReady : np.ndarray
+        Emitted when a new hologram is computed
+    recalculate : None
+        Emitted when geometry or transformation matrix is updated
+
+    Methods
+    -------
+    start() -> CGH
+        Initializes the CGH pipeline
+    stop() -> None
+        Stops the CGH pipeline
+    compute(traps: list[QTrap]) -> np.ndarray
+        Computes phase hologram for specified traps
     '''
 
     hologramReady = pyqtSignal(np.ndarray)
@@ -167,6 +208,7 @@ class CGH(QObject):
         return r
 
     def fieldOf(self, trap: QTrap) -> np.ndarray[complex]:
+        '''Computes field of a single trap'''
         if trap.needsField():
             amplitude = trap.amplitude * np.exp(1j*trap.phase)
             r = self.transform(trap.r)
@@ -182,12 +224,10 @@ class CGH(QObject):
     def compute(self, traps: list[QTrap]) -> None:
         '''Computes phase hologram for specified traps'''
         logger.debug(f'computing hologram for {len(traps)} traps')
-        start = perf_counter()
         self.field.fill(0j)
         for trap in traps:
             self.field += self.fieldOf(trap)
         self.phase = self.quantize(self.field)
-        self.time = perf_counter() - start
         self.hologramReady.emit(self.phase)
         return self.phase
 

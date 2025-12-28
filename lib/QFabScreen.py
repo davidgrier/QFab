@@ -32,6 +32,7 @@ class QFabScreen(QVideoScreen):
     @pyqtSlot()
     def clearTraps(self) -> None:
         self.overlay.clearTraps()
+        self.status.emit('Cleared all traps')
 
     def mousePressEvent(self, event: QEvent) -> None:
         super().mousePressEvent(event)
