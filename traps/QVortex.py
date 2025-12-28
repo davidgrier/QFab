@@ -4,6 +4,18 @@ from pyqtgraph.Qt.QtCore import pyqtProperty
 
 class QVortex(QTrap):
 
+    '''Optical vortex
+
+    Inherits
+    --------
+    QTrap
+
+    Properties
+    ----------
+    ell : int
+        Topological charge of the optical vortex
+    '''
+
     def __init__(self, *args,
                  ell: int = 0,
                  **kwargs) -> None:

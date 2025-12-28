@@ -40,7 +40,6 @@ class QTrapMenu(QMenu):
     def _addTrap(self) -> None:
         action = self.sender()
         trapname = action.data()
-        print(trapname)
         module = import_module(f'QFab.traps.{trapname}')
         trap = getattr(module, trapname)()
         pos = QPointF(100, 100)
@@ -49,10 +48,20 @@ class QTrapMenu(QMenu):
 
 def main() -> None:
     import pyqtgraph as pg
+    from pyqtgraph.Qt.QtWidgets import QMainWindow
 
-    app = pg.mkQApp("QTrapMenu Example")
-    menu = QTrapMenu(None)
-    menu.show()
+    @pyqtSlot(QPointF, QTrap)
+    def handler(pos: QPointF, trap: QTrap) -> None:
+        print(f'Adding trap {trap} at position {pos}')
+
+    app = pg.mkQApp('QTrapMenu Example')
+    demo = QMainWindow()
+    menubar = demo.menuBar()
+    filemenu = menubar.addMenu('&File')
+    trapmenu = QTrapMenu(demo)
+    trapmenu.addTrap.connect(handler)
+    filemenu.addMenu(QTrapMenu(demo))
+    demo.show()
     app.exec()
 
 

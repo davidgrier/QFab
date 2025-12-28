@@ -43,6 +43,7 @@ class Fab(QMainWindow):
         self.menuAddTrap.addTrap.connect(pattern.addTrap)
         self.cgh.hologramReady.connect(self.slm.setData)
         self.cgh.recalculate.connect(self.screen.overlay.recalculate)
+        self.screen.status.connect(self.setStatus)
 
     @pyqtSlot(bool)
     def dvrPlayback(self, playback: bool) -> None:
@@ -52,6 +53,10 @@ class Fab(QMainWindow):
         else:
             self.source.newFrame.connect(self.screen.setImage)
         self.cameraTree.setDisabled(playback)
+
+    @pyqtSlot(str)
+    def setStatus(self, message: str) -> None:
+        self.statusBar().showMessage(message, 5000)
 
     def closeEvent(self, event: QEvent) -> None:
         self.slm.close()

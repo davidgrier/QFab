@@ -4,6 +4,20 @@ from pyqtgraph.Qt.QtCore import pyqtProperty
 
 class QRingTrap(QTrap):
 
+    '''Ring trap
+
+    Inherits
+    --------
+    QTrap
+
+    Properties
+    ----------
+    radius : float
+        Radius of the ring trap [pixels]
+    ell : float
+        Topological charge of the ring trap
+    '''
+
     def __init__(self, *args,
                  radius: float = 10.,
                  ell: float = 0.,
