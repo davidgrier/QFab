@@ -1,3 +1,4 @@
+
 from dataclasses import (dataclass, fields)
 from pyqtgraph.Qt.QtCore import (pyqtSignal, pyqtSlot, pyqtProperty,
                                  QObject, QPointF)
@@ -140,6 +141,23 @@ class CGH(QObject):
         self.theta = np.arctan2.outer(y, x)
         self.qr = np.hypot.outer(self.qprp*y, self.qprp*x)
         self.recalculate.emit()
+
+    @pyqtProperty(list)
+    def properties(self) -> list[str]:
+        '''List of properties that affect geometry'''
+        return [f.name for f in fields(self)]
+
+    @pyqtProperty(dict)
+    def settings(self) -> dict:
+        '''Dictionary of current settings'''
+        return {f.name: getattr(self, f.name) for f in fields(self)}
+
+    @settings.setter
+    def settings(self, settings: dict) -> None:
+        '''Sets current settings from dictionary'''
+        for key, value in settings.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
     @pyqtProperty(int)
     def height(self) -> int:

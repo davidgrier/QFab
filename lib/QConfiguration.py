@@ -27,9 +27,10 @@ class QConfiguration(QObject):
         path = self.datadir / f'{prefix}_{self.timestamp()}{suffix}'
         return str(path)
 
-    def configname(self, obj: QObject) -> str:
-        classname = object.__class__.__name__
+    def configname(self, qobj: QObject) -> str:
+        classname = qobj.__class__.__name__
         path = self.configdir / f'{classname}.toml'
+        return str(path)
 
     def save(self, obj: QObject) -> None:
         doc = tomlkit.document()

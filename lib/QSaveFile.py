@@ -1,4 +1,6 @@
-from pyqtgraph.Qt.QtCore import (QObject, pyqtSlot)
+from pyqtgraph.Qt.QtCore import QObject
+from pyqtgraph.Qt.QtWidgets import QMainWindow
+from pyqtgraph import ImageItem
 from pyqtgraph.exporters import ImageExporter
 import pyqtgraph as pg
 
@@ -9,46 +11,27 @@ class QSaveFile(QObject):
                     'JPEG Image (*.jpg *.jpeg);;'
                     'TIFF Image (*.tif *.tiff)')
 
-    def __init__(self, parent: QObject) -> None:
+    def __init__(self, parent: QMainWindow) -> None:
         super().__init__(parent)
         self.configuration = parent.configuration
-        self.screen = parent.screen
-        self.slm = parent.slm
-        self.setStatus = parent.setStatus
 
-    @pyqtSlot()
-    def saveImage(self, filename: str | None = None) -> None:
+    def saveImage(self,
+                  image: ImageItem,
+                  filename: str | None = None,
+                  prefix: str = 'pyfab') -> str:
         config = self.configuration
-        filename = filename or config.filename(suffix='.png')
-        exporter = ImageExporter(self.screen.image)
+        filename = filename or config.filename(prefix=prefix, suffix='.png')
+        exporter = ImageExporter(image)
         exporter.export(filename)
-        self.setStatus(f'Saved image to {filename}')
+        return filename
 
-    @pyqtSlot()
-    def saveImageAs(self) -> None:
-        default = self.configuration.filename(suffix='.png')
+    def saveImageAs(self,
+                    image: ImageItem,
+                    prefix: str = 'pyfab') -> str:
+        default = self.configuration.filename(prefix=prefix, suffix='.png')
         filename, _ = pg.FileDialog.getSaveFileName(
-            self.parent(), 'Save Image As', default, self.formats)
+            self.parent(), 'Save As', default, self.formats)
         if filename:
-            self.saveImage(filename)
+            return self.saveImage(image, filename)
         else:
-            self.setStatus('Save image cancelled.')
-
-    @pyqtSlot()
-    def saveHologram(self) -> None:
-        config = self.configuration
-        filename = config.filename(prefix='hologram', suffix='.png')
-        exporter = ImageExporter(self.slm.image)
-        exporter.export(filename)
-        self.setStatus(f'Saved hologram to {filename}')
-
-    @pyqtSlot()
-    def saveHologramAs(self) -> None:
-        default = self.configuration.filename(
-            prefix='hologram', suffix='.png')
-        filename, _ = pg.FileDialog.getSaveFileName(
-            self.parent(), 'Save Hologram As', default, self.formats)
-        if filename:
-            self.saveHologram(filename)
-        else:
-            self.setStatus('Save hologram cancelled.')
+            return ''

@@ -63,19 +63,35 @@ class PyFab(QMainWindow):
 
     @pyqtSlot()
     def saveImage(self) -> None:
-        self.saveFile.saveImage()
+        filename = self.saveFile.saveImage(self.screen.image)
+        self.setStatus(f'Saved image as {filename}')
 
     @pyqtSlot()
     def saveImageAs(self) -> None:
-        self.saveFile.saveImageAs()
+        if (filename := self.saveFile.saveImageAs(self.screen.image)):
+            self.setStatus(f'Saved image as {filename}')
+        else:
+            self.setStatus('Image save cancelled')
 
     @pyqtSlot()
     def saveHologram(self) -> None:
-        self.saveFile.saveHologram()
+        filename = self.saveFile.saveImage(self.slm.image,
+                                           prefix='hologram')
+        self.setStatus(f'Saved hologram as {filename}')
 
     @pyqtSlot()
     def saveHologramAs(self) -> None:
-        self.saveFile.saveHologramAs()
+        if (filename := self.saveFile.saveImageAs(self.slm.image,
+                                                  prefix='hologram')):
+            self.setStatus(f'Saved hologram as {filename}')
+        else:
+            self.setStatus('Hologram save cancelled')
+
+    @pyqtSlot()
+    def saveSettings(self) -> None:
+        self.configuration.save(self.cghTree)
+        directory = self.configuration.configdir
+        self.setStatus(f'Configuration saved to {directory}')
 
     @pyqtSlot(str)
     def setStatus(self, message: str) -> None:
