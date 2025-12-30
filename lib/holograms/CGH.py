@@ -1,4 +1,3 @@
-
 from dataclasses import (dataclass, fields)
 from pyqtgraph.Qt.QtCore import (pyqtSignal, pyqtSlot, pyqtProperty,
                                  QObject, QPointF)

@@ -15,19 +15,19 @@ class QSaveFile(QObject):
         super().__init__(parent)
         self.configuration = parent.configuration
 
-    def saveImage(self,
-                  image: ImageItem,
-                  filename: str | None = None,
-                  prefix: str = 'pyfab') -> str:
+    def image(self,
+              image: ImageItem,
+              filename: str | None = None,
+              prefix: str = 'pyfab') -> str:
         config = self.configuration
         filename = filename or config.filename(prefix=prefix, suffix='.png')
         exporter = ImageExporter(image)
         exporter.export(filename)
         return filename
 
-    def saveImageAs(self,
-                    image: ImageItem,
-                    prefix: str = 'pyfab') -> str:
+    def imageAs(self,
+                image: ImageItem,
+                prefix: str = 'pyfab') -> str:
         default = self.configuration.filename(prefix=prefix, suffix='.png')
         filename, _ = pg.FileDialog.getSaveFileName(
             self.parent(), 'Save As', default, self.formats)

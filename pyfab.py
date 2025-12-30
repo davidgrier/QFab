@@ -27,7 +27,7 @@ class PyFab(QMainWindow):
         self._connectSignals()
         self.configuration = QConfiguration(self)
         # self.configuration.restore(self.cgh)
-        self.saveFile = QSaveFile(self)
+        self.save = QSaveFile(self)
 
     def _setupUI(self) -> None:
         uic.loadUi(self.UIFILE, self)
@@ -63,29 +63,29 @@ class PyFab(QMainWindow):
 
     @pyqtSlot()
     def saveImage(self) -> None:
-        filename = self.saveFile.saveImage(self.screen.image)
+        filename = self.save.image(self.screen.image)
         self.setStatus(f'Saved image as {filename}')
 
     @pyqtSlot()
     def saveImageAs(self) -> None:
-        if (filename := self.saveFile.saveImageAs(self.screen.image)):
+        filename := self.save.imageAs(self.screen.image)
+        if filename:
             self.setStatus(f'Saved image as {filename}')
         else:
-            self.setStatus('Image save cancelled')
+            self.setStatus('Save image cancelled')
 
     @pyqtSlot()
     def saveHologram(self) -> None:
-        filename = self.saveFile.saveImage(self.slm.image,
-                                           prefix='hologram')
+        filename = self.save.image(self.slm.image, prefix='hologram')
         self.setStatus(f'Saved hologram as {filename}')
 
     @pyqtSlot()
     def saveHologramAs(self) -> None:
-        if (filename := self.saveFile.saveImageAs(self.slm.image,
-                                                  prefix='hologram')):
+        filename = self.save.imageAs(self.slm.image, prefix='hologram')
+        if filename:
             self.setStatus(f'Saved hologram as {filename}')
         else:
-            self.setStatus('Hologram save cancelled')
+            self.setStatus('Save hologram cancelled')
 
     @pyqtSlot()
     def saveSettings(self) -> None:
