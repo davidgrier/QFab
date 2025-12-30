@@ -19,6 +19,23 @@ class QSaveFile(QObject):
               image: ImageItem,
               filename: str | None = None,
               prefix: str = 'pyfab') -> str:
+        '''Saves image to file
+
+        Arguments
+        ---------
+        image : ImageItem
+            Image to save
+        filename : str | None
+            Filename to save to. If None, a default filename
+            will be generated.
+        prefix : str
+            Prefix for default filename
+
+        Returns
+        -------
+        filename : str
+            Filename saved to
+        '''
         config = self.configuration
         filename = filename or config.filename(prefix=prefix, suffix='.png')
         exporter = ImageExporter(image)
@@ -28,6 +45,20 @@ class QSaveFile(QObject):
     def imageAs(self,
                 image: ImageItem,
                 prefix: str = 'pyfab') -> str:
+        '''Saves image to file with "Save As" dialog
+
+        Arguments
+        ---------
+        image : ImageItem
+            Image to save
+        prefix : str
+            Prefix for default filename
+
+        Returns
+        -------
+        filename : str
+            Filename saved to, or empty string if cancelled
+        '''
         default = self.configuration.filename(prefix=prefix, suffix='.png')
         filename, _ = pg.FileDialog.getSaveFileName(
             self.parent(), 'Save As', default, self.formats)
