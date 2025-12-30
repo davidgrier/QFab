@@ -81,14 +81,22 @@ class QTrap(QObject):
         return (f'{name}(r=({r}), ' +
                 f'amplitude={self.amplitude:.2f}, phase={self.phase:.2f})')
 
+    def _registerProperties(self) -> None:
+        self.properties = dict()
+        self.registerProperty('x')
+        self.registerProperty('y')
+        self.registerProperty('z')
+        self.registerProperty('amplitude')
+        self.registerProperty('phase')
+
     def _toQVector3D(self, r: Position) -> QVector3D:
         if isinstance(r, QPointF):
             r = QVector3D(r.x(), r.y(), self.r.z())
         elif isinstance(r, Iterable):
             if len(r) == 2:
-                r = QVector3D(*r, self.r.z())
+                r = QVector3D(r[0], r[1], self.r.z())
             elif len(r) == 3:
-                r = QVector3D(*r)
+                r = QVector3D(r[0], r[1], r[2])
             else:
                 raise ValueError('r must be a QVector3D')
         return r
@@ -136,31 +144,31 @@ class QTrap(QObject):
 
     @pyqtProperty(float)
     def x(self) -> float:
-        return self._r.x()
+        return self.r.x()
 
     @x.setter
     def x(self, x: float) -> None:
-        self._r.setX(x)
+        self.r.setX(x)
         self._needsField = True
         self.changed.emit()
 
     @pyqtProperty(float)
     def y(self) -> float:
-        return self._r.y()
+        return self.r.y()
 
-    @x.setter
+    @y.setter
     def y(self, y: float) -> None:
-        self._r.setY(y)
+        self.r.setY(y)
         self._needsField = True
         self.changed.emit()
 
     @pyqtProperty(float)
     def z(self) -> float:
-        return self._r.z()
+        return self.r.z()
 
     @z.setter
     def z(self, z: float) -> None:
-        self._r.setZ(z)
+        self.r.setZ(z)
         self._needsField = True
         self.changed.emit()
 
@@ -222,7 +230,6 @@ class QTrap(QObject):
     def registerProperty(self, name,
                          decimals=2,
                          tooltip=False) -> None:
-        '''Register a property so that it can be edited'''
         self.properties[name] = {'decimals': decimals,
                                  'tooltip': tooltip}
 
@@ -230,14 +237,6 @@ class QTrap(QObject):
     def setProperty(self, name, value) -> None:
         if name in self.properties:
             setattr(self, name, value)
-
-    def _registerProperties(self) -> None:
-        self.properties = dict()
-        self.registerProperty('x')
-        self.registerProperty('y')
-        self.registerProperty('z')
-        self.registerProperty('amplitude')
-        self.registerProperty('phase')
 
     def settings(self) -> dict[str, float]:
         return {p: getattr(self, p) for p in self.properties.keys()}

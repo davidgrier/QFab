@@ -12,7 +12,7 @@ import logging
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
 
 
 def getWidth():
@@ -28,23 +28,28 @@ class QTrapPropertyEdit(QLineEdit):
 
     valueChanged = pyqtSignal(str, float)
 
-    def __init__(self,
-                 name: str,
-                 value: float,
-                 *args,
-                 decimals: int = 2,
-                 **kwargs) -> None:
+    def __init__(self, name: str, value: float, *args,
+                 decimals: int = 2, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.name = name
+        self.decimals = decimals
+        self._setupUi()
+        self._connectSignals()
+        self.value = value
+
+    def _setupUi(self) -> None:
         self.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.setFixedWidth(getWidth())
         self.setMaxLength(8)
-        self.fmt = f'{{:.{decimals}f}}'
-        v = QDoubleValidator(decimals=decimals)
+        v = QDoubleValidator(decimals=self.decimals)
         v.setNotation(QDoubleValidator.Notation.StandardNotation)
         self.setValidator(v)
-        self.name = name
-        self.value = value
+
+    def _connectSignals(self) -> None:
         self.returnPressed.connect(self.updateValue)
+
+    def format(self, value: float) -> str:
+        return f'{value:.{self.decimals}f}'
 
     @pyqtSlot()
     def updateValue(self) -> None:
@@ -58,47 +63,7 @@ class QTrapPropertyEdit(QLineEdit):
 
     @value.setter
     def value(self, value: float) -> None:
-        self.setText(self.fmt.format(value))
-        self._value = value
-
-
-class QTrapListPropertyEdit(QLineEdit):
-
-    '''Control for one list-like property of one trap'''
-
-    valueChanged = pyqtSignal(str, object)
-
-    def __init__(self,
-                 name: str,
-                 value: object,
-                 *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.setAlignment(Qt.AlignRight)
-        self.setFixedWidth(getWidth())
-        numberrx = '([+-]?\d*\.?\d+)'
-        listrx = '\[' + '(?:\s*' + numberrx + \
-            '\s*,)*\s*' + numberrx + '\s*\]'
-        self.rx = QRegularExpression(listrx)
-        val = QRegularExpressionValidator(self.rx)
-        self.setValidator(val)
-        self.name = name
-        self.value = value
-        self.returnPressed.connect(self.updateValue)
-
-    @pyqtSlot()
-    def updateValue(self) -> None:
-        txt = str(self.text())
-        self.value = np.fromstring(txt[1:-1], sep=',', dtype=np.float)
-        self.valueChanged.emit(self.name, self.value)
-        logger.debug(f'Changing {self.name}: {self.value}')
-
-    @pyqtProperty(object)
-    def value(self) -> object:
-        return self._value
-
-    @value.setter
-    def value(self, value: object) -> None:
-        self.setText(str(value))
+        self.setText(self.format(value))
         self._value = value
 
 
@@ -108,6 +73,9 @@ class QTrapPropertyWidget(QWidget):
 
     def __init__(self, trap: QTrap, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self._setupUi(trap)
+
+    def _setupUi(self, trap: QTrap) -> None:
         layout = QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -126,10 +94,7 @@ class QTrapPropertyWidget(QWidget):
     def propertyWidget(self, trap: QTrap, name: str) -> QWidget:
         value = getattr(trap, name)
         decimals = trap.properties[name]['decimals']
-        if isinstance(value, list):
-            wid = QTrapListPropertyEdit(name, value)
-        else:
-            wid = QTrapPropertyEdit(name, value, decimals=decimals)
+        wid = QTrapPropertyEdit(name, value, decimals=decimals)
         wid.valueChanged.connect(trap.setProperty)
         return wid
 
@@ -148,9 +113,9 @@ class QTrapWidget(QFrame):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.properties = dict()
-        self.init_ui()
+        self._setupUi()
 
-    def init_ui(self) -> None:
+    def _setupUi(self) -> None:
         self.setFrameShape(QFrame.Shape.Box)
         inner = QWidget()
         self.layout = QVBoxLayout()

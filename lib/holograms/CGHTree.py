@@ -117,7 +117,6 @@ class CGHTree(ParameterTree):
         cgh = CGH()
         widget = cls(cgh=cgh)
         widget.show()
-        # print('CGH properties:', widget.properties)
         print('CGH settings:', widget.settings)
         pg.exec()
 
