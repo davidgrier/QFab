@@ -26,8 +26,8 @@ class PyFab(QMainWindow):
         self._setupUI()
         self._connectSignals()
         self.configuration = QConfiguration(self)
-        # self.configuration.restore(self.cgh)
         self.save = QSaveFile(self)
+        self.restoreSettings()
 
     def _setupUI(self) -> None:
         uic.loadUi(self.UIFILE, self)
@@ -89,15 +89,22 @@ class PyFab(QMainWindow):
 
     @pyqtSlot()
     def saveSettings(self) -> None:
-        self.configuration.save(self.cghTree)
-        directory = self.configuration.configdir
-        self.setStatus(f'Configuration saved to {directory}')
+        filename = self.save.toToml(self.cghTree)
+        self.setStatus(f'Configuration saved to {filename}')
+
+    @pyqtSlot()
+    def restoreSettings(self) -> None:
+        if (filename := self.save.fromToml(self.cghTree)):
+            self.setStatus(f'Configuration restored from {filename}')
+        else:
+            self.setStatus('Configuration file not found or invalid')
 
     @pyqtSlot(str)
     def setStatus(self, message: str) -> None:
         self.statusBar().showMessage(message, 5000)
 
     def closeEvent(self, event: QEvent) -> None:
+        self.saveSettings()
         self.slm.close()
         super().closeEvent(event)
 
