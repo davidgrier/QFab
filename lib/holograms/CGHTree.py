@@ -1,20 +1,35 @@
 from pyqtgraph.parametertree import (Parameter, ParameterTree)
-from pyqtgraph.Qt.QtCore import (pyqtSlot, pyqtProperty)
+from pyqtgraph.Qt.QtCore import (pyqtSlot, pyqtProperty, QSignalBlocker)
 from QFab.lib.holograms.CGH import CGH
 from dataclasses import asdict
 import numpy as np
+import logging
+
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
 
 class CGHTree(ParameterTree):
 
-    def __init__(self, *args, cgh: CGH | None = None, **kwargs) -> None:
+    def __init__(self, *args,
+                 cgh: CGH | None = None,
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.tree = self.description()
-        self.setParameters(self.tree, showTop=False)
-        self.tree.sigTreeStateChanged.connect(self.handleChanges)
+        self._setupUi()
+        self._connectSignals()
         self.cgh = cgh
 
-    def description(self) -> Parameter:
+    def _setupUi(self) -> None:
+        self.tree = self._description()
+        self.setParameters(self.tree, showTop=False)
+        self._parameters = self._getParameters(self.tree)
+
+    def _connectSignals(self) -> None:
+        self.tree.sigTreeStateChanged.connect(self.updateCGH)
+
+    def _description(self) -> Parameter:
         instr = dict(name='instrument', type='group', children=[
             dict(name='wavelength', type='float',
                  value=1.064, decimals=4, suffix='μm'),
@@ -37,42 +52,62 @@ class CGHTree(ParameterTree):
         return Parameter.create(name='params', type='group',
                                 children=[instr, slm, camera])
 
+    def _getParameters(self, parameter: Parameter) -> list[str]:
+        parameters = {}
+        for child in parameter.children():
+            if child.hasChildren():
+                parameters.update(self._getParameters(child))
+            else:
+                parameters.update({child.name(): child})
+        return parameters
+
     @pyqtProperty(CGH)
     def cgh(self) -> CGH:
         return self._cgh
 
     @cgh.setter
-    def cgh(self, cgh: CGH) -> None:
+    def cgh(self, cgh: CGH | None) -> None:
         self._cgh = cgh
-#        if cgh is not None:
-#            self.sync()
+        self.updateTree()
+
+    def get(self, key: str, default: object = None) -> object:
+        if key in self._parameters:
+            return self._parameters[key].value()
+        else:
+            return default
+
+    def set(self, key: str, value: object) -> None:
+        if key in self._parameters:
+            self._parameters[key].setValue(value)
+        else:
+            logger.info(f'unknown parameter: {key}')
 
     @pyqtProperty(list)
     def properties(self) -> list[str]:
-        return self.tree.saveState()['children']
+        return self._parameters.keys()
 
     @pyqtProperty(dict)
     def settings(self) -> dict[str, object]:
-        return {p.name(): p.value() for p in self.tree.children()}
+        return {p: self.get(p) for p in self.properties}
 
     @settings.setter
     def settings(self, settings: dict[str, object]) -> None:
-        for key, value in settings.items():
-            try:
-                parameter = self.parameters.param(key)
-                parameter.setValue(value)
-            except KeyError:
-                pass
+        with self.tree.treeChangeBlocker():
+            for key, value in settings.items():
+                self.set(key, value)
 
     @pyqtSlot(object, object)
-    def handleChanges(self, tree, changes) -> None:
+    def updateCGH(self, tree, changes) -> None:
+        if self.cgh is None:
+            return
         for param, change, value in changes:
             if (change == 'value'):
-                key = param.name().lower()
-                try:
-                    setattr(self.cgh, key, value)
-                except:
-                    print(f'error setting {key}: {value}')
+                key = param.name()
+                self.cgh.set(key, value)
+
+    def updateTree(self) -> None:
+        if self.cgh is not None:
+            self.settings = self.cgh.settings
 
     @classmethod
     def example(cls) -> None:
@@ -82,7 +117,7 @@ class CGHTree(ParameterTree):
         cgh = CGH()
         widget = cls(cgh=cgh)
         widget.show()
-        print('CGH properties:', widget.properties)
+        # print('CGH properties:', widget.properties)
         print('CGH settings:', widget.settings)
         pg.exec()
 

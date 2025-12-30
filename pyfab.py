@@ -68,7 +68,7 @@ class PyFab(QMainWindow):
 
     @pyqtSlot()
     def saveImageAs(self) -> None:
-        filename := self.save.imageAs(self.screen.image)
+        filename = self.save.imageAs(self.screen.image)
         if filename:
             self.setStatus(f'Saved image as {filename}')
         else:

@@ -141,6 +141,23 @@ class CGH(QObject):
         self.qr = np.hypot.outer(self.qprp*y, self.qprp*x)
         self.recalculate.emit()
 
+    def get(self, key: str) -> object | None:
+        '''Gets value of specified property'''
+        if hasattr(self, key):
+            logger.debug(f'getting property: {key}')
+            return getattr(self, key)
+        else:
+            logger.warning(f'Unsupported property: {key}')
+            return None
+
+    def set(self, key: str, value: object) -> None:
+        '''Sets value of specified property'''
+        if hasattr(self, key):
+            logger.debug(f'setting property: {key} to {value}')
+            setattr(self, key, value)
+        else:
+            logger.warning(f'Unsupported property: {key}')
+
     @pyqtProperty(list)
     def properties(self) -> list[str]:
         '''List of properties that affect geometry'''
@@ -149,14 +166,13 @@ class CGH(QObject):
     @pyqtProperty(dict)
     def settings(self) -> dict:
         '''Dictionary of current settings'''
-        return {f.name: getattr(self, f.name) for f in fields(self)}
+        return {f.name: self.get(f.name) for f in fields(self)}
 
     @settings.setter
     def settings(self, settings: dict) -> None:
         '''Sets current settings from dictionary'''
         for key, value in settings.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+            self.set(key, value)
 
     @pyqtProperty(int)
     def height(self) -> int:
