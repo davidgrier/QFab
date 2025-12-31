@@ -7,7 +7,6 @@ from pathlib import Path
 from QVideo.lib import (choose_camera, QCameraTree)
 from QFab.lib.QSLM import QSLM
 from QFab.lib.holograms.CGH import CGH
-from QFab.lib.QConfiguration import QConfiguration
 from QFab.lib.QSaveFile import QSaveFile
 
 
@@ -25,7 +24,6 @@ class PyFab(QMainWindow):
         self.cgh = CGH(shape=self.slm.shape)
         self._setupUI()
         self._connectSignals()
-        self.configuration = QConfiguration(self)
         self.save = QSaveFile(self)
         self.restoreSettings()
 

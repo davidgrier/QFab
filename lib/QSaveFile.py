@@ -4,6 +4,7 @@ from pyqtgraph import ImageItem
 from pyqtgraph.exporters import ImageExporter
 import pyqtgraph as pg
 from pathlib import Path
+from datetime import datetime
 import tomlkit
 
 
@@ -15,7 +16,30 @@ class QSaveFile(QObject):
 
     def __init__(self, parent: QMainWindow) -> None:
         super().__init__(parent)
-        self.configuration = parent.configuration
+        self._makeDirs(parent)
+
+    def _makeDirs(self, parent: QMainWindow) -> None:
+        self.classname = parent.__class__.__name__.lower()
+        self.datadir = Path.home() / 'data'
+        self.configdir = Path.home() / f'.{self.classname}'
+        self.datadir.mkdir(parents=True, exist_ok=True)
+        self.configdir.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def timestamp() -> str:
+        return datetime.now().strftime('%Y%m%d_%H%M%S')
+
+    def filename(self,
+                 prefix: str | None = None,
+                 suffix: str | None = None) -> str:
+        prefix = prefix or self.classname
+        path = self.datadir / f'{prefix}_{self.timestamp()}{suffix}'
+        return str(path)
+
+    def configname(self, qobj: QObject) -> str:
+        classname = qobj.__class__.__name__
+        path = self.configdir / f'{classname}.toml'
+        return str(path)
 
     def image(self,
               image: ImageItem,
@@ -39,7 +63,7 @@ class QSaveFile(QObject):
             Filename saved to
         '''
         config = self.configuration
-        filename = filename or config.filename(prefix=prefix, suffix='.png')
+        filename = filename or self.filename(prefix=prefix, suffix='.png')
         exporter = ImageExporter(image)
         exporter.export(filename)
         return filename
@@ -61,7 +85,7 @@ class QSaveFile(QObject):
         filename : str
             Filename saved to, or empty string if cancelled
         '''
-        default = self.configuration.filename(prefix=prefix, suffix='.png')
+        default = self.filename(prefix=prefix, suffix='.png')
         filename, _ = pg.FileDialog.getSaveFileName(
             self.parent(), 'Save As', default, self.formats)
         if filename:
@@ -72,13 +96,13 @@ class QSaveFile(QObject):
     def toToml(self, qobj: QObject) -> str:
         doc = tomlkit.document()
         doc['settings'] = qobj.settings
-        filename = self.configuration.configname(qobj)
+        filename = self.configname(qobj)
         with open(filename, 'w') as f:
             f.write(tomlkit.dumps(doc))
         return filename
 
     def fromToml(self, qobj: QObject) -> str:
-        filename = self.configuration.configname(qobj)
+        filename = self.configname(qobj)
         if Path(filename).exists():
             with open(filename, 'r', encoding='utf-8') as f:
                 doc = tomlkit.load(f)
