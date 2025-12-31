@@ -23,7 +23,7 @@
       <widget class="QFabScreen" name="screen"/>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="videoTab">
         <attribute name="title">
