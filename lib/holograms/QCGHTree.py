@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 
-class CGHTree(ParameterTree):
+class QCGHTree(ParameterTree):
 
     def __init__(self, *args,
                  cgh: CGH | None = None,

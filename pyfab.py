@@ -22,7 +22,7 @@ class PyFab(QMainWindow):
         self.cameraTree = cameraTree
         self.source = self.cameraTree.source
         self.slm = QSLM()
-        self.cgh = CGH(self.slm.shape)
+        self.cgh = CGH(shape=self.slm.shape)
         self._setupUI()
         self._connectSignals()
         self.configuration = QConfiguration(self)

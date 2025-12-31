@@ -65,7 +65,7 @@
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <widget class="CGHTree" name="cghTree">
+          <widget class="QCGHTree" name="cghTree">
            <attribute name="headerVisible">
             <bool>false</bool>
            </attribute>
@@ -237,11 +237,6 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>CGHTree</class>
-   <extends>QTreeWidget</extends>
-   <header>QFab.lib.holograms.CGHTree</header>
-  </customwidget>
-  <customwidget>
    <class>QTrapWidget</class>
    <extends>QFrame</extends>
    <header>QFab.lib.traps.QTrapWidget</header>
@@ -251,6 +246,11 @@
    <class>QTrapMenu</class>
    <extends>QMenu</extends>
    <header>QFab.lib.traps.QTrapMenu</header>
+  </customwidget>
+  <customwidget>
+   <class>QCGHTree</class>
+   <extends>QTreeWidget</extends>
+   <header>QFab.lib.holograms.QCGHTree</header>
   </customwidget>
  </customwidgets>
  <resources/>

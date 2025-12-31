@@ -44,7 +44,7 @@ class QSLM(GraphicsLayoutWidget):
         self.view = self.addViewBox(enableMenu=False,
                                     enableMouse=False)
         self.view.setDefaultPadding(0)
-        self.image = ImageItem()  # axisOrder='row-major')
+        self.image = ImageItem(axisOrder='row-major')
         self.view.addItem(self.image)
 
         screens = QGuiApplication.screens()
