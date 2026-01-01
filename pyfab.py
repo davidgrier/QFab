@@ -22,14 +22,17 @@ class PyFab(QMainWindow):
         self.source = self.cameraTree.source
         self.slm = QSLM()
         self.cgh = CGH(shape=self.slm.shape)
-        self._setupUI()
+        self._setupUi()
         self._connectSignals()
+        self._addFilters()
         self.save = QSaveFile(self)
         self.restoreSettings()
 
-    def _setupUI(self) -> None:
+    def _setupUi(self) -> None:
         uic.loadUi(self.UIFILE, self)
         self.videoTab.layout().addWidget(self.cameraTree)
+        self.videoTab.layout().addWidget(self.screen.filter)
+        self.screen.filter.setVisible(True)
         self.screen.framerate = 30
         self.screen.source = self.source
         self.dvr.source = self.source
@@ -49,6 +52,10 @@ class PyFab(QMainWindow):
         self.cgh.hologramReady.connect(self.slm.setData)
         self.cgh.recalculate.connect(self.screen.overlay.recalculate)
         self.screen.status.connect(self.setStatus)
+
+    def _addFilters(self) -> None:
+        for f in 'QRGBFilter QBlurFilter QSampleHold QEdgeFilter'.split():
+            self.screen.filter.registerByName(f)
 
     @pyqtSlot(bool)
     def dvrPlayback(self, playback: bool) -> None:
