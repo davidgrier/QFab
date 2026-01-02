@@ -60,8 +60,10 @@ class QTrap(QObject):
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._registerProperties()
-        self.origin = r or (0., 0., 0.)
-        self.r = self.origin
+        self._r = QVector3D(0., 0., 0.)
+        if r is not None:
+            self.r = r
+        self.origin = self.r
         self.amplitude = amplitude or 1.
         self.phase = phase or np.random.uniform(0., 2.*np.pi)
         self._needsField = True
