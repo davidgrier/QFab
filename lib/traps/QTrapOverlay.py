@@ -109,6 +109,7 @@ class QTrapOverlay(ScatterPlotItem):
                              (('left', 'alt|shift'), 'breakGroup'))
 
     def __init__(self, *args,
+                 size: int = 20,
                  parent: QtCore.QObject | None = None,
                  descriptions: Descriptions = default,
                  **kwargs) -> None:
@@ -126,7 +127,7 @@ class QTrapOverlay(ScatterPlotItem):
         *args, **kwargs
             Forwarded to ``ScatterPlotItem``.
         '''
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, size=size, **kwargs)
         self._setupUi()
         self._traps: list[QTrap] = []
         self._selected: QTrap | None = None
