@@ -1,4 +1,4 @@
-from QFab.lib.traps import QTrap
+from QFab.lib.traps.QTrap import QTrap
 
 
 class QTweezer(QTrap):
@@ -9,9 +9,6 @@ class QTweezer(QTrap):
     --------
     QTrap
     '''
-
-    def needsStructure(self) -> bool:
-        return False
 
 
 if __name__ == '__main__':

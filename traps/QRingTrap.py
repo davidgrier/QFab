@@ -1,5 +1,7 @@
 from QFab.lib.traps import QTrap
 from pyqtgraph.Qt.QtCore import pyqtProperty
+import numpy as np
+from scipy.special import jv
 
 
 class QRingTrap(QTrap):
@@ -37,7 +39,6 @@ class QRingTrap(QTrap):
     @radius.setter
     def radius(self, radius: float) -> None:
         self._radius = float(radius)
-        self._needsStructure = True
         self.changed.emit()
 
     @pyqtProperty(float)
@@ -48,14 +49,7 @@ class QRingTrap(QTrap):
     @ell.setter
     def ell(self, ell: float) -> None:
         self._ell = float(ell)
-        self._needsStructure = True
         self.changed.emit()
 
-    def constructor(self) -> str:
-        return f'''\
-import numpy as np
-from scipy.special import jv
-
-trap.structure = jv({self.ell}, {self.radius} * cgh.qr) * \
-        np.exp(1.j * {self.ell} * cgh.theta) \
-'''
+    def structure(self, cgh) -> np.ndarray:
+        return jv(self.ell, self.radius * cgh.qr) * np.exp(1j * self.ell * cgh.theta)

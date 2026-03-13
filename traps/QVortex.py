@@ -1,5 +1,6 @@
 from QFab.lib.traps import QTrap
 from pyqtgraph.Qt.QtCore import pyqtProperty
+import numpy as np
 
 
 class QVortex(QTrap):
@@ -32,15 +33,10 @@ class QVortex(QTrap):
     @ell.setter
     def ell(self, ell: int) -> None:
         self._ell = int(ell)
-        self._needsStructure = True
         self.changed.emit()
 
-    def constructor(self) -> str:
-        return f'''\
-import numpy as np
-
-trap.structure = np.exp(1j * {self.ell} * cgh.theta)\
-'''
+    def structure(self, cgh) -> np.ndarray:
+        return np.exp(1j * self.ell * cgh.theta)
 
 
 if __name__ == '__main__':

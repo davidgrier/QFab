@@ -1,7 +1,6 @@
 from pyqtgraph.parametertree import (Parameter, ParameterTree)
 from pyqtgraph.Qt.QtCore import (pyqtSlot, pyqtProperty, QSignalBlocker)
 from QFab.lib.holograms.CGH import CGH
-from dataclasses import asdict
 import numpy as np
 import logging
 
@@ -38,7 +37,7 @@ class QCGHTree(ParameterTree):
             dict(name='focallength', type='float', value=200., suffix='μm'),
             dict(name='camerapitch', type='float', value=4.8, suffix='μm'),
             dict(name='slmpitch', type='float', value=8., suffix='μm'),
-            dict(name='splay', type='float', value=0.01, suffix='°')])
+            dict(name='splay', type='float', value=0.01)])
         slm = dict(name='SLM', type='group', children=[
             dict(name='xs', type='float', value=256., suffix='phixels'),
             dict(name='ys', type='float', value=256., suffix='phixels'),
@@ -101,9 +100,12 @@ class QCGHTree(ParameterTree):
         if self.cgh is None:
             return
         for param, change, value in changes:
-            if (change == 'value'):
+            if change == 'value':
                 key = param.name()
-                self.cgh.set(key, value)
+                if hasattr(self.cgh, key):
+                    setattr(self.cgh, key, value)
+                else:
+                    logger.warning(f'CGH has no attribute: {key}')
 
     def updateTree(self) -> None:
         if self.cgh is not None:
@@ -122,4 +124,4 @@ class QCGHTree(ParameterTree):
 
 
 if __name__ == '__main__':
-    CGHTree.example()
+    QCGHTree.example()

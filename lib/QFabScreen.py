@@ -1,54 +1,94 @@
-from QVideo.lib import (QVideoScreen, QCamera)
+from QVideo.lib import QVideoScreen, QCamera
 from QFab.lib.traps.QTrapOverlay import QTrapOverlay
-from pyqtgraph.Qt.QtCore import (pyqtSlot, QEvent)
-import numpy as np
+from pyqtgraph.Qt import QtCore, QtGui
 import logging
 
 
-logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class QFabScreen(QVideoScreen):
 
-    '''Video screen with overlay for interacting with traps
+    '''Video screen with overlay for interacting with optical traps.
 
-    Inherits
-    --------
-    QVideo.QVideoScreen
+    Extends QVideoScreen by adding a QTrapOverlay that intercepts mouse
+    and wheel events and translates them into trap operations.
+
+    Parameters
+    ----------
+    *args :
+        Positional arguments forwarded to QVideoScreen.
+    **kwargs :
+        Keyword arguments forwarded to QVideoScreen.
+
+    Attributes
+    ----------
+    overlay : QTrapOverlay
+        Graphical overlay for creating, moving, and grouping traps.
+
+    Signals
+    -------
+    status : str
+        Emitted with a human-readable message after user actions such
+        as clearing all traps.
     '''
 
     def _setupUi(self) -> None:
+        '''Add the trap overlay to the inherited video view.'''
         super()._setupUi()
-        self.overlay = QTrapOverlay(self)
+        self.overlay = QTrapOverlay()
         self.view.addItem(self.overlay)
 
-    @pyqtSlot(np.ndarray)
-    def setImage(self, image: QCamera.Image) -> None:
-        super().setImage(image)
-        self.overlay.redraw()
+    def _overlayPos(self, event: QtGui.QInputEvent) -> QtCore.QPointF:
+        '''Map a widget event position to overlay item coordinates.
 
-    @pyqtSlot()
+        Parameters
+        ----------
+        event : QtGui.QInputEvent
+            A mouse or wheel event carrying a ``position()`` in widget
+            (viewport) coordinates. The position is truncated to integer
+            pixels by ``mapToScene``, which does not accept ``QPointF``.
+
+        Returns
+        -------
+        QtCore.QPointF
+            The corresponding position in the overlay item's local
+            coordinate system.
+        '''
+        return self.overlay.mapFromScene(
+            self.mapToScene(event.position().toPoint()))
+
+    @QtCore.pyqtSlot()
     def clearTraps(self) -> None:
+        '''Remove all traps from the overlay and emit a status message.'''
         self.overlay.clearTraps()
         self.status.emit('Cleared all traps')
 
-    def mousePressEvent(self, event: QEvent) -> None:
-        super().mousePressEvent(event)
-        self.overlay.mousePress(event)
+    # Pass mouse events to the trap overlay
 
-    def mouseMoveEvent(self, event: QEvent) -> None:
-        super().mouseMoveEvent(event)
-        self.overlay.mouseMove(event)
+    def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
+        if self.overlay.mousePress(event, self._overlayPos(event)):
+            event.accept()
+        else:
+            super().mousePressEvent(event)
 
-    def mouseReleaseEvent(self, event: QEvent) -> None:
-        super().mouseReleaseEvent(event)
-        self.overlay.mouseRelease(event)
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
+        if self.overlay.mouseMove(event, self._overlayPos(event)):
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
 
-    def wheelEvent(self, event: QEvent) -> None:
-        super().wheelEvent(event)
-        self.overlay.wheel(event)
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
+        if self.overlay.mouseRelease(event):
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
+
+    def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
+        if self.overlay.wheel(event, self._overlayPos(event)):
+            event.accept()
+        else:
+            super().wheelEvent(event)
 
 
 if __name__ == '__main__':
