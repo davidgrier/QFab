@@ -84,7 +84,8 @@ class TestTrapRequested(unittest.TestCase):
     def test_unknown_trap_does_not_emit(self):
         menu = QTrapMenu()
         spy = QtTest.QSignalSpy(menu.trapRequested)
-        menu._onTrapSelected('NoSuchTrap')
+        with self.assertLogs('QFab.lib.traps.QTrapMenu', level='WARNING'):
+            menu._onTrapSelected('NoSuchTrap')
         self.assertEqual(len(spy), 0)
 
 
