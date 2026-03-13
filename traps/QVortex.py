@@ -1,5 +1,6 @@
 from QFab.lib.traps.QTrap import QTrap
 from QFab.lib.letterSymbol import letterSymbol
+from pyqtgraph.Qt import QtCore
 import numpy as np
 
 
@@ -23,6 +24,8 @@ class QVortex(QTrap):
         Topological charge of the optical vortex.
     '''
 
+    structureChanged = QtCore.pyqtSignal()
+
     def __init__(self, *args, ell: int = 0, **kwargs) -> None:
         self._ell = int(ell)
         super().__init__(*args, **kwargs)
@@ -42,7 +45,7 @@ class QVortex(QTrap):
     @ell.setter
     def ell(self, ell: int) -> None:
         self._ell = int(ell)
-        self.changed.emit()
+        self.structureChanged.emit()
 
     def structure(self, cgh) -> np.ndarray:
         return np.exp(1j * self.ell * cgh.theta)

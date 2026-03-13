@@ -94,6 +94,8 @@ class PyFab(QtWidgets.QMainWindow):
         '''Connect each new leaf trap's changed signal and schedule a compute.'''
         for leaf in trap.leaves():
             leaf.changed.connect(self._scheduleCompute)
+            if hasattr(leaf, 'structureChanged'):
+                leaf.structureChanged.connect(self._scheduleCompute)
         self._scheduleCompute()
 
     @QtCore.pyqtSlot(QTrap)

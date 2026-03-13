@@ -1,5 +1,6 @@
 from QFab.lib.traps.QTrap import QTrap
 from QFab.lib.letterSymbol import letterSymbol
+from pyqtgraph.Qt import QtCore
 import numpy as np
 from scipy.special import jv
 
@@ -28,6 +29,8 @@ class QRingTrap(QTrap):
         Topological charge of the ring trap.
     '''
 
+    structureChanged = QtCore.pyqtSignal()
+
     def __init__(self, *args,
                  radius: float = 10.,
                  ell: float = 0.,
@@ -52,7 +55,7 @@ class QRingTrap(QTrap):
     @radius.setter
     def radius(self, radius: float) -> None:
         self._radius = float(radius)
-        self.changed.emit()
+        self.structureChanged.emit()
 
     @property
     def ell(self) -> float:
@@ -62,7 +65,7 @@ class QRingTrap(QTrap):
     @ell.setter
     def ell(self, ell: float) -> None:
         self._ell = float(ell)
-        self.changed.emit()
+        self.structureChanged.emit()
 
     def structure(self, cgh) -> np.ndarray:
         return jv(self.ell, self.radius * cgh.qr) * np.exp(1j * self.ell * cgh.theta)

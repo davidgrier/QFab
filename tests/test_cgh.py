@@ -411,6 +411,33 @@ class TestFieldOf(unittest.TestCase):
         second = self.cgh.fieldOf(trap)
         self.assertIsNot(first, second)
 
+    def test_changed_does_not_invalidate_structure_cache(self):
+        from QFab.traps.QVortex import QVortex
+        trap = QVortex(r=(0., 0., 0.), phase=0., ell=1)
+        self.cgh.fieldOf(trap)
+        structure_before = self.cgh._structure_cache[trap]
+        trap.x = 5.  # emits changed, not structureChanged
+        self.assertNotIn(trap, self.cgh._field_cache)
+        self.assertIn(trap, self.cgh._structure_cache)
+        self.assertIs(self.cgh._structure_cache[trap], structure_before)
+
+    def test_structure_changed_invalidates_only_structure_cache(self):
+        from QFab.traps.QVortex import QVortex
+        trap = QVortex(r=(0., 0., 0.), phase=0., ell=1)
+        self.cgh.fieldOf(trap)
+        self.assertIn(trap, self.cgh._field_cache)
+        self.assertIn(trap, self.cgh._structure_cache)
+        trap.ell = 2  # emits structureChanged
+        self.assertIn(trap, self.cgh._field_cache)
+        self.assertNotIn(trap, self.cgh._structure_cache)
+
+    def test_field_of_connects_structure_changed(self):
+        from QFab.traps.QVortex import QVortex
+        trap = QVortex(r=(0., 0., 0.), phase=0., ell=0)
+        self.cgh.fieldOf(trap)
+        trap.ell = 3
+        self.assertNotIn(trap, self.cgh._structure_cache)
+
 
 class TestCompute(unittest.TestCase):
 

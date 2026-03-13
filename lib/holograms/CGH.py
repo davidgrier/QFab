@@ -224,21 +224,37 @@ class CGH(QtCore.QObject):
         self._field_cache.clear()
         self._structure_cache.clear()
 
-    def _invalidateTrap(self, trap_ref: weakref.ref) -> None:
-        '''Discard cached field and structure for one trap.
+    def _invalidateField(self, trap_ref: weakref.ref) -> None:
+        '''Discard the cached displacement field for one trap.
 
-        Connected to ``trap.changed`` for each trap on its first
-        appearance in ``fieldOf``, so that position, amplitude, or
+        Connected to ``trap.changed`` so that position, amplitude, or
         phase changes are reflected in the next computation.
 
         Parameters
         ----------
         trap_ref : weakref.ref
-            Weak reference to the trap whose cache entries should be removed.
+            Weak reference to the trap whose field cache entry should be
+            removed.
         '''
         trap = trap_ref()
         if trap is not None:
             self._field_cache.pop(trap, None)
+
+    def _invalidateStructure(self, trap_ref: weakref.ref) -> None:
+        '''Discard the cached structure field for one trap.
+
+        Connected to ``trap.structureChanged`` so that changes to
+        structural parameters (e.g. topological charge) are reflected
+        in the next computation without discarding the displacement field.
+
+        Parameters
+        ----------
+        trap_ref : weakref.ref
+            Weak reference to the trap whose structure cache entry should
+            be removed.
+        '''
+        trap = trap_ref()
+        if trap is not None:
             self._structure_cache.pop(trap, None)
 
     @property
@@ -435,10 +451,10 @@ class CGH(QtCore.QObject):
     def fieldOf(self, trap: QTrap) -> np.ndarray:
         '''Compute the complex field contribution of a single trap.
 
-        Results are cached by trap identity and recomputed only when the
-        trap emits ``changed`` or CGH calibration is updated. On first
-        encounter, ``trap.changed`` is connected to invalidate the cache
-        entry for that trap.
+        The displacement field and structure field are cached separately.
+        ``trap.changed`` invalidates the displacement field cache;
+        ``trap.structureChanged`` (if present) invalidates only the
+        structure cache, leaving the displacement field intact.
 
         Parameters
         ----------
@@ -452,7 +468,10 @@ class CGH(QtCore.QObject):
         '''
         if trap not in self._connected_traps:
             trap_ref = weakref.ref(trap)
-            trap.changed.connect(partial(self._invalidateTrap, trap_ref))
+            trap.changed.connect(partial(self._invalidateField, trap_ref))
+            if hasattr(trap, 'structureChanged'):
+                trap.structureChanged.connect(
+                    partial(self._invalidateStructure, trap_ref))
             self._connected_traps.add(trap)
         if trap not in self._field_cache:
             amplitude = trap.amplitude * np.exp(1j*trap.phase)
