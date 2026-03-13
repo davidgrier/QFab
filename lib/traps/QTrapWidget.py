@@ -30,27 +30,14 @@ class QTrapPropertyEdit(QtWidgets.QLineEdit):
     _field_width: int | None = None
 
     @classmethod
-    def _invalidateFieldWidth(cls, font: QtGui.QFont = None) -> None:
-        '''Clear the cached field width.
-
-        Called when the application font changes.
-        '''
-        cls._field_width = None
-
-    @classmethod
     def fieldWidth(cls) -> int:
         '''Return the pixel width needed to display a typical value.
 
-        Computed from the application font metrics, cached per concrete
-        class (not shared across subclasses), and invalidated automatically
-        when the application font changes.
+        Computed from the application font metrics and cached per
+        concrete class (not shared across subclasses).
         '''
         if cls.__dict__.get('_field_width') is None:
-            app = QtWidgets.QApplication.instance()
-            if '_signal_connected' not in cls.__dict__:
-                app.fontChanged.connect(cls._invalidateFieldWidth)
-                cls._signal_connected = True
-            fm = QtGui.QFontMetrics(app.font())
+            fm = QtGui.QFontMetrics(QtWidgets.QApplication.instance().font())
             cls._field_width = fm.boundingRect('12345.6').width()
         return cls._field_width
 

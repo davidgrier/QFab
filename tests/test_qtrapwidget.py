@@ -22,9 +22,8 @@ class TestQTrapPropertyEditFieldWidth(unittest.TestCase):
     def test_cached_per_class(self):
         class SubEdit(QTrapPropertyEdit):
             pass
-        base_width = QTrapPropertyEdit.fieldWidth()
-        sub_width = SubEdit.fieldWidth()
-        # both are positive ints; crucially they are stored separately
+        QTrapPropertyEdit.fieldWidth()
+        SubEdit.fieldWidth()
         self.assertIn('_field_width', QTrapPropertyEdit.__dict__)
         self.assertIn('_field_width', SubEdit.__dict__)
 
@@ -123,6 +122,14 @@ class TestQTrapPropertyEditValue(unittest.TestCase):
         self.assertAlmostEqual(self.edit.value, 4.25, places=2)
 
 
+class _TooltipTrap(QTrap):
+    '''QTrap subclass that registers one property with tooltip=True.'''
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.registerProperty('x', tooltip=True)
+
+
 class TestQTrapPropertyWidget(unittest.TestCase):
 
     def setUp(self):
@@ -161,6 +168,11 @@ class TestQTrapPropertyWidget(unittest.TestCase):
             self.widget.cleanup()
         except Exception as e:
             self.fail(f'Second cleanup raised unexpectedly: {e}')
+
+    def test_tooltip_set_when_property_has_tooltip(self):
+        trap = _TooltipTrap(phase=0.)
+        widget = QTrapPropertyWidget(trap)
+        self.assertEqual(widget.wid['x'].toolTip(), 'x')
 
 
 class TestQTrapWidget(unittest.TestCase):
