@@ -74,7 +74,7 @@ class CGH(QtCore.QObject):
     hologramReady = QtCore.pyqtSignal(np.ndarray)
     recalculate = QtCore.pyqtSignal()
 
-    dtype = np.complex128
+    dtype = np.complex64
 
     _fields = ('shape', 'wavelength', 'n_m', 'magnification', 'focallength',
                'camerapitch', 'slmpitch', 'scale', 'splay',
@@ -206,12 +206,12 @@ class CGH(QtCore.QObject):
         alpha = np.cos(np.radians(self.phis))
         x = alpha*(np.arange(self.width) - self.xs)
         y = np.arange(self.height) - self.ys
-        self.iqx = 1j * self.qprp*x
-        self.iqy = -1j * self.qprp*y
-        self.iqxz = 1j * self.qpar*x*x
-        self.iqyz = 1j * self.qpar*y*y
-        self.theta = np.arctan2.outer(y, x)
-        self.qr = np.hypot.outer(self.qprp*y, self.qprp*x)
+        self.iqx = (1j * self.qprp * x).astype(self.dtype)
+        self.iqy = (-1j * self.qprp * y).astype(self.dtype)
+        self.iqxz = (1j * self.qpar * x * x).astype(self.dtype)
+        self.iqyz = (1j * self.qpar * y * y).astype(self.dtype)
+        self.theta = np.arctan2.outer(y, x).astype(np.float32)
+        self.qr = np.hypot.outer(self.qprp * y, self.qprp * x).astype(np.float32)
         self._clearCache()
         self.recalculate.emit()
 
@@ -474,11 +474,12 @@ class CGH(QtCore.QObject):
                     partial(self._invalidateStructure, trap_ref))
             self._connected_traps.add(trap)
         if trap not in self._field_cache:
-            amplitude = trap.amplitude * np.exp(1j*trap.phase)
+            amplitude = np.dtype(self.dtype).type(trap.amplitude * np.exp(1j * trap.phase))
             r = self.transform(QtGui.QVector3D(*trap.r))
-            ex = np.exp(self.iqx * r.x() + self.iqxz * r.z())
-            ey = np.exp(self.iqy * r.y() + self.iqyz * r.z())
-            self._field_cache[trap] = np.outer(amplitude*ey, ex)
+            rx, ry, rz = np.float32(r.x()), np.float32(r.y()), np.float32(r.z())
+            ex = np.exp(self.iqx * rx + self.iqxz * rz)
+            ey = np.exp(self.iqy * ry + self.iqyz * rz)
+            self._field_cache[trap] = np.outer(amplitude * ey, ex)
         if trap not in self._structure_cache:
             if hasattr(trap, 'structure'):
                 self._structure_cache[trap] = trap.structure(self)

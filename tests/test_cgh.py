@@ -160,7 +160,7 @@ class TestUpdateGeometry(unittest.TestCase):
         self.assertEqual(self.cgh.field.shape, self.cgh.shape)
 
     def test_field_dtype(self):
-        self.assertEqual(self.cgh.field.dtype, np.complex128)
+        self.assertEqual(self.cgh.field.dtype, np.complex64)
 
     def test_field_zeros(self):
         self.cgh.updateGeometry()
@@ -481,7 +481,7 @@ class TestBless(unittest.TestCase):
     def test_casts_to_dtype(self):
         field = np.ones((4, 4), dtype=np.float32)
         result = self.cgh.bless(field)
-        self.assertEqual(result.dtype, np.complex128)
+        self.assertEqual(result.dtype, np.complex64)
 
     def test_preserves_values(self):
         field = np.ones((4, 4), dtype=np.float64)
@@ -492,23 +492,23 @@ class TestBless(unittest.TestCase):
 class TestDtype(unittest.TestCase):
 
     def test_default_dtype(self):
-        self.assertEqual(CGH.dtype, np.complex128)
+        self.assertEqual(CGH.dtype, np.complex64)
 
     def test_field_uses_dtype(self):
-        self.assertEqual(CGH().field.dtype, np.complex128)
+        self.assertEqual(CGH().field.dtype, np.complex64)
 
     def test_subclass_dtype_override(self):
         class SubCGH(CGH):
-            dtype = np.complex64
+            dtype = np.complex128
         cgh = SubCGH()
-        self.assertEqual(cgh.field.dtype, np.complex64)
+        self.assertEqual(cgh.field.dtype, np.complex128)
 
     def test_subclass_bless_uses_dtype(self):
         class SubCGH(CGH):
-            dtype = np.complex64
+            dtype = np.complex128
         cgh = SubCGH()
         result = cgh.bless(np.ones((4, 4), dtype=np.float64))
-        self.assertEqual(result.dtype, np.complex64)
+        self.assertEqual(result.dtype, np.complex128)
 
 
 if __name__ == '__main__':
