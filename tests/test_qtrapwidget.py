@@ -210,7 +210,8 @@ class TestQTrapWidget(unittest.TestCase):
 
     def test_register_duplicate_does_not_add_row(self):
         self.widget.registerTrap(self.trap)
-        self.widget.registerTrap(self.trap)
+        with self.assertLogs('QFab.lib.traps.QTrapWidget', level='WARNING'):
+            self.widget.registerTrap(self.trap)
         self.assertEqual(self.widget.count(), 2)
 
     def test_unregister_removes_from_dict(self):
@@ -233,7 +234,8 @@ class TestQTrapWidget(unittest.TestCase):
 
     def test_unregister_unknown_trap_does_not_raise(self):
         try:
-            self.widget.unregisterTrap(self.trap)
+            with self.assertLogs('QFab.lib.traps.QTrapWidget', level='WARNING'):
+                self.widget.unregisterTrap(self.trap)
         except Exception as e:
             self.fail(f'unregisterTrap raised unexpectedly: {e}')
 
