@@ -6,6 +6,7 @@ from QFab.lib.QSLM import QSLM
 from QFab.lib.holograms.CGH import CGH
 from QFab.lib.holograms.QCGHTree import QCGHTree  # noqa: F401 — needed for uic
 from QFab.lib.traps.QTrap import QTrap
+from QFab.lib.traps.QTrapMenu import QTrapMenu  # noqa: F401 — needed for uic
 from QFab.lib.QSaveFile import QSaveFile
 import logging
 
@@ -64,6 +65,7 @@ class PyFab(QtWidgets.QMainWindow):
         self.screen.source = self.source
         self.dvr.source = self.source
         self.cghTree.cgh = self.cgh
+        self.menuAddTrap.pos = QtCore.QPointF(self.cgh.xc, self.cgh.yc)
         self.helpBrowser.setSearchPaths([str(self.HELPDIR)])
         self.helpBrowser.setSource(QtCore.QUrl('index.html'))
 
@@ -82,7 +84,7 @@ class PyFab(QtWidgets.QMainWindow):
         overlay.trapAdded.connect(self._onTrapAdded)
         overlay.trapRemoved.connect(self._onTrapRemoved)
         self.cgh.recalculate.connect(self._scheduleCompute)
-        # TODO: connect menuAddTrap once QTrapMenu integration is finalised.
+        self.menuAddTrap.trapRequested.connect(self._onTrapRequested)
 
     def _addFilters(self) -> None:
         '''Register display filters with the video screen.'''
@@ -102,6 +104,12 @@ class PyFab(QtWidgets.QMainWindow):
     def _onTrapRemoved(self, trap: QTrap) -> None:
         '''Schedule a hologram recompute after a trap is removed.'''
         self._scheduleCompute()
+
+    @QtCore.pyqtSlot(QtCore.QPointF, QTrap)
+    def _onTrapRequested(self, pos: QtCore.QPointF, trap: QTrap) -> None:
+        '''Add a trap from the menu at the requested position.'''
+        trap.r = (pos.x(), pos.y(), 0.)
+        self.screen.overlay.addTrap(trap)
 
     @QtCore.pyqtSlot()
     def _scheduleCompute(self) -> None:
