@@ -161,6 +161,31 @@ class PyFab(QtWidgets.QMainWindow):
         self.resize(cam.width() + panel_w + self.splitter.handleWidth(),
                     cam.height() + chrome_h)
 
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        '''Schedule an aspect-ratio correction after every resize.'''
+        super().resizeEvent(event)
+        QtCore.QTimer.singleShot(0, self._constrainAspectRatio)
+
+    def _constrainAspectRatio(self) -> None:
+        '''Snap the window height so the screen matches the camera aspect ratio.
+
+        Reads the screen widget's actual width after the layout has
+        settled, computes the ideal height, and resizes the window if
+        they differ.  The correction is a no-op when the ratio is already
+        correct, so the resulting second resize event terminates the loop.
+        '''
+        cam = self.screen.sizeHint()
+        if not cam.isValid() or cam.width() == 0:
+            return
+        screen_w = self.screen.width()
+        if screen_w <= 0:
+            return
+        ideal_h = screen_w * cam.height() // cam.width()
+        chrome_h = self.height() - self.centralWidget().height()
+        desired_h = ideal_h + chrome_h
+        if self.height() != desired_h:
+            self.resize(self.width(), desired_h)
+
     @QtCore.pyqtSlot(str)
     def setStatus(self, message: str) -> None:
         '''Display a transient status message in the status bar.'''
