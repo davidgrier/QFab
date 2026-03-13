@@ -59,6 +59,7 @@ class PyFab(QtWidgets.QMainWindow):
         self.helpBrowser.setSource(QtCore.QUrl('index.html'))
         self.splitter.setStretchFactor(0, 3)  # screen gets 3 parts
         self.splitter.setStretchFactor(1, 1)  # control panel gets 1 part
+        self.centralWidget().layout().setContentsMargins(0, 0, 0, 0)
 
     def _connectSignals(self) -> None:
         '''Wire signals and slots between subsystems.'''
@@ -154,7 +155,9 @@ class PyFab(QtWidgets.QMainWindow):
             return
         panel_w = self.tabWidget.sizeHint().width()
         self.splitter.setSizes([cam.width(), panel_w])
-        chrome_h = self.menuBar().height() + self.statusBar().height()
+        # Measure chrome from actual geometry rather than estimating from
+        # widget heights (menuBar height is unreliable on macOS native menus).
+        chrome_h = self.height() - self.centralWidget().height()
         self.resize(cam.width() + panel_w + self.splitter.handleWidth(),
                     cam.height() + chrome_h)
 
