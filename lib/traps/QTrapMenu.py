@@ -84,7 +84,7 @@ def main() -> None:
 
     @QtCore.pyqtSlot(QtCore.QPointF, QTrap)
     def handler(pos: QtCore.QPointF, trap: QTrap) -> None:
-        print(f'Adding trap {trap} at position {pos}')
+        print(f'Adding trap {trap}')
 
     pg.mkQApp('QTrapMenu Example')
     demo = QtWidgets.QMainWindow()
