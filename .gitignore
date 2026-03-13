@@ -15,8 +15,9 @@ build/
 \#*\#
 .#*
 
-# Testing
+# Testing / coverage
 .coverage
+.coverage.*
 htmlcov/
 .pytest_cache/
 .tox/

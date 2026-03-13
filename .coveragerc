@@ -1,0 +1,19 @@
+[run]
+source =
+    lib
+    traps
+omit =
+    */old/*
+    */__pycache__/*
+    */.ipynb_checkpoints/*
+
+[report]
+show_missing = true
+skip_covered = false
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    @classmethod\s+def example
+
+[html]
+directory = htmlcov
