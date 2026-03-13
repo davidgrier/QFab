@@ -79,7 +79,7 @@ class QTrapMenu(QtWidgets.QMenu):
         self.trapRequested.emit(self._pos, trap)
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     import pyqtgraph as pg
 
     @QtCore.pyqtSlot(QtCore.QPointF, QTrap)
