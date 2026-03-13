@@ -19,7 +19,6 @@ class QTrapArray(QTrapGroup):
         w, h = self.shape
         grid = np.mgrid[0:w, 0:h]
         xys = self.separation * grid.reshape(len(grid), -1).T
-        offset = 2 * (self.separation,)
-        traps = [QTweezer(r=xy+offset) for xy in xys]
-        self.add(traps)
-        print(len(self))
+        offset = np.array([self.separation, self.separation, 0.])
+        traps = [QTweezer(r=np.append(xy, 0.) + offset) for xy in xys]
+        self.addTrap(traps)

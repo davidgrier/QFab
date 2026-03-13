@@ -623,12 +623,12 @@ class TestBreakGroup(unittest.TestCase):
         spy = QtTest.QSignalSpy(overlay.trapAdded)
         with patch.object(overlay, 'trapAt', return_value=t1):
             overlay.breakGroup(QtCore.QPointF(1., 1.))
-        # two trapAdded: grp (refresh with remaining member) then t1 (detached)
+        # two trapAdded: t2 promoted (dissolution) then t1 (detached)
         self.assertEqual(len(spy), 2)
-        self.assertIs(spy[0][0], grp)
+        self.assertIs(spy[0][0], t2)
         self.assertIs(spy[1][0], t1)
 
-    def test_emits_trap_removed_when_group_becomes_empty(self):
+    def test_dissolve_promotes_sole_member_to_overlay(self):
         overlay = make_overlay()
         t1 = QTrap(r=(1., 1., 0.), phase=0.)
         t2 = QTrap(r=(2., 2., 0.), phase=0.)
@@ -637,9 +637,19 @@ class TestBreakGroup(unittest.TestCase):
         overlay.addTrap(grp)
         with patch.object(overlay, 'trapAt', return_value=t1):
             overlay.breakGroup(QtCore.QPointF(1., 1.))
+        self.assertIs(t2.parent(), overlay)
+
+    def test_dissolve_emits_trap_removed_for_group(self):
+        overlay = make_overlay()
+        t1 = QTrap(r=(1., 1., 0.), phase=0.)
+        t2 = QTrap(r=(2., 2., 0.), phase=0.)
+        grp = QTrapGroup(r=(1.5, 1.5, 0.))
+        grp.addTrap([t1, t2])
+        overlay.addTrap(grp)
         spy = QtTest.QSignalSpy(overlay.trapRemoved)
-        with patch.object(overlay, 'trapAt', return_value=t2):
-            overlay.breakGroup(QtCore.QPointF(2., 2.))
+        with patch.object(overlay, 'trapAt', return_value=t1):
+            overlay.breakGroup(QtCore.QPointF(1., 1.))
+        # one trapRemoved(grp) during dissolution
         self.assertEqual(len(spy), 1)
         self.assertIs(spy[0][0], grp)
 
@@ -647,13 +657,14 @@ class TestBreakGroup(unittest.TestCase):
         overlay = make_overlay()
         t1 = QTrap(r=(1., 1., 0.), phase=0.)
         t2 = QTrap(r=(2., 2., 0.), phase=0.)
-        grp = QTrapGroup(r=(1.5, 1.5, 0.))
-        grp.addTrap([t1, t2])
+        t3 = QTrap(r=(3., 3., 0.), phase=0.)
+        grp = QTrapGroup(r=(2., 2., 0.))
+        grp.addTrap([t1, t2, t3])
         overlay.addTrap(grp)
         spy = QtTest.QSignalSpy(overlay.trapRemoved)
         with patch.object(overlay, 'trapAt', return_value=t1):
             overlay.breakGroup(QtCore.QPointF(1., 1.))
-        # one trapRemoved(grp) for the refresh cycle
+        # one trapRemoved(grp) for the refresh; group still has 2 members
         self.assertEqual(len(spy), 1)
         self.assertIs(spy[0][0], grp)
 

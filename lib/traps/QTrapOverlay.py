@@ -472,14 +472,21 @@ class QTrapOverlay(ScatterPlotItem):
                 self.trapAdded.emit(outer)
             self.trapAdded.emit(direct)
         else:
+            all_members = list(direct)
+            self.trapRemoved.emit(direct)
             direct.removeTrap(trap)
             trap.setParent(self)
-            if not list(direct) and direct.parent() is self:
-                self.trapRemoved.emit(direct)
+            remaining = [m for m in all_members if m is not trap]
+            if len(remaining) == 1:
+                sole = remaining[0]
+                direct.removeTrap(sole)
+                sole.setParent(self)
                 direct.setParent(None)
-            else:
-                self.trapRemoved.emit(direct)
+                self.trapAdded.emit(sole)
+            elif remaining:
                 self.trapAdded.emit(direct)
+            else:
+                direct.setParent(None)
             self.trapAdded.emit(trap)
         return True
 
