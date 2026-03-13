@@ -83,13 +83,14 @@ def main() -> None:
     def handler(pos: QtCore.QPointF, trap: QTrap) -> None:
         print(f'Adding trap {trap} at position {pos}')
 
-    app = pg.mkQApp('QTrapMenu Example')
+    pg.mkQApp('QTrapMenu Example')
     demo = QtWidgets.QMainWindow()
+    demo.menuBar().setNativeMenuBar(False)
     trapmenu = QTrapMenu(demo)
     trapmenu.trapRequested.connect(handler)
     demo.menuBar().addMenu(trapmenu)
     demo.show()
-    app.exec()
+    pg.exec()
 
 
 if __name__ == '__main__':
