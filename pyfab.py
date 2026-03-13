@@ -31,6 +31,7 @@ class PyFab(QtWidgets.QMainWindow):
 
     UIFILE = Path(__file__).parent / 'PyFab.ui'
     HELPDIR = Path(__file__).parent / 'help'
+    SETTINGS = ('QFab', 'PyFab')
 
     def __init__(self, cameraTree: QCameraTree,
                  *args, **kwargs) -> None:
@@ -57,9 +58,6 @@ class PyFab(QtWidgets.QMainWindow):
         self.cghTree.cgh = self.cgh
         self.helpBrowser.setSearchPaths([str(self.HELPDIR)])
         self.helpBrowser.setSource(QtCore.QUrl('index.html'))
-        self.splitter.setStretchFactor(0, 3)  # screen gets 3 parts
-        self.splitter.setStretchFactor(1, 1)  # control panel gets 1 part
-        self.centralWidget().layout().setContentsMargins(0, 0, 0, 0)
 
     def _connectSignals(self) -> None:
         '''Wire signals and slots between subsystems.'''
@@ -88,6 +86,7 @@ class PyFab(QtWidgets.QMainWindow):
             self.source.newFrame.disconnect(self.screen.setImage)
             self.dvr.newFrame.connect(self.screen.setImage)
         else:
+            self.dvr.newFrame.disconnect(self.screen.setImage)
             self.source.newFrame.connect(self.screen.setImage)
         self.cameraTree.setDisabled(playback)
 
@@ -124,15 +123,14 @@ class PyFab(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def saveSettings(self) -> None:
         '''Save window geometry and CGH calibration settings.'''
-        QtCore.QSettings('QFab', 'PyFab').setValue(
-            'geometry', self.saveGeometry())
+        QtCore.QSettings(*self.SETTINGS).setValue('geometry', self.saveGeometry())
         filename = self.save.toToml(self.cghTree)
         self.setStatus(f'Configuration saved to {filename}')
 
     @QtCore.pyqtSlot()
     def restoreSettings(self) -> None:
         '''Restore window geometry and CGH calibration settings.'''
-        geometry = QtCore.QSettings('QFab', 'PyFab').value('geometry')
+        geometry = QtCore.QSettings(*self.SETTINGS).value('geometry')
         if geometry:
             self.restoreGeometry(geometry)
         else:
@@ -141,6 +139,15 @@ class PyFab(QtWidgets.QMainWindow):
             self.setStatus(f'Configuration restored from {filename}')
         else:
             self.setStatus('Configuration file not found or invalid')
+
+    @property
+    def _chromeHeight(self) -> int:
+        '''Height of window chrome (menu bar, status bar) in pixels.
+
+        Measured from actual geometry rather than widget height reports,
+        which are unreliable on macOS with native menus.
+        '''
+        return self.height() - self.centralWidget().height()
 
     def _fitToCamera(self) -> None:
         '''Size the window so the screen shows the camera frame with no bars.
@@ -155,11 +162,8 @@ class PyFab(QtWidgets.QMainWindow):
             return
         panel_w = self.tabWidget.sizeHint().width()
         self.splitter.setSizes([cam.width(), panel_w])
-        # Measure chrome from actual geometry rather than estimating from
-        # widget heights (menuBar height is unreliable on macOS native menus).
-        chrome_h = self.height() - self.centralWidget().height()
         self.resize(cam.width() + panel_w + self.splitter.handleWidth(),
-                    cam.height() + chrome_h)
+                    cam.height() + self._chromeHeight)
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         '''Schedule an aspect-ratio correction after every resize.'''
@@ -181,8 +185,7 @@ class PyFab(QtWidgets.QMainWindow):
         if screen_w <= 0:
             return
         ideal_h = screen_w * cam.height() // cam.width()
-        chrome_h = self.height() - self.centralWidget().height()
-        desired_h = ideal_h + chrome_h
+        desired_h = ideal_h + self._chromeHeight
         if self.height() != desired_h:
             self.resize(self.width(), desired_h)
 
