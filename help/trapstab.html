@@ -18,8 +18,24 @@
     and can be edited directly by clicking on a cell.
 
     Additional columns are added automatically to control properties
-    of structured traps. These extra columns are not labeled.
-    Instead, the relevant cells have tooltips that explain their function.
+    of structured traps. The available structured trap types are:
+    <ul>
+      <li><b>Tweezer</b>: a single focused spot.</li>
+      <li><b>Vortex</b>: a Laguerre-Gaussian beam with a topological charge.</li>
+      <li><b>Ring trap</b>: an annular optical trap.</li>
+      <li><b>Trap array</b>: a rectangular grid of tweezers, with optional
+          position jitter (<b>fuzz</b>) and a mask to suppress individual
+          sites. Extra properties: <b>nx</b> (columns), <b>ny</b> (rows),
+          <b>separation</b> (spacing in pixels), <b>fuzz</b>
+          (random displacement std dev in pixels).</li>
+      <li><b>Letter array</b>: a single dot-matrix character (A–Z, a–z, 0–9)
+          rendered as tweezers on a 5&times;7 grid.
+          Extra property: <b>separation</b> (dot spacing in pixels).</li>
+      <li><b>Text array</b>: a string of letter arrays laid out side by side.
+          Extra properties: <b>text</b> (the string), <b>separation</b>
+          (dot spacing in pixels).</li>
+    </ul>
+    The extra property cells have tooltips that explain their function.
     <hr>
   </body>
 </html>
