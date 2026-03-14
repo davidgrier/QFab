@@ -195,6 +195,35 @@ class TestRemoveTrapLargerGroup(unittest.TestCase):
         self.assertEqual(len(self.overlay.points()), 0)
 
 
+class TestRemoveTrapSignalOrdering(unittest.TestCase):
+    '''trapRemoved must fire while group leaves are still attached.
+
+    QTrapWidget.unregisterTrap iterates group.leaves() to remove leaf
+    rows.  If leaves are orphaned before the signal fires, unregisterTrap
+    sees an empty iterator and leaf rows are leaked.
+    '''
+
+    def setUp(self):
+        self.overlay = make_overlay()
+        self.t1 = QTrap(r=(1., 0., 0.), phase=0.)
+        self.t2 = QTrap(r=(2., 0., 0.), phase=0.)
+        self.grp = QTrapGroup(r=(1.5, 0., 0.))
+        self.grp.addTrap([self.t1, self.t2])
+        self.overlay.addTrap(self.grp)
+
+    def test_leaves_still_attached_when_trap_removed_fires(self):
+        leaf_count_at_signal = []
+        self.overlay.trapRemoved.connect(
+            lambda g: leaf_count_at_signal.append(len(list(g.leaves()))))
+        self.overlay.removeTrap(self.t1)
+        self.assertEqual(leaf_count_at_signal, [2])
+
+    def test_leaves_orphaned_after_remove(self):
+        self.overlay.removeTrap(self.t1)
+        self.assertIsNone(self.t1.parent())
+        self.assertIsNone(self.t2.parent())
+
+
 class TestClearTraps(unittest.TestCase):
 
     def setUp(self):
