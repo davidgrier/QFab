@@ -37,12 +37,12 @@ class QSLMWidget(GraphicsLayoutWidget):
     '''
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, background='w', **kwargs)
         self._setupUi()
 
     def _setupUi(self) -> None:
         self.ci.layout.setContentsMargins(0, 0, 0, 0)
-        self.view = self.addViewBox(enableMenu=False, enableMouse=False)
+        self.view = self.addViewBox(enableMenu=False)
         self.view.setDefaultPadding(0)
         self.view.setAspectLocked(True)
         self.image = ImageItem(axisOrder='row-major')
