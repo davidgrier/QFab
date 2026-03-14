@@ -198,7 +198,7 @@ class QTrapArray(QTrapGroup):
         self.reshaped.emit()
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         '''Demonstrate creation and reshaping of a tweezer array.'''
         arr = cls(shape=(3, 3), separation=30.)
         print(arr)
@@ -208,5 +208,5 @@ class QTrapArray(QTrapGroup):
         print(f'After nx=2: {arr}')
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QTrapArray.example()

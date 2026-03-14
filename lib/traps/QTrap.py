@@ -193,10 +193,10 @@ class QTrap(QtCore.QObject):
         return {p: getattr(self, p) for p in self.properties.keys()}
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         trap = cls(r=(10, 20, 30))
         print(trap)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QTrap.example()

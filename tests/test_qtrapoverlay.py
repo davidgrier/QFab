@@ -1097,5 +1097,61 @@ class TestWheel(unittest.TestCase):
         self.assertAlmostEqual(trap.z, 9.)
 
 
+class TestReshapeSignals(unittest.TestCase):
+    '''Cover _connectGroup, _onGroupReshaping, _onGroupReshaped.'''
+
+    def setUp(self):
+        from QFab.traps.QTrapArray import QTrapArray
+        self.overlay = make_overlay()
+        self.array = QTrapArray(shape=(2, 2), separation=10.)
+        self.overlay.addTrap(self.array)
+
+    def tearDown(self):
+        self.overlay.clearTraps()
+
+    def test_array_leaves_registered_on_add(self):
+        self.assertEqual(len(self.overlay._traps), 4)
+
+    def test_reshaping_signal_connected(self):
+        # Changing nx triggers reshaping/reshaped; trap count should update.
+        self.array.nx = 3
+        self.assertEqual(len(self.overlay._traps), 6)
+
+    def test_shrink_updates_trap_count(self):
+        self.array.nx = 1
+        self.assertEqual(len(self.overlay._traps), 2)
+
+    def test_spot_count_matches_traps_after_reshape(self):
+        self.array.ny = 3
+        self.assertEqual(len(self.overlay._traps), len(self.overlay.points()))
+
+    def test_trap_removed_signal_emitted_on_reshape(self):
+        spy = QtTest.QSignalSpy(self.overlay.trapRemoved)
+        self.array.nx = 3
+        self.assertEqual(len(spy), 1)
+
+    def test_trap_added_signal_emitted_on_reshape(self):
+        spy = QtTest.QSignalSpy(self.overlay.trapAdded)
+        self.array.nx = 3
+        self.assertEqual(len(spy), 1)
+
+    def test_all_new_leaves_have_changed_connected(self):
+        self.array.nx = 3
+        spy = QtTest.QSignalSpy(self.overlay.trapAdded)
+        # Changing a trap's position should not raise — signals are connected.
+        try:
+            for t in self.array.leaves():
+                t.x = t.x + 1.
+        except Exception as e:
+            self.fail(f'Unexpected exception after reshape: {e}')
+
+    def test_old_leaves_disconnected_after_reshape(self):
+        old_leaves = list(self.array.leaves())
+        self.array.nx = 3
+        # Old leaves are no longer in _traps
+        for leaf in old_leaves:
+            self.assertNotIn(leaf, self.overlay._traps)
+
+
 if __name__ == '__main__':
     unittest.main()

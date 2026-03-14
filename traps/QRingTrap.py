@@ -71,5 +71,5 @@ class QRingTrap(QTrap):
         return jv(self.ell, self.radius * cgh.qr) * np.exp(1j * self.ell * cgh.theta)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QRingTrap.example()

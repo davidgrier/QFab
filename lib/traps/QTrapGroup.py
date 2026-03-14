@@ -123,7 +123,7 @@ class QTrapGroup(QTrap):
         return all(trap.isWithin(rect) for trap in self)
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         '''Demonstrate group construction, translation, and removal.'''
         group = cls()
         print(len(group))
@@ -138,5 +138,5 @@ class QTrapGroup(QTrap):
             print(trap)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QTrapGroup.example()

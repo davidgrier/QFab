@@ -1,7 +1,8 @@
 '''Unit tests for QFabScreen.'''
 import unittest
+import numpy as np
 from unittest.mock import MagicMock, patch
-from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
+from pyqtgraph.Qt import QtWidgets, QtCore, QtGui, QtTest
 from QFab.lib.QFabScreen import QFabScreen
 from QFab.lib.traps.QTrap import QTrap
 from QFab.lib.traps.QTrapGroup import QTrapGroup
@@ -204,6 +205,59 @@ class TestOverlayPos(unittest.TestCase):
         event = make_press_event(QtCore.QPoint(50, 50))
         pos = screen._overlayPos(event)
         self.assertIsInstance(pos, QtCore.QPointF)
+
+
+class TestSizeHints(unittest.TestCase):
+    '''Cover sizeHint, hasHeightForWidth, heightForWidth with a mock source.'''
+
+    def setUp(self):
+        self.screen = make_screen()
+        self.shape = QtCore.QSize(640, 480)
+        source = MagicMock()
+        source.source.shape = self.shape
+        self.screen.source = source
+
+    def test_size_hint_returns_camera_shape(self):
+        self.assertEqual(self.screen.sizeHint(), self.shape)
+
+    def test_has_height_for_width_true_with_source(self):
+        self.assertTrue(self.screen.hasHeightForWidth())
+
+    def test_has_height_for_width_false_without_source(self):
+        screen = make_screen()  # fresh screen with no source
+        self.assertFalse(screen.hasHeightForWidth())
+
+    def test_height_for_width_preserves_aspect_ratio(self):
+        # 640×480 → height for width=320 should be 240
+        h = self.screen.heightForWidth(320)
+        self.assertEqual(h, 240)
+
+    def test_height_for_width_without_source_delegates(self):
+        screen = make_screen()  # fresh screen with no source
+        try:
+            screen.heightForWidth(320)
+        except Exception as e:
+            self.fail(f'heightForWidth raised {e} without source')
+
+
+class TestSetImageRendered(unittest.TestCase):
+    '''Cover the rendered signal branch in setImage.'''
+
+    def setUp(self):
+        self.screen = make_screen()
+        self.image = np.zeros((480, 640, 3), dtype=np.uint8)
+
+    def test_rendered_not_emitted_when_not_ready(self):
+        spy = QtTest.QSignalSpy(self.screen.rendered)
+        self.screen._ready = False
+        self.screen.setImage(self.image)
+        self.assertEqual(len(spy), 0)
+
+    def test_rendered_emitted_when_ready(self):
+        spy = QtTest.QSignalSpy(self.screen.rendered)
+        self.screen._ready = True
+        self.screen.setImage(self.image)
+        self.assertEqual(len(spy), 1)
 
 
 if __name__ == '__main__':

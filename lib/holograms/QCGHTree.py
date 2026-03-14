@@ -204,7 +204,7 @@ class QCGHTree(ParameterTree):
                              if k in self._parameters}
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         '''Display an interactive CGH parameter tree demo.'''
         import pyqtgraph as pg
 
@@ -216,5 +216,5 @@ class QCGHTree(ParameterTree):
         pg.exec()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QCGHTree.example()

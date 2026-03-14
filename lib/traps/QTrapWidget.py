@@ -247,7 +247,7 @@ class QTrapWidget(QtWidgets.QFrame):
         return self._inner_layout.count()
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         '''Display a QTrapWidget demo with several traps.'''
         import pyqtgraph as pg
 
@@ -267,5 +267,5 @@ class QTrapWidget(QtWidgets.QFrame):
         pg.exec()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QTrapWidget.example()

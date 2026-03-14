@@ -616,7 +616,7 @@ class CGH(QtCore.QObject):
         return field.astype(self.dtype)
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         '''Demonstrate the CGH pipeline.
 
         Creates a CGH instance, computes a hologram for a single on-axis
@@ -632,5 +632,5 @@ class CGH(QtCore.QObject):
               f'dtype={hologram.dtype}')
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     CGH.example()

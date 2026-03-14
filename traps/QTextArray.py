@@ -119,7 +119,7 @@ class QTextArray(QTrapGroup):
         self.reshaped.emit()
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         '''Demonstrate creation of a text trap array.'''
         ta = cls(text='NYU', separation=30.)
         print(ta)
@@ -127,5 +127,5 @@ class QTextArray(QTrapGroup):
               f'{len(list(ta))} letter arrays')
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QTextArray.example()

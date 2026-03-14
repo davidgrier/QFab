@@ -124,7 +124,7 @@ class QSLM(GraphicsLayoutWidget):
         return self.image.image
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         '''Display a test pattern on the SLM.
 
         Opens an SLM window in fake (primary screen) mode and displays
@@ -139,5 +139,5 @@ class QSLM(GraphicsLayoutWidget):
         pg.exec()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QSLM.example()

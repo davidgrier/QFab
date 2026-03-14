@@ -730,7 +730,7 @@ class QTrapOverlay(ScatterPlotItem):
         return True
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         '''Display an interactive trap overlay demo.
 
         Opens a plot window with several individual traps and a grouped
@@ -766,5 +766,5 @@ class QTrapOverlay(ScatterPlotItem):
         pg.exec()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QTrapOverlay.example()

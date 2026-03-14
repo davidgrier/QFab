@@ -78,7 +78,7 @@ class QSLMWidget(GraphicsLayoutWidget):
             self.image.setImage(hologram, autoLevels=False)
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         '''Show the widget with a diagonal gradient test pattern.'''
         import pyqtgraph as pg
 
@@ -93,5 +93,5 @@ class QSLMWidget(GraphicsLayoutWidget):
         pg.exec()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QSLMWidget.example()

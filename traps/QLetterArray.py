@@ -168,7 +168,7 @@ class QLetterArray(QTrapArray):
         self.mask = _char_mask(char)  # triggers _repopulate via mask.setter
 
     @classmethod
-    def example(cls) -> None:
+    def example(cls) -> None:  # pragma: no cover
         '''Demonstrate creation and character change.'''
         la = cls(char='N', separation=10.)
         print(la, f'  ({len(list(la.leaves()))} dots)')
@@ -176,5 +176,5 @@ class QLetterArray(QTrapArray):
         print(la, f'  ({len(list(la.leaves()))} dots)')
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QLetterArray.example()

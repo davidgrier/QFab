@@ -51,5 +51,5 @@ class QVortex(QTrap):
         return np.exp(1j * self.ell * cgh.theta)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     QVortex.example()

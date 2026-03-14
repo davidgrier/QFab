@@ -306,5 +306,31 @@ class TestQTrapWidgetGroups(unittest.TestCase):
         self.assertAlmostEqual(leaf_widget.wid['x'].value, initial_x, places=2)
 
 
+class TestQTrapWidgetDuplicateLeaf(unittest.TestCase):
+    '''Cover the "leaf already registered" warning path in registerTrap.'''
+
+    def setUp(self):
+        self.widget = QTrapWidget()
+        self.t1 = QTrap(r=(1., 2., 3.), phase=0.)
+        self.t2 = QTrap(r=(4., 5., 6.), phase=0.)
+        self.grp = QTrapGroup(r=(2.5, 3.5, 4.5))
+        self.grp.addTrap([self.t1, self.t2])
+
+    def test_duplicate_leaf_logs_warning(self):
+        # Register t1 individually first, then register the group that contains it.
+        self.widget.registerTrap(self.t1)
+        with self.assertLogs('QFab.lib.traps.QTrapWidget', level='WARNING') as cm:
+            self.widget.registerTrap(self.grp)
+        self.assertTrue(any('Leaf already registered' in line for line in cm.output))
+
+    def test_duplicate_leaf_not_added_twice(self):
+        self.widget.registerTrap(self.t1)
+        with self.assertLogs('QFab.lib.traps.QTrapWidget', level='WARNING'):
+            self.widget.registerTrap(self.grp)
+        # t1 should appear only once in _trap_widgets
+        self.assertEqual(
+            sum(1 for k in self.widget._trap_widgets if k is self.t1), 1)
+
+
 if __name__ == '__main__':
     unittest.main()
