@@ -6,6 +6,7 @@ from QFab.lib.QFabScreen import QFabScreen
 from QFab.lib.traps.QTrap import QTrap
 from QFab.lib.traps.QTrapGroup import QTrapGroup
 from QFab.lib.traps.QTrapOverlay import QTrapOverlay
+from QVideo.lib.QVideoScreen import QVideoScreen
 
 
 app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
@@ -102,10 +103,9 @@ class TestMousePressEvent(unittest.TestCase):
 
     def test_propagates_when_overlay_ignores(self):
         event = make_press_event(self.pos)
-        base = 'QVideo.lib.QVideoScreen.mousePressEvent'
         with patch.object(self.screen.overlay, 'mousePress',
                           return_value=False):
-            with patch(base) as mock_super:
+            with patch.object(QVideoScreen, 'mousePressEvent') as mock_super:
                 self.screen.mousePressEvent(event)
                 self.assertTrue(mock_super.called)
 
@@ -132,10 +132,9 @@ class TestMouseMoveEvent(unittest.TestCase):
 
     def test_propagates_when_overlay_ignores(self):
         event = make_move_event(self.pos)
-        base = 'QVideo.lib.QVideoScreen.mouseMoveEvent'
         with patch.object(self.screen.overlay, 'mouseMove',
                           return_value=False):
-            with patch(base) as mock_super:
+            with patch.object(QVideoScreen, 'mouseMoveEvent') as mock_super:
                 self.screen.mouseMoveEvent(event)
                 self.assertTrue(mock_super.called)
 
@@ -162,10 +161,9 @@ class TestMouseReleaseEvent(unittest.TestCase):
 
     def test_propagates_when_overlay_ignores(self):
         event = make_release_event(self.pos)
-        base = 'QVideo.lib.QVideoScreen.mouseReleaseEvent'
         with patch.object(self.screen.overlay, 'mouseRelease',
                           return_value=False):
-            with patch(base) as mock_super:
+            with patch.object(QVideoScreen, 'mouseReleaseEvent') as mock_super:
                 self.screen.mouseReleaseEvent(event)
                 self.assertTrue(mock_super.called)
 
@@ -192,10 +190,9 @@ class TestWheelEvent(unittest.TestCase):
 
     def test_propagates_when_overlay_ignores(self):
         event = make_wheel_event(self.pos)
-        base = 'QVideo.lib.QVideoScreen.wheelEvent'
         with patch.object(self.screen.overlay, 'wheel',
                           return_value=False):
-            with patch(base) as mock_super:
+            with patch.object(QVideoScreen, 'wheelEvent') as mock_super:
                 self.screen.wheelEvent(event)
                 self.assertTrue(mock_super.called)
 
