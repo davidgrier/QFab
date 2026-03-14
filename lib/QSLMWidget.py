@@ -37,7 +37,8 @@ class QSLMWidget(GraphicsLayoutWidget):
     '''
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, background='w', **kwargs)
+        super().__init__(*args, **kwargs)
+        self.setBackground('w')
         self._setupUi()
 
     def _setupUi(self) -> None:
