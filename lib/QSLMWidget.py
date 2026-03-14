@@ -40,6 +40,7 @@ class QSLMWidget(GraphicsLayoutWidget):
         super().__init__(*args, **kwargs)
         self.setBackground('w')
         self._setupUi()
+        self._hologram: Hologram | None = None
 
     def _setupUi(self) -> None:
         self.ci.layout.setContentsMargins(0, 0, 0, 0)
@@ -54,17 +55,24 @@ class QSLMWidget(GraphicsLayoutWidget):
         '''Phase pattern currently shown, or ``None`` before first update.'''
         return self.image.image
 
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        if self._hologram is not None:
+            self.image.setImage(self._hologram, autoLevels=False)
+
     @QtCore.pyqtSlot(np.ndarray)
     def setData(self, hologram: Hologram) -> None:
         '''Display a phase hologram in the preview.
 
-        No-op while the widget is hidden.
+        Always caches the hologram so the display is current when the
+        widget becomes visible.  Rendering is skipped while hidden.
 
         Parameters
         ----------
         hologram : Hologram
             Phase pattern to preview, encoded as 8-bit integers.
         '''
+        self._hologram = hologram
         if self.isVisible():
             logger.debug('Updating SLM preview')
             self.image.setImage(hologram, autoLevels=False)
