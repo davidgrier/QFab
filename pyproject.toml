@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "QFab"
+version = "0.1.0"
+description = "Holographic optical trapping instrument control"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pyqtgraph>=0.13",
+    "tomlkit>=0.11",
+    "PyQt5>=5.15",
+]
+
+[project.scripts]
+pyfab = "QFab.pyfab:main"
+
+[tool.setuptools.packages.find]
+where = [".."]
+include = ["QFab*"]
+
+[tool.setuptools.package-data]
+QFab = ["PyFab.ui", "help/**/*"]

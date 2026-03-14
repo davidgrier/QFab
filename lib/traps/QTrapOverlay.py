@@ -249,12 +249,15 @@ class QTrapOverlay(ScatterPlotItem):
             return self.removeTrap(pts[0].data())
         group = self.groupOf(trap)
         self.trapRemoved.emit(group)
-        for t in list(group):
-            t.changed.disconnect(self._onTrapChanged)
-            if isinstance(t.parent(), QTrapGroup):
-                t.parent().removeTrap(t)
-            self._traps.remove(t)
+        for t in list(group.leaves()):
+            try:
+                t.changed.disconnect(self._onTrapChanged)
+            except (TypeError, RuntimeError):
+                pass
+            if t in self._traps:
+                self._traps.remove(t)
             t._index = None
+            t.setParent(None)
         group.setParent(None)
         self._rebuildSpots()
         return True

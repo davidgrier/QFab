@@ -307,5 +307,163 @@ class TestSetTrapProperty(unittest.TestCase):
         self.assertAlmostEqual(arr.separation, 30.)
 
 
+class TestFuzz(unittest.TestCase):
+
+    def test_default_fuzz_is_zero(self):
+        arr = QTrapArray()
+        self.assertEqual(arr.fuzz, 0.)
+
+    def test_custom_fuzz(self):
+        arr = QTrapArray(fuzz=5.)
+        self.assertEqual(arr.fuzz, 5.)
+
+    def test_fuzz_minimum_is_zero(self):
+        arr = QTrapArray(fuzz=-3.)
+        self.assertEqual(arr.fuzz, 0.)
+
+    def test_fuzz_is_registered(self):
+        arr = QTrapArray()
+        self.assertIn('fuzz', arr.properties)
+
+    def test_fuzz_decimals_one(self):
+        arr = QTrapArray()
+        self.assertEqual(arr.properties['fuzz']['decimals'], 1)
+
+    def test_fuzz_zero_gives_exact_positions(self):
+        sep = 20.
+        arr = QTrapArray(shape=(3, 3), separation=sep, fuzz=0.)
+        positions = np.array([t.r[:2] for t in arr.leaves()])
+        xs = sep * (np.arange(3) - 1.)
+        ys = sep * (np.arange(3) - 1.)
+        grid = np.array([(x, y) for x in xs for y in ys])
+        np.testing.assert_array_almost_equal(np.sort(positions, axis=0),
+                                             np.sort(grid, axis=0), decimal=10)
+
+    def test_fuzz_nonzero_displaces_traps(self):
+        # With 25 traps and fuzz=10, all landing exactly on grid is impossible.
+        arr = QTrapArray(shape=(5, 5), separation=50., fuzz=10.)
+        positions = np.array([t.r[:2] for t in arr.leaves()])
+        xs = 50. * (np.arange(5) - 2.)
+        ys = 50. * (np.arange(5) - 2.)
+        grid = np.array([(x, y) for x in xs for y in ys])
+        self.assertFalse(np.allclose(positions, grid))
+
+    def test_fuzz_setter_updates_fuzz(self):
+        arr = QTrapArray()
+        arr.fuzz = 7.
+        self.assertAlmostEqual(arr.fuzz, 7.)
+
+    def test_fuzz_setter_triggers_repopulate(self):
+        arr = QTrapArray(shape=(2, 2))
+        spy = QtTest.QSignalSpy(arr.reshaped)
+        arr.fuzz = 5.
+        self.assertEqual(len(spy), 1)
+
+    def test_fuzz_preserved_after_nx_change(self):
+        arr = QTrapArray(shape=(2, 2), fuzz=3.)
+        arr.nx = 3
+        self.assertAlmostEqual(arr.fuzz, 3.)
+
+    def test_fuzz_preserved_after_mask_change(self):
+        arr = QTrapArray(shape=(2, 2), fuzz=3.)
+        arr.mask = np.eye(2, dtype=bool)
+        self.assertAlmostEqual(arr.fuzz, 3.)
+
+    def test_fuzz_preserves_trap_count(self):
+        arr = QTrapArray(shape=(3, 3), fuzz=5.)
+        self.assertEqual(len(list(arr.leaves())), 9)
+
+    def test_fuzz_z_unchanged(self):
+        arr = QTrapArray(shape=(2, 2), fuzz=10., r=(0., 0., 5.))
+        for trap in arr.leaves():
+            self.assertAlmostEqual(trap.r[2], 5., places=10)
+
+    def test_set_fuzz_via_set_trap_property(self):
+        arr = QTrapArray()
+        arr.setTrapProperty('fuzz', 4.)
+        self.assertAlmostEqual(arr.fuzz, 4.)
+
+
+class TestMask(unittest.TestCase):
+
+    def test_default_mask_is_none(self):
+        arr = QTrapArray()
+        self.assertIsNone(arr.mask)
+
+    def test_mask_reduces_count(self):
+        mask = np.array([[True, False], [False, True]])
+        arr = QTrapArray(shape=(2, 2), mask=mask)
+        self.assertEqual(len(arr), 2)
+
+    def test_all_false_mask_creates_no_traps(self):
+        arr = QTrapArray(shape=(3, 3), mask=np.zeros((3, 3), dtype=bool))
+        self.assertEqual(len(list(arr.leaves())), 0)
+
+    def test_all_true_mask_equals_full_grid(self):
+        arr_plain = QTrapArray(shape=(2, 3))
+        arr_masked = QTrapArray(shape=(2, 3), mask=np.ones((2, 3), dtype=bool))
+        self.assertEqual(len(arr_plain), len(arr_masked))
+
+    def test_mask_wrong_shape_raises(self):
+        with self.assertRaises(ValueError):
+            QTrapArray(shape=(2, 2), mask=np.ones((3, 3), dtype=bool))
+
+    def test_mask_setter_repopulates(self):
+        arr = QTrapArray(shape=(2, 2))
+        mask = np.array([[True, False], [True, False]])
+        arr.mask = mask
+        self.assertEqual(len(list(arr.leaves())), 2)
+
+    def test_mask_setter_none_restores_full_grid(self):
+        mask = np.array([[True, False], [False, True]])
+        arr = QTrapArray(shape=(2, 2), mask=mask)
+        arr.mask = None
+        self.assertEqual(len(list(arr.leaves())), 4)
+
+    def test_mask_setter_wrong_shape_raises(self):
+        arr = QTrapArray(shape=(2, 2))
+        with self.assertRaises(ValueError):
+            arr.mask = np.ones((3, 3), dtype=bool)
+
+    def test_nx_change_resets_mask(self):
+        arr = QTrapArray(shape=(2, 2), mask=np.ones((2, 2), dtype=bool))
+        arr.nx = 3
+        self.assertIsNone(arr.mask)
+
+    def test_ny_change_resets_mask(self):
+        arr = QTrapArray(shape=(2, 2), mask=np.ones((2, 2), dtype=bool))
+        arr.ny = 3
+        self.assertIsNone(arr.mask)
+
+    def test_shape_change_resets_mask(self):
+        arr = QTrapArray(shape=(2, 2), mask=np.ones((2, 2), dtype=bool))
+        arr.shape = (3, 3)
+        self.assertIsNone(arr.mask)
+
+    def test_separation_change_preserves_mask(self):
+        mask = np.array([[True, False], [False, True]])
+        arr = QTrapArray(shape=(2, 2), separation=10., mask=mask)
+        arr.separation = 20.
+        self.assertIsNotNone(arr.mask)
+        self.assertEqual(len(list(arr.leaves())), 2)
+
+    def test_masked_position_absent_from_leaves(self):
+        # 2x2 with ix=0, iy=0 (top-left) masked out, separation=10
+        mask = np.ones((2, 2), dtype=bool)
+        mask[0, 0] = False
+        arr = QTrapArray(shape=(2, 2), separation=10., mask=mask, r=(0., 0., 0.))
+        positions = np.array([t.r[:2] for t in arr.leaves()])
+        absent = np.array([-5., -5.])
+        for pos in positions:
+            self.assertFalse(np.allclose(pos, absent),
+                             msg='Masked position should be absent')
+
+    def test_leaves_all_tweezers_with_mask(self):
+        mask = np.eye(3, dtype=bool)
+        arr = QTrapArray(shape=(3, 3), mask=mask)
+        for trap in arr.leaves():
+            self.assertIsInstance(trap, QTweezer)
+
+
 if __name__ == '__main__':
     unittest.main()
