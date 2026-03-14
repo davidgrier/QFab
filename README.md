@@ -1,7 +1,7 @@
 # QFab
 
 **QFab** is a Python application for holographic optical trapping — controlling
-spatial light modulators (SLMs) to create, move, and reconfigure optical tweezers
+spatial light modulators (SLMs) to create, move, and reconfigure optical traps
 in real time using a live camera feed.
 
 ## Features
@@ -76,6 +76,9 @@ QFab/
 ├── traps/            — Concrete trap implementations
 └── tests/            — Unit tests
 ```
+
+## Acknowledgments
+This project is maintained with support from the National Science Foundation of the United States under Award Number DMR-2428983.
 
 ## License
 
