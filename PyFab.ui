@@ -14,33 +14,26 @@
    <string>PyFab</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_2">
-   <property name="leftMargin">
-    <number>0</number>
-   </property>
-   <property name="topMargin">
-    <number>0</number>
-   </property>
-   <property name="rightMargin">
-    <number>0</number>
-   </property>
-   <property name="bottomMargin">
-    <number>0</number>
-   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_5">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QFabScreen" name="screen">
-       <attribute name="stretchFactor">
-        <number>3</number>
-       </attribute>
-      </widget>
+      <widget class="QFabScreen" name="screen"/>
       <widget class="QTabWidget" name="tabWidget">
-       <attribute name="stretchFactor">
-        <number>1</number>
-       </attribute>
        <property name="currentIndex">
         <number>0</number>
        </property>
@@ -52,10 +45,10 @@
          <item>
           <widget class="QDVRWidget" name="dvr">
            <property name="frameShape">
-            <enum>QFrame::Shape::StyledPanel</enum>
+            <enum>QFrame::StyledPanel</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Shadow::Raised</enum>
+            <enum>QFrame::Raised</enum>
            </property>
           </widget>
          </item>
@@ -69,10 +62,10 @@
          <item>
           <widget class="QTrapWidget" name="traps">
            <property name="frameShape">
-            <enum>QFrame::Shape::StyledPanel</enum>
+            <enum>QFrame::StyledPanel</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Shadow::Raised</enum>
+            <enum>QFrame::Raised</enum>
            </property>
           </widget>
          </item>
@@ -94,6 +87,16 @@
             </property>
            </column>
           </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="slmTab">
+        <attribute name="title">
+         <string>SLM</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <item>
+          <widget class="QSLMWidget" name="slmView"/>
          </item>
         </layout>
        </widget>
@@ -128,7 +131,7 @@
             <item>
              <widget class="QPushButton" name="helpForward">
               <property name="layoutDirection">
-               <enum>Qt::LayoutDirection::RightToLeft</enum>
+               <enum>Qt::RightToLeft</enum>
               </property>
               <property name="text">
                <string>Forward</string>
@@ -270,6 +273,11 @@
    <class>QCGHTree</class>
    <extends>QTreeWidget</extends>
    <header>QFab.lib.holograms.QCGHTree</header>
+  </customwidget>
+  <customwidget>
+   <class>QSLMWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>QFab.lib.QSLMWidget</header>
   </customwidget>
  </customwidgets>
  <resources/>
