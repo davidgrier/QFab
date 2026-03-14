@@ -217,6 +217,11 @@ class QTrapOverlay(ScatterPlotItem):
                     **trap.appearance()}
             self.addPoints([spot])
             trap.changed.connect(self._onTrapChanged)
+        if hasattr(traps, 'reshaping'):
+            traps.reshaping.connect(
+                functools.partial(self._onGroupReshaping, traps))
+            traps.reshaped.connect(
+                functools.partial(self._onGroupReshaped, traps))
         self.trapAdded.emit(traps)
         return True
 
@@ -243,6 +248,7 @@ class QTrapOverlay(ScatterPlotItem):
                 return False
             return self.removeTrap(pts[0].data())
         group = self.groupOf(trap)
+        self.trapRemoved.emit(group)
         for t in list(group):
             t.changed.disconnect(self._onTrapChanged)
             if isinstance(t.parent(), QTrapGroup):
@@ -251,7 +257,6 @@ class QTrapOverlay(ScatterPlotItem):
             t._index = None
         group.setParent(None)
         self._rebuildSpots()
-        self.trapRemoved.emit(group)
         return True
 
     def clearTraps(self) -> None:
@@ -295,6 +300,46 @@ class QTrapOverlay(ScatterPlotItem):
         while isinstance(trap.parent(), QTrapGroup):
             trap = trap.parent()
         return trap
+
+    def _onGroupReshaping(self, group: QTrap) -> None:
+        '''Disconnect old leaves and emit trapRemoved before repopulation.
+
+        Called when a reshapeable group (e.g. QTrapArray) is about to
+        discard its current tweezers.  Old leaves are still children of
+        the group at this point, so ``group.leaves()`` returns them.
+
+        Parameters
+        ----------
+        group : QTrap
+            The group that is about to repopulate.
+        '''
+        for t in list(group.leaves()):
+            try:
+                t.changed.disconnect(self._onTrapChanged)
+            except (TypeError, RuntimeError):
+                pass
+            if t in self._traps:
+                self._traps.remove(t)
+                t._index = None
+        self.trapRemoved.emit(group)
+
+    def _onGroupReshaped(self, group: QTrap) -> None:
+        '''Connect new leaves and emit trapAdded after repopulation.
+
+        Called after a reshapeable group has populated its new tweezers.
+        New leaves are already children of the group at this point.
+
+        Parameters
+        ----------
+        group : QTrap
+            The group that has just repopulated.
+        '''
+        for t in group.leaves():
+            t._index = len(self._traps)
+            self._traps.append(t)
+            t.changed.connect(self._onTrapChanged)
+        self._rebuildSpots()
+        self.trapAdded.emit(group)
 
     @QtCore.pyqtSlot()
     def _onTrapChanged(self) -> None:
