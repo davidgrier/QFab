@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "QFab"
-version = "0.1.0"
+version = "1.0.0"
 description = "Holographic optical trapping instrument control"
 readme = "README.md"
 license = { file = "LICENSE" }

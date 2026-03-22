@@ -67,14 +67,12 @@ Interactive and programmatic rotation of trap groups.
 
 ---
 
-## Automated CGH Calibration
+## CGH Calibration
 
-Replace manual CGH parameter entry with measurement-based calibration.
+CGH calibration is inherently manual — all known implementations rely on
+operator measurement of system parameters. Improvements in this area:
 
-- Detect trap positions in camera image (centroid or Gaussian fit)
-- Iterative optimization of `xs`, `ys`, `phis`, `xc`, `yc`, `zc`, `thetac`, etc.
-- Calibration wizard UI (step-by-step procedure)
-- Task-based implementation so calibration can run headlessly or be scripted
+- Calibration wizard UI (step-by-step procedure with prompts)
 - Documentation: calibration procedure guide in `help/`
 
 ---
