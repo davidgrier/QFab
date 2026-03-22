@@ -26,7 +26,7 @@ import logging
 from argparse import ArgumentParser
 from typing import NamedTuple
 
-from QHOT.lib.holograms.CGH import CGH
+from QHOT.lib.holograms import CGH
 
 __all__ = 'build_parser cgh_parser choose_cgh'.split()
 

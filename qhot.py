@@ -7,7 +7,7 @@ from pyqtgraph.Qt import QtCore, QtWidgets, QtGui, uic
 from QVideo.lib import choose_camera, QCameraTree
 from QHOT.lib import QSLM, QSLMWidget, QSaveFile, build_parser, choose_cgh  # noqa: F401
 from QHOT.lib.holograms import CGH, QCGHTree      # noqa: F401
-from QHOT.lib.traps import QTrap, QTrapMenu       # noqa: F401
+from QHOT.lib.traps import QTrap, QTrapGroup, QTrapMenu  # noqa: F401
 
 
 logger = logging.getLogger(__name__)
@@ -109,7 +109,6 @@ class QHOT(QtWidgets.QMainWindow):
         moves).  Each leaf's ``changed`` and ``structureChanged`` are
         also connected to handle independent leaf changes.
         '''
-        from QHOT.lib.traps.QTrapGroup import QTrapGroup
         if isinstance(trap, QTrapGroup):
             trap.changed.connect(self._scheduleCompute)
         for leaf in trap.leaves():

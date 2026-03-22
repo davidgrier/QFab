@@ -4,7 +4,7 @@ from pyqtgraph.Qt import QtCore, QtWidgets, QtGui
 from pyqtgraph import mkBrush, mkPen
 from QHOT.lib.traps.QTrap import QTrap
 from QHOT.lib.traps.QTrapGroup import QTrapGroup
-from QHOT.traps.QTweezer import QTweezer
+from QHOT.traps import QTweezer
 from enum import Enum
 import json
 import numpy as np

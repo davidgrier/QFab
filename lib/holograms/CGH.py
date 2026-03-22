@@ -8,8 +8,7 @@ import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui
 
 from QHOT.lib.types import Field, Hologram, Shape
-from QHOT.lib.traps.QTrap import QTrap
-from QHOT.lib.traps.QTrapGroup import QTrapGroup
+from QHOT.lib.traps import QTrap, QTrapGroup
 
 
 logger = logging.getLogger(__name__)
