@@ -45,16 +45,16 @@ class PyFab(QtWidgets.QMainWindow):
         self.source = self.cameraTree.source
         self.slm = QSLM()
         self.cgh = CGH(shape=self.slm.shape)
-        self._cgh_thread = QtCore.QThread(self)
-        self.cgh.moveToThread(self._cgh_thread)
-        self._traps_changed: bool = False
-        self._compute_pending: bool = False
+        self._cghThread = QtCore.QThread(self)
+        self.cgh.moveToThread(self._cghThread)
+        self._trapsChanged: bool = False
+        self._computePending: bool = False
         self._setupUi()
         self._connectSignals()
         self._addFilters()
         self.save = QSaveFile(self)
         self.restoreSettings()
-        self._cgh_thread.start()
+        self._cghThread.start()
 
     def _setupUi(self) -> None:
         '''Load the UI file and configure child widgets.'''
@@ -116,20 +116,20 @@ class PyFab(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def _scheduleCompute(self) -> None:
         '''Mark traps as changed; the next frame will trigger recomputation.'''
-        self._traps_changed = True
+        self._trapsChanged = True
 
     @QtCore.pyqtSlot()
     def _onFrame(self) -> None:
         '''On each video frame, dispatch a compute if traps have changed.'''
-        if self._traps_changed and not self._compute_pending:
-            self._traps_changed = False
-            self._compute_pending = True
+        if self._trapsChanged and not self._computePending:
+            self._trapsChanged = False
+            self._computePending = True
             self._computeRequested.emit(list(self.screen.overlay._traps))
 
     @QtCore.pyqtSlot(object)
     def _onHologramReady(self, _phase) -> None:
         '''Clear the pending flag so the next frame may trigger a compute.'''
-        self._compute_pending = False
+        self._computePending = False
 
     @QtCore.pyqtSlot(bool)
     def dvrPlayback(self, playback: bool) -> None:
@@ -249,8 +249,8 @@ class PyFab(QtWidgets.QMainWindow):
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         '''Save settings, shut down CGH thread, and close the SLM on exit.'''
         self.saveSettings()
-        self._cgh_thread.quit()
-        self._cgh_thread.wait()
+        self._cghThread.quit()
+        self._cghThread.wait()
         self.slm.close()
         super().closeEvent(event)
 

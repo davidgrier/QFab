@@ -9,36 +9,29 @@ logger = logging.getLogger(__name__)
 
 
 class QTrap(QtCore.QObject):
-    '''Abstract representation of an optical trap
+    '''Abstract representation of an optical trap.
 
-    Inherits
-    --------
-    pyqtgraph.Qt.QtCore.QObject
+    Subclass of ``QtCore.QObject``.
 
     Attributes
     ----------
-    r: npt.NDArray[np.float64]
-        Three-dimensional location of the trap [pixels]
-    x: float
-        x-coordinate of the trap [pixels]
-    y: float
-        y-coordinate of the trap [pixels]
-    z: float
-        z-coordinate of the trap [pixels]
-    amplitude: float
-        Relative amplitude of the trap field
-    phase: float
-        Relative phase of the trap field [radians]
+    r : npt.NDArray[np.float64]
+        Three-dimensional location of the trap [pixels].
+    x : float
+        x-coordinate of the trap [pixels].
+    y : float
+        y-coordinate of the trap [pixels].
+    z : float
+        z-coordinate of the trap [pixels].
+    amplitude : float
+        Relative amplitude of the trap field.
+    phase : float
+        Relative phase of the trap field [radians].
 
     Signals
     -------
     changed
-        Emitted when any property of the trap is changed
-
-    Methods
-    -------
-    appearance() -> dict
-        Returns the visual properties of the trap
+        Emitted when any property of the trap changes.
     '''
 
     changed = QtCore.Signal()
