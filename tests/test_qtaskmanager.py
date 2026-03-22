@@ -1,0 +1,327 @@
+'''Unit tests for QTaskManager.'''
+import unittest
+from unittest.mock import MagicMock
+
+from pyqtgraph.Qt import QtCore, QtWidgets, QtTest
+
+from QHOT.tasks.QTask import QTask
+from QHOT.tasks.QTaskManager import QTaskManager
+
+app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+
+
+class MockScreen(QtCore.QObject):
+    '''Minimal screen substitute with a rendered signal.'''
+    rendered = QtCore.pyqtSignal()
+
+
+class TestQTaskManagerInit(unittest.TestCase):
+
+    def setUp(self):
+        self.screen = MockScreen()
+
+    def test_no_active_task_initially(self):
+        mgr = QTaskManager(self.screen)
+        self.assertIsNone(mgr.active)
+
+    def test_queue_size_zero_initially(self):
+        mgr = QTaskManager(self.screen)
+        self.assertEqual(mgr.queue_size, 0)
+
+    def test_background_empty_initially(self):
+        mgr = QTaskManager(self.screen)
+        self.assertEqual(mgr.background, [])
+
+    def test_not_paused_initially(self):
+        mgr = QTaskManager(self.screen)
+        self.assertFalse(mgr.paused)
+
+    def test_overlay_stored(self):
+        overlay = MagicMock()
+        mgr = QTaskManager(self.screen, overlay=overlay)
+        self.assertIs(mgr.overlay, overlay)
+
+    def test_cgh_stored(self):
+        cgh = MagicMock()
+        mgr = QTaskManager(self.screen, cgh=cgh)
+        self.assertIs(mgr.cgh, cgh)
+
+
+class TestQTaskManagerRegistration(unittest.TestCase):
+
+    def setUp(self):
+        self.screen  = MockScreen()
+        self.manager = QTaskManager(self.screen)
+
+    def test_first_blocking_task_becomes_active(self):
+        task = QTask()
+        self.manager.register(task)
+        self.assertIs(self.manager.active, task)
+
+    def test_first_blocking_task_starts_running(self):
+        task = QTask()
+        self.manager.register(task)
+        self.assertEqual(task.state, QTask.State.RUNNING)
+
+    def test_second_blocking_task_queued(self):
+        t1, t2 = QTask(), QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        self.assertEqual(self.manager.queue_size, 1)
+
+    def test_third_blocking_task_increments_queue(self):
+        t1, t2, t3 = QTask(), QTask(), QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        self.manager.register(t3)
+        self.assertEqual(self.manager.queue_size, 2)
+
+    def test_nonblocking_task_not_queued(self):
+        task = QTask()
+        self.manager.register(task, blocking=False)
+        self.assertEqual(self.manager.queue_size, 0)
+        self.assertIsNone(self.manager.active)
+
+    def test_nonblocking_task_starts_immediately(self):
+        task = QTask()
+        self.manager.register(task, blocking=False)
+        self.assertEqual(task.state, QTask.State.RUNNING)
+
+    def test_nonblocking_task_in_background_list(self):
+        task = QTask()
+        self.manager.register(task, blocking=False)
+        self.assertIn(task, self.manager.background)
+
+    def test_register_returns_task(self):
+        task = QTask()
+        result = self.manager.register(task)
+        self.assertIs(result, task)
+
+    def test_background_property_is_copy(self):
+        task = QTask()
+        self.manager.register(task, blocking=False)
+        bg = self.manager.background
+        bg.clear()
+        self.assertEqual(len(self.manager.background), 1)
+
+
+class TestQTaskManagerFrameDispatch(unittest.TestCase):
+
+    def setUp(self):
+        self.screen  = MockScreen()
+        self.manager = QTaskManager(self.screen)
+
+    def _emit(self, n: int = 1) -> None:
+        for _ in range(n):
+            self.screen.rendered.emit()
+
+    def test_frame_steps_active_blocking_task(self):
+        task = QTask()
+        task._step = MagicMock()
+        self.manager.register(task)
+        self._emit()
+        task._step.assert_called_once()
+
+    def test_frame_steps_background_task(self):
+        task = QTask()
+        task._step = MagicMock()
+        self.manager.register(task, blocking=False)
+        self._emit()
+        task._step.assert_called_once()
+
+    def test_pause_prevents_blocking_step(self):
+        task = QTask()
+        task._step = MagicMock()
+        self.manager.register(task)
+        self.manager.pause(True)
+        self._emit()
+        task._step.assert_not_called()
+
+    def test_pause_prevents_background_step(self):
+        task = QTask()
+        task._step = MagicMock()
+        self.manager.register(task, blocking=False)
+        self.manager.pause(True)
+        self._emit()
+        task._step.assert_not_called()
+
+    def test_resume_restores_dispatch(self):
+        task = QTask()
+        task._step = MagicMock()
+        self.manager.register(task)
+        self.manager.pause(True)
+        self.manager.pause(False)
+        self._emit()
+        task._step.assert_called_once()
+
+    def test_paused_property_reflects_state(self):
+        self.manager.pause(True)
+        self.assertTrue(self.manager.paused)
+        self.manager.pause(False)
+        self.assertFalse(self.manager.paused)
+
+    def test_no_step_when_no_active_task(self):
+        # Should not raise even with nothing registered
+        self._emit()
+
+
+class TestQTaskManagerSequencing(unittest.TestCase):
+
+    def setUp(self):
+        self.screen  = MockScreen()
+        self.manager = QTaskManager(self.screen)
+
+    def _emit(self, n: int = 1) -> None:
+        for _ in range(n):
+            self.screen.rendered.emit()
+
+    def test_second_task_activates_after_first_completes(self):
+        t1 = QTask(duration=1)
+        t2 = QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        self._emit(1)
+        self.assertEqual(t1.state, QTask.State.COMPLETED)
+        self.assertIs(self.manager.active, t2)
+
+    def test_previous_passed_from_first_to_second(self):
+        t1 = QTask(duration=1)
+        t2 = QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        self._emit(1)
+        self.assertIs(t2.previous, t1)
+
+    def test_previous_is_none_for_first_task(self):
+        task = QTask()
+        self.manager.register(task)
+        self.assertIsNone(task.previous)
+
+    def test_three_tasks_run_in_order(self):
+        order = []
+        tasks = [QTask(duration=1) for _ in range(3)]
+        for i, t in enumerate(tasks):
+            t.started.connect(lambda _i=i: order.append(_i))
+            self.manager.register(t)
+        self._emit(3)
+        self.assertEqual(order, [0, 1, 2])
+
+    def test_queue_depletes_as_tasks_complete(self):
+        tasks = [QTask(duration=1) for _ in range(3)]
+        for t in tasks:
+            self.manager.register(t)
+        self.assertEqual(self.manager.queue_size, 2)
+        self._emit(1)
+        self.assertEqual(self.manager.queue_size, 1)
+        self._emit(1)
+        self.assertEqual(self.manager.queue_size, 0)
+
+    def test_active_is_none_after_all_complete(self):
+        task = QTask(duration=1)
+        self.manager.register(task)
+        self._emit(1)
+        self.assertIsNone(self.manager.active)
+
+    def test_blocking_failure_clears_queue(self):
+        t1, t2, t3 = QTask(), QTask(), QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        self.manager.register(t3)
+        t1.abort('test failure')
+        self.assertEqual(self.manager.queue_size, 0)
+        self.assertIsNone(self.manager.active)
+
+    def test_blocking_failure_does_not_affect_background(self):
+        blocking = QTask()
+        bg = QTask()
+        self.manager.register(blocking)
+        self.manager.register(bg, blocking=False)
+        blocking.abort()
+        self.assertIn(bg, self.manager.background)
+
+
+class TestQTaskManagerStop(unittest.TestCase):
+
+    def setUp(self):
+        self.screen  = MockScreen()
+        self.manager = QTaskManager(self.screen)
+
+    def test_stop_clears_queue(self):
+        for _ in range(3):
+            self.manager.register(QTask())
+        self.manager.stop()
+        self.assertEqual(self.manager.queue_size, 0)
+
+    def test_stop_aborts_active_task(self):
+        task = QTask()
+        self.manager.register(task)
+        self.manager.stop()
+        self.assertEqual(task.state, QTask.State.FAILED)
+
+    def test_stop_removes_background_tasks(self):
+        for _ in range(2):
+            self.manager.register(QTask(), blocking=False)
+        self.manager.stop()
+        self.assertEqual(len(self.manager.background), 0)
+
+    def test_stop_aborts_background_tasks(self):
+        task = QTask()
+        self.manager.register(task, blocking=False)
+        self.manager.stop()
+        self.assertEqual(task.state, QTask.State.FAILED)
+
+    def test_stop_clears_active_reference(self):
+        self.manager.register(QTask())
+        self.manager.stop()
+        self.assertIsNone(self.manager.active)
+
+    def test_stop_on_empty_manager_does_not_raise(self):
+        self.manager.stop()
+
+
+class TestQTaskManagerBackground(unittest.TestCase):
+
+    def setUp(self):
+        self.screen  = MockScreen()
+        self.manager = QTaskManager(self.screen)
+
+    def _emit(self, n: int = 1) -> None:
+        for _ in range(n):
+            self.screen.rendered.emit()
+
+    def test_background_task_removed_on_completion(self):
+        task = QTask(duration=1)
+        self.manager.register(task, blocking=False)
+        self._emit(1)
+        self.assertEqual(len(self.manager.background), 0)
+
+    def test_background_task_removed_on_failure(self):
+        task = QTask()
+        self.manager.register(task, blocking=False)
+        task.abort('test')
+        self.assertEqual(len(self.manager.background), 0)
+
+    def test_multiple_background_tasks_run_simultaneously(self):
+        steps = []
+        for i in range(3):
+            t = QTask()
+            t.process = MagicMock(
+                side_effect=lambda f, _i=i: steps.append(_i))
+            self.manager.register(t, blocking=False)
+        self._emit(1)
+        self.assertEqual(sorted(steps), [0, 1, 2])
+
+    def test_background_runs_alongside_blocking(self):
+        blocking = QTask()
+        bg       = QTask()
+        blocking._step = MagicMock()
+        bg._step       = MagicMock()
+        self.manager.register(blocking)
+        self.manager.register(bg, blocking=False)
+        self._emit(1)
+        blocking._step.assert_called_once()
+        bg._step.assert_called_once()
+
+
+if __name__ == '__main__':
+    unittest.main()
