@@ -616,23 +616,3 @@ class CGH(QtCore.QObject):
         if field is None:
             return None
         return field.astype(self.dtype)
-
-    @classmethod
-    def example(cls) -> None:  # pragma: no cover
-        '''Demonstrate the CGH pipeline.
-
-        Creates a CGH instance, computes a hologram for a single on-axis
-        tweezer trap, and prints the result shape and dtype. Can be
-        called on any subclass.
-        '''
-        from QHOT.traps.QTweezer import QTweezer
-
-        cgh = cls()
-        trap = QTweezer(r=(cgh.xc, cgh.yc, 0.))
-        hologram = cgh.compute([trap])
-        print(f'{cls.__name__}: hologram shape={hologram.shape}, '
-              f'dtype={hologram.dtype}')
-
-
-if __name__ == '__main__':  # pragma: no cover
-    CGH.example()

@@ -213,19 +213,3 @@ class QCGHTree(ParameterTree):
         if self._cgh is not None:
             self.settings = {k: v for k, v in self._cgh.settings.items()
                              if k in self._parameters}
-
-    @classmethod
-    def example(cls) -> None:  # pragma: no cover
-        '''Display an interactive CGH parameter tree demo.'''
-        import pyqtgraph as pg
-
-        pg.mkQApp()
-        cgh = CGH()
-        widget = cls(cgh=cgh)
-        widget.show()
-        print('CGH settings:', widget.settings)
-        pg.exec()
-
-
-if __name__ == '__main__':  # pragma: no cover
-    QCGHTree.example()

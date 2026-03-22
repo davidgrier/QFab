@@ -179,18 +179,3 @@ class TorchCGH(CGH):
             return None
         return torch.as_tensor(
             np.asarray(field, dtype=np.complex64), device=self.device)
-
-    @classmethod
-    def example(cls) -> None:  # pragma: no cover
-        '''Demonstrate TorchCGH device selection and hologram computation.'''
-        from QHOT.traps.QTweezer import QTweezer
-        cgh = cls()
-        print(f'TorchCGH device: {cgh.device}')
-        trap = QTweezer(r=(cgh.xc, cgh.yc, 0.))
-        hologram = cgh.compute([trap])
-        print(f'TorchCGH: hologram shape={hologram.shape}, '
-              f'dtype={hologram.dtype}')
-
-
-if __name__ == '__main__':  # pragma: no cover
-    TorchCGH.example()
