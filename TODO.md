@@ -125,7 +125,7 @@ Detect objects in the camera field of view and trap them automatically.
 
 Save and restore experimental state for reproducible measurements.
 
-- Save and load trap configurations (positions, types, parameters) to/from JSON or TOML
+- ~~Save and load trap configurations (positions, types, parameters) to/from JSON or TOML~~  **Done**
 - Experiment log: record trap events, positions, and timestamps automatically
 - Export trap trajectories as data files for post-processing
 
@@ -173,21 +173,20 @@ Strengthen the test suite and catch regressions early.
 
 ## Type System
 
-Strengthen type safety across the codebase.
+~~Strengthen type safety across the codebase.~~
 
-- Create `lib/types.py` defining `Hologram` and `Field` type aliases (e.g. `np.ndarray` specialisations)
-- Use those types consistently throughout `lib/holograms/` and `traps/`
-- Enables better static analysis and clearer API documentation
+- ~~Create `lib/types.py` defining `Hologram` and `Field` type aliases~~  **Done**
+- ~~Use those types consistently throughout `lib/holograms/` and `traps/`~~  **Done**
 
 ---
 
 ## Release and Distribution
 
-Prepare QHOT for public release.
+~~Prepare QHOT for public release.~~
 
-- Check appropriateness of current license for a public release
-- Create a PyPI package and publish to the Python Package Index
-- Create a ReadTheDocs project and publish the Sphinx docs
+- ~~Check appropriateness of current license for a public release~~  **Done** (GPLv3)
+- ~~Create a PyPI package and publish to the Python Package Index~~  **Done** (v1.0.0)
+- ~~Create a ReadTheDocs project and publish the Sphinx docs~~  **Done**
 - Add references to relevant literature (holographic optical trapping, SLM CGH algorithms)
 
 ---
