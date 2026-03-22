@@ -36,6 +36,7 @@ class QRingTrap(QTrap):
         Topological charge of the ring trap.
     '''
 
+    #: Emitted when the topological charge or radius changes.
     structureChanged = QtCore.pyqtSignal()
 
     def __init__(self, *args,

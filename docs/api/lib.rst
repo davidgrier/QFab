@@ -1,6 +1,12 @@
 Core library
 ============
 
+Types
+-----
+
+.. automodule:: QFab.lib.types
+   :members:
+
 QFabScreen
 ----------
 

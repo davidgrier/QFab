@@ -69,7 +69,9 @@ class QTrapOverlay(ScatterPlotItem):
         Emitted with the top-level trap or group after it is removed.
     '''
 
+    #: Emitted with the trap when a trap is added to the scene.
     trapAdded = QtCore.pyqtSignal(QTrap)
+    #: Emitted with the trap when a trap is removed from the scene.
     trapRemoved = QtCore.pyqtSignal(QTrap)
 
     class State(Enum):

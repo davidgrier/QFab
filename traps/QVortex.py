@@ -31,6 +31,7 @@ class QVortex(QTrap):
         Topological charge of the optical vortex.
     '''
 
+    #: Emitted when the topological charge changes.
     structureChanged = QtCore.pyqtSignal()
 
     def __init__(self, *args, ell: int = 10, **kwargs) -> None:

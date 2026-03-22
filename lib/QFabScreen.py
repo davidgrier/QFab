@@ -38,7 +38,9 @@ class QFabScreen(QVideoScreen):
         should be synchronized with the display cadence.
     '''
 
+    #: Emitted with a status message string for display in the UI.
     status = QtCore.pyqtSignal(str)
+    #: Emitted after each video frame is rendered to the screen.
     rendered = QtCore.pyqtSignal()
 
     def _setupUi(self) -> None:

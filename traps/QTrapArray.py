@@ -60,7 +60,9 @@ class QTrapArray(QTrapGroup):
         Emitted after the new tweezers have been added.
     '''
 
+    #: Emitted when the array begins to reshape.
     reshaping = QtCore.pyqtSignal()
+    #: Emitted when the array has finished reshaping.
     reshaped = QtCore.pyqtSignal()
 
     def __init__(self, *args,

@@ -31,6 +31,7 @@ class QTrapGroup(QTrap):
         signals so that observers can perform bulk invalidation.
     '''
 
+    #: Emitted with (leaves, delta) when the group is translated.
     groupMoved = QtCore.pyqtSignal(object, object)
 
     def __len__(self) -> int:

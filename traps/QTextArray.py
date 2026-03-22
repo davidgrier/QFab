@@ -45,7 +45,9 @@ class QTextArray(QTrapGroup):
         Emitted after the new letter arrays have been added.
     '''
 
+    #: Emitted when the text array begins to reshape.
     reshaping = QtCore.pyqtSignal()
+    #: Emitted when the text array has finished reshaping.
     reshaped = QtCore.pyqtSignal()
 
     def __init__(self, *args,

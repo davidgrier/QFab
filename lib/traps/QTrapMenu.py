@@ -37,6 +37,7 @@ class QTrapMenu(QtWidgets.QMenu):
         trap instance when the user selects a trap type.
     '''
 
+    #: Emitted with (position, trap) when the user selects a trap type.
     trapRequested = QtCore.pyqtSignal(QtCore.QPointF, QTrap)
 
     def __init__(self, *args, title: str = 'Add Trap', **kwargs) -> None:

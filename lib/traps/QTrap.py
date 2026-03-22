@@ -43,6 +43,7 @@ class QTrap(QtCore.QObject):
         Emitted when any property of the trap changes.
     '''
 
+    #: Emitted when any trap property changes.
     changed = QtCore.Signal()
 
     def __init__(self,

@@ -77,7 +77,9 @@ class CGH(QtCore.QObject):
         Emitted when the geometry or transformation matrix is updated.
     '''
 
+    #: Emitted with the quantized phase array when a hologram is computed.
     hologramReady = QtCore.pyqtSignal(np.ndarray)
+    #: Emitted when the geometry or transformation matrix is updated.
     recalculate = QtCore.pyqtSignal()
 
     dtype = np.complex64

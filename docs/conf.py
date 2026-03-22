@@ -18,8 +18,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 project = 'QFab'
 author = 'David G. Grier'
 copyright = '2026, David G. Grier'
-from importlib.metadata import version as _get_version
-release = _get_version('QFab')
+try:
+    from importlib.metadata import version as _get_version
+    release = _get_version('QFab')
+except Exception:
+    release = '0.1.0'
 
 # -- General configuration ---------------------------------------------------
 

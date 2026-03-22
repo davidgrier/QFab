@@ -26,6 +26,7 @@ class QTrapPropertyEdit(QtWidgets.QLineEdit):
         Number of decimal places for display and validation. Default: 2.
     '''
 
+    #: Emitted with (name, value) when a trap property is edited.
     propertyChanged = QtCore.pyqtSignal(str, float)
 
     _field_width: int | None = None
