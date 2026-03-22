@@ -175,8 +175,10 @@ class QTrapArray(QTrapGroup):
         Gaussian random offset (std = ``fuzz``) in x and y.
         '''
         cx, cy, cz = self._r
-        xs = cx + self._separation * (np.arange(self._nx) - (self._nx - 1) / 2.)
-        ys = cy + self._separation * (np.arange(self._ny) - (self._ny - 1) / 2.)
+        dx = self._separation * (np.arange(self._nx) - (self._nx - 1) / 2.)
+        dy = self._separation * (np.arange(self._ny) - (self._ny - 1) / 2.)
+        xs = cx + dx
+        ys = cy + dy
         traps = []
         for ix, x in enumerate(xs):
             for iy, y in enumerate(ys):

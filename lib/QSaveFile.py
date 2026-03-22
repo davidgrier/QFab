@@ -96,7 +96,7 @@ class QSaveFile(QtCore.QObject):
     def image(self,
               data: ImageItem | npt.NDArray,
               filename: str | None = None,
-              prefix: str = 'pyfab') -> str:
+              prefix: str = 'qhot') -> str:
         '''Save image data to a file.
 
         Accepts either a pyqtgraph ``ImageItem`` (exported via
@@ -111,7 +111,7 @@ class QSaveFile(QtCore.QObject):
             Destination path.  If ``None``, a timestamped ``.png`` file
             is created in the data directory.
         prefix : str
-            Prefix for the auto-generated filename.  Default: ``'pyfab'``.
+            Prefix for the auto-generated filename.  Default: ``'qhot'``.
 
         Returns
         -------
@@ -127,7 +127,7 @@ class QSaveFile(QtCore.QObject):
 
     def imageAs(self,
                 data: ImageItem | npt.NDArray,
-                prefix: str = 'pyfab') -> str:
+                prefix: str = 'qhot') -> str:
         '''Save image data to a user-chosen file via a Save As dialog.
 
         Parameters
@@ -135,7 +135,7 @@ class QSaveFile(QtCore.QObject):
         data : ImageItem or numpy.ndarray
             Image to save.
         prefix : str
-            Prefix for the default filename suggestion.  Default: ``'pyfab'``.
+            Prefix for the default filename suggestion.  Default: ``'qhot'``.
 
         Returns
         -------

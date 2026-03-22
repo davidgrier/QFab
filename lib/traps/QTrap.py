@@ -12,12 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class QTrap(QtCore.QObject):
-
-    _registry: dict[str, type] = {}
-
-    def __init_subclass__(cls, **kwargs) -> None:
-        super().__init_subclass__(**kwargs)
-        QTrap._registry[cls.__name__] = cls
     '''Abstract representation of an optical trap.
 
     Subclass of ``QtCore.QObject``.
@@ -42,6 +36,12 @@ class QTrap(QtCore.QObject):
     changed
         Emitted when any property of the trap changes.
     '''
+
+    _registry: dict[str, type] = {}
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        QTrap._registry[cls.__name__] = cls
 
     #: Emitted when any trap property changes.
     changed = QtCore.pyqtSignal()
@@ -100,6 +100,7 @@ class QTrap(QtCore.QObject):
 
     @property
     def x(self) -> float:
+        '''x-coordinate of the trap [pixels].'''
         return self._r[0]
 
     @x.setter
@@ -109,6 +110,7 @@ class QTrap(QtCore.QObject):
 
     @property
     def y(self) -> float:
+        '''y-coordinate of the trap [pixels].'''
         return self._r[1]
 
     @y.setter
@@ -118,6 +120,7 @@ class QTrap(QtCore.QObject):
 
     @property
     def z(self) -> float:
+        '''z-coordinate of the trap [pixels].'''
         return self._r[2]
 
     @z.setter

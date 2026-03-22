@@ -39,7 +39,8 @@ class QVortex(QTrap):
         super().__init__(*args, **kwargs)
 
     def _registerProperties(self) -> None:
-        '''Register ``ell`` as an editable property in addition to base properties.'''
+        '''Register ``ell`` as an editable property in addition to
+        base properties.'''
         super()._registerProperties()
         self.registerProperty('ell', decimals=0, tooltip=True)
 

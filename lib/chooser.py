@@ -44,7 +44,8 @@ class _CGHEntry(NamedTuple):
 _CGH_BACKENDS: dict[str, _CGHEntry] = {
     'torch': _CGHEntry('-t', 'QHOT.lib.holograms.TorchCGH', 'TorchCGH',
                        'PyTorch',
-                       'PyTorch backend (auto-selects MPS, CUDA/ROCm, or CPU)'),
+                       'PyTorch backend '
+                       '(auto-selects MPS, CUDA/ROCm, or CPU)'),
     'cupy':  _CGHEntry('-u', 'QHOT.lib.holograms.cupyCGH', 'cupyCGH',
                        'CuPy',
                        'CuPy CUDA backend (NVIDIA only)'),

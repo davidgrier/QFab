@@ -5,7 +5,8 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets, QtGui, uic
 
 from QVideo.lib import choose_camera, QCameraTree
-from QHOT.lib import QSLM, QSLMWidget, QSaveFile, build_parser, choose_cgh  # noqa: F401
+from QHOT.lib import (QSLM, QSLMWidget, QSaveFile,  # noqa: F401
+                      build_parser, choose_cgh)
 from QHOT.lib.holograms import CGH, QCGHTree      # noqa: F401
 from QHOT.lib.traps import QTrap, QTrapGroup, QTrapMenu  # noqa: F401
 

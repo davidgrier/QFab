@@ -1,4 +1,4 @@
-from QVideo.lib import QVideoScreen, QCamera
+from QVideo.lib import QVideoScreen
 from QHOT.lib.traps.QTrapOverlay import QTrapOverlay
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 import numpy as np
@@ -73,7 +73,8 @@ class QHOTScreen(QVideoScreen):
 
     @QtCore.pyqtSlot(np.ndarray)
     def setImage(self, image: np.ndarray) -> None:
-        '''Render a frame and emit ``rendered`` if the display rate allows it.'''
+        '''Render a frame and emit ``rendered`` if the display rate
+        allows it.'''
         was_ready = self._ready
         super().setImage(image)
         if was_ready:
@@ -88,24 +89,28 @@ class QHOTScreen(QVideoScreen):
     # Pass mouse events to the trap overlay
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
+        '''Forward press to overlay; fall back to video screen handler.'''
         if self.overlay.mousePress(event, self._overlayPos(event)):
             event.accept()
         else:
             super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
+        '''Forward move to overlay; fall back to video screen handler.'''
         if self.overlay.mouseMove(event, self._overlayPos(event)):
             event.accept()
         else:
             super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
+        '''Forward release to overlay; fall back to video screen handler.'''
         if self.overlay.mouseRelease(event):
             event.accept()
         else:
             super().mouseReleaseEvent(event)
 
     def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
+        '''Forward wheel to overlay; fall back to video screen handler.'''
         if self.overlay.wheel(event, self._overlayPos(event)):
             event.accept()
         else:

@@ -218,7 +218,8 @@ class CGH(QtCore.QObject):
         self.iqxz = (1j * self.qpar * x * x).astype(self.dtype)
         self.iqyz = (1j * self.qpar * y * y).astype(self.dtype)
         self.theta = np.arctan2.outer(y, x).astype(np.float32)
-        self.qr = np.hypot.outer(self.qprp * y, self.qprp * x).astype(np.float32)
+        self.qr = np.hypot.outer(
+            self.qprp * y, self.qprp * x).astype(np.float32)
         self._clearCache()
         self.recalculate.emit()
 
@@ -547,7 +548,9 @@ class CGH(QtCore.QObject):
         self._connectTrap(trap)
         if trap not in self._field_cache:
             r = self.transform(QtGui.QVector3D(*trap.r))
-            rx, ry, rz = np.float32(r.x()), np.float32(r.y()), np.float32(r.z())
+            rx = np.float32(r.x())
+            ry = np.float32(r.y())
+            rz = np.float32(r.z())
             ex = np.exp(self.iqx * rx + self.iqxz * rz)
             ey = np.exp(self.iqy * ry + self.iqyz * rz)
             if isinstance(trap, QTrapGroup):

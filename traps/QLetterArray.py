@@ -120,7 +120,7 @@ class QLetterArray(QTrapArray):
 
     Inherits
     --------
-    QFab.traps.QTrapArray
+    QHOT.traps.QTrapArray
 
     Parameters
     ----------

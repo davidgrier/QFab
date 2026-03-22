@@ -1,4 +1,4 @@
-'''Type aliases for array types used throughout the QFab pipeline.'''
+'''Type aliases for array types used throughout the QHOT pipeline.'''
 import numpy as np
 from numpy.typing import NDArray
 
