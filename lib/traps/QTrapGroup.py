@@ -78,6 +78,70 @@ class QTrapGroup(QTrap):
             else:
                 child._r += delta
 
+    def _snapshot(self) -> dict:
+        '''Record current positions of all descendants, keyed by id.
+
+        Returns
+        -------
+        dict
+            Mapping of ``id(child)`` to a copy of ``child._r`` for
+            every direct child and all deeper descendants.
+        '''
+        s = {}
+        for child in self:
+            s[id(child)] = child._r.copy()
+            if isinstance(child, QTrapGroup):
+                s.update(child._snapshot())
+        return s
+
+    def _rotateSilently(self, angle: float,
+                        cx: float, cy: float,
+                        snapshot: dict) -> None:
+        '''Rotate all descendants around (cx, cy) using snapshot positions.
+
+        Updates ``_r`` in place without emitting any signals.
+
+        Parameters
+        ----------
+        angle : float
+            Rotation angle in radians.
+        cx, cy : float
+            Center of rotation in item coordinates.
+        snapshot : dict
+            Mapping of ``id(child)`` to initial position, as returned
+            by ``_snapshot()``.
+        '''
+        cos_a = np.cos(angle)
+        sin_a = np.sin(angle)
+        for child in self:
+            orig = snapshot[id(child)]
+            dx = orig[0] - cx
+            dy = orig[1] - cy
+            child._r[0] = cx + cos_a * dx - sin_a * dy
+            child._r[1] = cy + sin_a * dx + cos_a * dy
+            if isinstance(child, QTrapGroup):
+                child._rotateSilently(angle, cx, cy, snapshot)
+
+    def rotate(self, angle: float, snapshot: dict) -> None:
+        '''Rotate all children by angle around the group center.
+
+        Applies the rotation from the snapshotted positions to avoid
+        floating-point drift during interactive drag.  All sub-group
+        centers are updated recursively.  Emits ``changed`` once.
+
+        Parameters
+        ----------
+        angle : float
+            Rotation angle in radians, measured from the positions
+            stored in ``snapshot``.
+        snapshot : dict
+            Mapping of ``id(child)`` to initial position array,
+            as returned by ``_snapshot()``.
+        '''
+        cx, cy = self._r[0], self._r[1]
+        self._rotateSilently(angle, cx, cy, snapshot)
+        self.changed.emit()
+
     @QTrap.r.setter
     def r(self, r: npt.ArrayLike) -> None:
         '''Translate the group so its center moves to ``r``.

@@ -1215,5 +1215,169 @@ class TestSaveLoad(unittest.TestCase):
         self.assertEqual(len(self.overlay._traps), 1)
 
 
+class TestStartRotation(unittest.TestCase):
+
+    def setUp(self):
+        self.overlay = make_overlay()
+        self.t1 = QTweezer(r=(4., 0., 0.), phase=0.)
+        self.t2 = QTweezer(r=(-4., 0., 0.), phase=0.)
+        self.grp = QTrapGroup(r=(0., 0., 0.))
+        self.grp.addTrap([self.t1, self.t2])
+        self.overlay.addTrap(self.grp)
+
+    def test_returns_false_no_trap(self):
+        with patch.object(self.overlay, 'trapAt', return_value=None):
+            result = self.overlay.startRotation(QtCore.QPointF(999., 999.))
+        self.assertFalse(result)
+
+    def test_returns_true_on_group(self):
+        with patch.object(self.overlay, 'trapAt', return_value=self.t1):
+            result = self.overlay.startRotation(QtCore.QPointF(4., 0.))
+        self.assertTrue(result)
+
+    def test_sets_rotating_group(self):
+        with patch.object(self.overlay, 'trapAt', return_value=self.t1):
+            self.overlay.startRotation(QtCore.QPointF(4., 0.))
+        self.assertIs(self.overlay._rotating, self.grp)
+
+    def test_records_rotation_center(self):
+        with patch.object(self.overlay, 'trapAt', return_value=self.t1):
+            self.overlay.startRotation(QtCore.QPointF(4., 0.))
+        self.assertAlmostEqual(self.overlay._rotation_center[0], 0.)
+        self.assertAlmostEqual(self.overlay._rotation_center[1], 0.)
+
+    def test_snapshot_populated(self):
+        with patch.object(self.overlay, 'trapAt', return_value=self.t1):
+            self.overlay.startRotation(QtCore.QPointF(4., 0.))
+        self.assertIn(id(self.t1), self.overlay._rotation_snapshot)
+        self.assertIn(id(self.t2), self.overlay._rotation_snapshot)
+
+    def test_brush_set_to_selected(self):
+        with patch.object(self.overlay, 'trapAt', return_value=self.t1):
+            self.overlay.startRotation(QtCore.QPointF(4., 0.))
+        for trap in [self.t1, self.t2]:
+            spot = self.overlay.points()[trap._index]
+            self.assertEqual(
+                spot.brush(),
+                self.overlay.brush[self.overlay.State.SELECTED])
+
+    def test_standalone_trap_returns_true_no_rotation(self):
+        overlay = make_overlay()
+        lone = QTweezer(r=(5., 5., 0.), phase=0.)
+        overlay.addTrap(lone)
+        with patch.object(overlay, 'trapAt', return_value=lone):
+            result = overlay.startRotation(QtCore.QPointF(5., 5.))
+        self.assertTrue(result)
+        self.assertIsNone(overlay._rotating)
+
+    def test_uses_outermost_group(self):
+        overlay = make_overlay()
+        outer = QTrapGroup(r=(0., 0., 0.))
+        inner = QTrapGroup(r=(2., 0., 0.))
+        leaf = QTweezer(r=(3., 0., 0.), phase=0.)
+        inner.addTrap(leaf)
+        outer.addTrap(inner)
+        overlay.addTrap(outer)
+        with patch.object(overlay, 'trapAt', return_value=leaf):
+            overlay.startRotation(QtCore.QPointF(3., 0.))
+        self.assertIs(overlay._rotating, outer)
+
+
+class TestRotationGesture(unittest.TestCase):
+
+    def setUp(self):
+        self.overlay = make_overlay()
+        self.t1 = QTweezer(r=(4., 0., 0.), phase=0.)
+        self.t2 = QTweezer(r=(-4., 0., 0.), phase=0.)
+        self.grp = QTrapGroup(r=(0., 0., 0.))
+        self.grp.addTrap([self.t1, self.t2])
+        self.overlay.addTrap(self.grp)
+
+    def _setup_rotation(self, x0, y0):
+        '''Directly configure rotation state from initial cursor position.'''
+        self.overlay._rotating = self.grp
+        cx, cy = self.grp._r[0], self.grp._r[1]
+        self.overlay._rotation_center = (cx, cy)
+        self.overlay._rotation_angle0 = np.arctan2(y0 - cy, x0 - cx)
+        self.overlay._rotation_snapshot = self.grp._snapshot()
+        self.overlay._drag_last = QtCore.QPointF(x0, y0)
+
+    def test_mouseMove_rotates_traps(self):
+        self._setup_rotation(4., 0.)
+        pos = QtCore.QPointF(0., 4.)
+        event = MagicMock()
+        event.buttons.return_value = self.overlay.button['left']
+        self.overlay.mouseMove(event, pos)
+        np.testing.assert_array_almost_equal(
+            self.t1._r[:2], [0., 4.], decimal=5)
+        np.testing.assert_array_almost_equal(
+            self.t2._r[:2], [0., -4.], decimal=5)
+
+    def test_mouseRelease_clears_rotating(self):
+        self._setup_rotation(4., 0.)
+        event = MagicMock()
+        self.overlay.mouseRelease(event)
+        self.assertIsNone(self.overlay._rotating)
+
+    def test_mouseRelease_clears_snapshot(self):
+        self._setup_rotation(4., 0.)
+        event = MagicMock()
+        self.overlay.mouseRelease(event)
+        self.assertEqual(self.overlay._rotation_snapshot, {})
+
+    def test_mouseRelease_restores_normal_brush(self):
+        self._setup_rotation(4., 0.)
+        self.overlay._setGroupBrush(self.grp, self.overlay.State.SELECTED)
+        event = MagicMock()
+        self.overlay.mouseRelease(event)
+        for trap in [self.t1, self.t2]:
+            spot = self.overlay.points()[trap._index]
+            self.assertEqual(
+                spot.brush(),
+                self.overlay.brush[self.overlay.State.NORMAL])
+
+    def test_spot_positions_updated_after_rotation(self):
+        self._setup_rotation(4., 0.)
+        pos = QtCore.QPointF(0., 4.)
+        event = MagicMock()
+        event.buttons.return_value = self.overlay.button['left']
+        self.overlay.mouseMove(event, pos)
+        spot1 = self.overlay.points()[self.t1._index]
+        self.assertAlmostEqual(spot1._data['x'], 0., places=5)
+        self.assertAlmostEqual(spot1._data['y'], 4., places=5)
+
+    def test_rotation_is_idempotent(self):
+        self._setup_rotation(4., 0.)
+        pos = QtCore.QPointF(0., 4.)
+        event = MagicMock()
+        event.buttons.return_value = self.overlay.button['left']
+        self.overlay.mouseMove(event, pos)
+        r1 = self.t1._r.copy()
+        self.overlay.mouseMove(event, pos)
+        np.testing.assert_array_almost_equal(self.t1._r, r1)
+
+    def test_nested_group_rotates_around_outer_center(self):
+        overlay = make_overlay()
+        outer = QTrapGroup(r=(0., 0., 0.))
+        inner = QTrapGroup(r=(2., 0., 0.))
+        leaf = QTweezer(r=(2., 0., 0.), phase=0.)
+        inner.addTrap(leaf)
+        outer.addTrap(inner)
+        overlay.addTrap(outer)
+        overlay._rotating = outer
+        overlay._rotation_center = (0., 0.)
+        overlay._rotation_angle0 = 0.
+        overlay._rotation_snapshot = outer._snapshot()
+        overlay._drag_last = QtCore.QPointF(2., 0.)
+        move_pos = QtCore.QPointF(0., 2.)
+        event = MagicMock()
+        event.buttons.return_value = overlay.button['left']
+        overlay.mouseMove(event, move_pos)
+        np.testing.assert_array_almost_equal(
+            inner._r[:2], [0., 2.], decimal=5)
+        np.testing.assert_array_almost_equal(
+            leaf._r[:2], [0., 2.], decimal=5)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -282,6 +282,116 @@ class TestTranslateSilently(unittest.TestCase):
         self.assertEqual(len(spy), 0)
 
 
+class TestSnapshot(unittest.TestCase):
+
+    def setUp(self):
+        self.group = QTrapGroup(r=(0., 0., 0.))
+        self.t1 = QTrap(r=(1., 0., 0.), phase=0.)
+        self.t2 = QTrap(r=(2., 0., 0.), phase=0.)
+        self.group.addTrap([self.t1, self.t2])
+
+    def test_contains_all_children(self):
+        snap = self.group._snapshot()
+        self.assertIn(id(self.t1), snap)
+        self.assertIn(id(self.t2), snap)
+
+    def test_values_are_copies(self):
+        snap = self.group._snapshot()
+        self.t1._r[0] = 99.
+        np.testing.assert_array_almost_equal(snap[id(self.t1)], [1., 0., 0.])
+
+    def test_nested_children_included(self):
+        inner = QTrapGroup(r=(5., 0., 0.))
+        leaf = QTrap(r=(6., 0., 0.), phase=0.)
+        inner.addTrap(leaf)
+        outer = QTrapGroup(r=(0., 0., 0.))
+        outer.addTrap(inner)
+        snap = outer._snapshot()
+        self.assertIn(id(inner), snap)
+        self.assertIn(id(leaf), snap)
+
+
+class TestRotate(unittest.TestCase):
+
+    def setUp(self):
+        self.group = QTrapGroup(r=(0., 0., 0.))
+        self.t1 = QTrap(r=(1., 0., 0.), phase=0.)
+        self.t2 = QTrap(r=(-1., 0., 0.), phase=0.)
+        self.group.addTrap([self.t1, self.t2])
+        self.snap = self.group._snapshot()
+
+    def test_90deg_rotation(self):
+        self.group.rotate(np.pi / 2., self.snap)
+        np.testing.assert_array_almost_equal(self.t1._r[:2], [0., 1.])
+        np.testing.assert_array_almost_equal(self.t2._r[:2], [0., -1.])
+
+    def test_180deg_rotation(self):
+        self.group.rotate(np.pi, self.snap)
+        np.testing.assert_array_almost_equal(self.t1._r[:2], [-1., 0.])
+        np.testing.assert_array_almost_equal(self.t2._r[:2], [1., 0.])
+
+    def test_group_center_unchanged(self):
+        self.group.rotate(np.pi / 4., self.snap)
+        np.testing.assert_array_almost_equal(self.group._r, [0., 0., 0.])
+
+    def test_z_coordinate_unchanged(self):
+        self.t1._r[2] = 5.
+        snap = self.group._snapshot()
+        self.group.rotate(np.pi / 2., snap)
+        self.assertAlmostEqual(self.t1._r[2], 5.)
+
+    def test_emits_changed_once(self):
+        spy = QtTest.QSignalSpy(self.group.changed)
+        self.group.rotate(np.pi / 2., self.snap)
+        self.assertEqual(len(spy), 1)
+
+    def test_leaf_changed_not_emitted(self):
+        spy1 = QtTest.QSignalSpy(self.t1.changed)
+        spy2 = QtTest.QSignalSpy(self.t2.changed)
+        self.group.rotate(np.pi / 2., self.snap)
+        self.assertEqual(len(spy1), 0)
+        self.assertEqual(len(spy2), 0)
+
+    def test_idempotent_with_same_snapshot(self):
+        self.group.rotate(np.pi / 3., self.snap)
+        r1a = self.t1._r.copy()
+        self.group.rotate(np.pi / 3., self.snap)
+        np.testing.assert_array_almost_equal(self.t1._r, r1a)
+
+    def test_zero_angle_no_change(self):
+        self.group.rotate(0., self.snap)
+        np.testing.assert_array_almost_equal(self.t1._r, [1., 0., 0.])
+
+    def test_non_zero_center(self):
+        group = QTrapGroup(r=(2., 0., 0.))
+        trap = QTrap(r=(3., 0., 0.), phase=0.)
+        group.addTrap(trap)
+        snap = group._snapshot()
+        group.rotate(np.pi / 2., snap)
+        np.testing.assert_array_almost_equal(trap._r[:2], [2., 1.])
+
+    def test_nested_group_center_rotates(self):
+        outer = QTrapGroup(r=(0., 0., 0.))
+        inner = QTrapGroup(r=(2., 0., 0.))
+        leaf = QTrap(r=(3., 0., 0.), phase=0.)
+        inner.addTrap(leaf)
+        outer.addTrap(inner)
+        snap = outer._snapshot()
+        outer.rotate(np.pi / 2., snap)
+        np.testing.assert_array_almost_equal(inner._r[:2], [0., 2.])
+        np.testing.assert_array_almost_equal(leaf._r[:2], [0., 3.])
+
+    def test_nested_leaf_rotates_around_outer_center(self):
+        outer = QTrapGroup(r=(0., 0., 0.))
+        inner = QTrapGroup(r=(1., 0., 0.))
+        leaf = QTrap(r=(2., 0., 0.), phase=0.)
+        inner.addTrap(leaf)
+        outer.addTrap(inner)
+        snap = outer._snapshot()
+        outer.rotate(np.pi / 2., snap)
+        np.testing.assert_array_almost_equal(leaf._r[:2], [0., 2.])
+
+
 class TestToDict(unittest.TestCase):
 
     def setUp(self):

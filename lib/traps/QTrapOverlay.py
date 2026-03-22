@@ -36,6 +36,7 @@ class QTrapOverlay(ScatterPlotItem):
     Shift + left click         Add trap
     Ctrl + Shift + left click  Remove trap
     Alt + Shift + left click   Break group
+    Alt + left drag            Rotate group
     Left drag (no modifier)    Move group
     Left drag (no target)      Rubber-band select / group
     Scroll wheel               Adjust trap z
@@ -109,7 +110,8 @@ class QTrapOverlay(ScatterPlotItem):
 
     default: Descriptions = ((('left', 'shift'), 'addTrap'),
                              (('left', 'ctrl|shift'), 'removeTrap'),
-                             (('left', 'alt|shift'), 'breakGroup'))
+                             (('left', 'alt|shift'), 'breakGroup'),
+                             (('left', 'alt'), 'startRotation'))
 
     def __init__(self, *args,
                  size: int = 16,
@@ -136,6 +138,10 @@ class QTrapOverlay(ScatterPlotItem):
         self._selected: QTrap | None = None
         self._drag_last: QtCore.QPointF | None = None
         self._selection_origin: QtCore.QPointF | None = None
+        self._rotating: QTrapGroup | None = None
+        self._rotation_center: tuple[float, float] = (0., 0.)
+        self._rotation_angle0: float = 0.
+        self._rotation_snapshot: dict = {}
         self._handler = dict(self._mapping(d) for d in descriptions)
 
     def __iter__(self) -> Iterator[QTrap]:
@@ -587,6 +593,38 @@ class QTrapOverlay(ScatterPlotItem):
         self._setGroupBrush(self._selected, self.State.SELECTED)
         return True
 
+    def startRotation(self, pos: QtCore.QPointF) -> bool:
+        '''Begin rotating the group under the cursor around its center.
+
+        If no trap is found at ``pos``, returns ``False`` to allow
+        rubber-band fallback.  If the trap is ungrouped, returns ``True``
+        but does not start rotation (Alt+drag on a lone trap is a no-op).
+
+        Parameters
+        ----------
+        pos : QPointF
+            Click position in item coordinates.
+
+        Returns
+        -------
+        bool
+            ``True`` if a trap was found (rotation started or no-op),
+            ``False`` if no trap is nearby.
+        '''
+        trap = self.trapAt(pos)
+        if trap is None:
+            return False
+        group = self.groupOf(trap)
+        if not isinstance(group, QTrapGroup):
+            return True
+        cx, cy = group._r[0], group._r[1]
+        self._rotating = group
+        self._rotation_center = (cx, cy)
+        self._rotation_angle0 = np.arctan2(pos.y() - cy, pos.x() - cx)
+        self._rotation_snapshot = group._snapshot()
+        self._setGroupBrush(group, self.State.SELECTED)
+        return True
+
     # QGraphicsItem event overrides (used when embedded in a PlotWidget)
 
     def mousePressEvent(self, event) -> None:
@@ -615,7 +653,13 @@ class QTrapOverlay(ScatterPlotItem):
             The mouse move event from Qt.
         '''
         pos = event.pos()
-        if self._selected is not None and self._drag_last is not None:
+        if self._rotating is not None:
+            cx, cy = self._rotation_center
+            angle_now = np.arctan2(pos.y() - cy, pos.x() - cx)
+            angle = angle_now - self._rotation_angle0
+            angle = (angle + np.pi) % (2. * np.pi) - np.pi
+            self._rotating.rotate(angle, self._rotation_snapshot)
+        elif self._selected is not None and self._drag_last is not None:
             dx = pos.x() - self._drag_last.x()
             dy = pos.y() - self._drag_last.y()
             new_r = self._selected._r.copy()
@@ -637,6 +681,10 @@ class QTrapOverlay(ScatterPlotItem):
         '''
         if self._selection.isVisible():
             self.endSelection()
+        if self._rotating is not None:
+            self._setGroupBrush(self._rotating, self.State.NORMAL)
+            self._rotating = None
+            self._rotation_snapshot = {}
         if self._selected is not None:
             self._setGroupBrush(self._selected, self.State.NORMAL)
         self._selected = None
@@ -694,7 +742,13 @@ class QTrapOverlay(ScatterPlotItem):
         '''
         if event.buttons() != self.button['left']:
             return False
-        if self._selected is not None and self._drag_last is not None:
+        if self._rotating is not None:
+            cx, cy = self._rotation_center
+            angle_now = np.arctan2(pos.y() - cy, pos.x() - cx)
+            angle = angle_now - self._rotation_angle0
+            angle = (angle + np.pi) % (2. * np.pi) - np.pi
+            self._rotating.rotate(angle, self._rotation_snapshot)
+        elif self._selected is not None and self._drag_last is not None:
             dx = pos.x() - self._drag_last.x()
             dy = pos.y() - self._drag_last.y()
             new_r = self._selected._r.copy()
@@ -723,6 +777,10 @@ class QTrapOverlay(ScatterPlotItem):
         '''
         if self._selection.isVisible():
             self.endSelection()
+        if self._rotating is not None:
+            self._setGroupBrush(self._rotating, self.State.NORMAL)
+            self._rotating = None
+            self._rotation_snapshot = {}
         if self._selected is not None:
             self._setGroupBrush(self._selected, self.State.NORMAL)
         self._selected = None
