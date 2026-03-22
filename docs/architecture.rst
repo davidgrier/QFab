@@ -25,14 +25,17 @@ traps.  Each trap holds a 3D position ``r``, an ``amplitude``, and a
 ``phase``, and emits ``changed`` whenever any property is updated.
 
 :class:`~QHOT.lib.traps.QTrapGroup.QTrapGroup` provides recursive grouping.
-Translating a group moves all contained traps together and emits
-``groupMoved`` so the CGH can update the accumulated group field in place
-rather than recomputing every trap individually.
+Translating a group moves all contained traps together and emits ``changed``
+once on the group, so the CGH can update only the group's displacement cache
+(one outer product) without recomputing every leaf individually.
+Rotating a group updates every child position in place and calls
+``_broadcastChanged()`` to emit ``changed`` from each descendant in turn,
+ensuring that all per-trap and per-group CGH caches are invalidated correctly.
 
 :class:`~QHOT.lib.traps.QTrapOverlay.QTrapOverlay` is a
 ``pyqtgraph.ScatterPlotItem`` that renders each trap as a colored spot and
 dispatches mouse and scroll-wheel events to add, remove, select, drag, group,
-and break traps.
+rotate, and break traps.
 
 **Serialization.**  Every trap class implements ``to_dict()``, which returns a
 plain ``dict`` containing a ``'type'`` key (the class name) and all registered
@@ -104,8 +107,9 @@ together via Qt signals.
 
 **Central signal flow:**
 
-1. ``QTrapOverlay`` emits ``trapAdded`` / ``trapRemoved`` → leaf trap
-   ``changed`` signals are connected to ``_scheduleCompute``.
+1. ``QTrapOverlay`` emits ``trapAdded`` / ``trapRemoved`` → the group's
+   ``changed`` signal and each leaf's ``changed`` signal are connected to
+   ``_scheduleCompute``.
 2. Each video frame triggers ``_onFrame``, which emits
    ``_computeRequested`` if traps have changed and no compute is pending.
 3. ``CGH.compute`` runs in a ``QThread`` and emits ``hologramReady``.

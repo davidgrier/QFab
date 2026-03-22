@@ -1,5 +1,73 @@
 # Changelog
 
+## [1.2.0] — 2026-03-22
+
+### Added
+- Interactive group rotation: hold **Alt** and left-drag any trap in a group
+  to rotate the entire outermost group around its center.  The rotation angle
+  is determined by the angle from the group center to the cursor, computed
+  absolutely from a snapshot of child positions taken at press time (no
+  floating-point drift).  Sub-group centers are updated recursively.  Traps
+  display the *selected* (pink) visual state during the drag.
+- `QTrapGroup._snapshot()`: records `{id(child): _r.copy()}` for all
+  descendants, used to seed rotation without cumulative drift.
+- `QTrapGroup._rotateSilently()`: applies an in-place rotation to all
+  descendants without emitting any signals.
+- `QTrapGroup._broadcastChanged()`: emits `changed` from every descendant
+  (leaves first, then sub-groups, then self) so that the CGH displacement-
+  field caches are correctly invalidated after rotation.
+- `QTrapGroup.rotate(angle, snapshot)`: public method combining the above;
+  called by `QTrapOverlay` on every mouse-move event during a rotation drag.
+- `QTrapOverlay.startRotation()`: begins rotation mode and is registered as
+  the handler for the **Alt + left drag** gesture.
+
+### Fixed
+- Group rotation now correctly updates the hologram on the SLM.  Previously,
+  `rotate()` only emitted `group.changed`, which cleared `_field_cache[group]`
+  but left `_structure_cache[group]` and every `_field_cache[leaf]` stale.
+  The CGH reused the old cached values and produced an unchanged hologram.
+  `_broadcastChanged()` ensures all relevant cache entries are invalidated.
+
+---
+
+## [1.1.0] — 2026-03-22
+
+### Added
+- `TorchCGH`: PyTorch-accelerated CGH backend.  Automatically selects the
+  best available device — Apple Silicon MPS, NVIDIA/AMD CUDA/ROCm, or CPU
+  fallback.  Install with `pip install QHOT[torch]`.
+- `lib/chooser.py`: `choose_cgh()` auto-detects and instantiates the best
+  available CGH backend; `cgh_parser()` registers `-t` (TorchCGH) and `-u`
+  (cupyCGH) CLI flags; `build_parser()` combines CGH and camera backend
+  flags into titled argument groups compatible with `QVideo.lib.chooser`.
+- `__version__` is now sourced from installed package metadata via
+  `importlib.metadata`, keeping `pyproject.toml` as the single source of
+  truth.
+
+### Fixed
+- Trap spots in a group now translate correctly when the group is dragged.
+  `_onGroupChanged` was only connected in `addTrap`; groups created by
+  rubber-band selection (`_finalizeSelection`) and by `breakGroup` (inner
+  group promotion) were missing the connection.
+
+### Changed
+- `CGH._connectTrap()` extracted as a shared helper so `TorchCGH.fieldOf`
+  no longer duplicates the weakref+partial signal-wiring block.
+- `@classmethod` removed from `coverage.exclude_lines`; `example()` methods
+  removed from all CGH modules, eliminating the need for that broad exclusion.
+
+---
+
+## [1.0.0] — 2026-03-15
+
+### Added
+- Initial public release on PyPI under the name **QHOT**
+  (renamed from the internal project name QFab).
+- GPLv3 license.
+- Sphinx documentation published to ReadTheDocs.
+
+---
+
 ## [0.1.0] — 2026-03-14
 
 ### Added
