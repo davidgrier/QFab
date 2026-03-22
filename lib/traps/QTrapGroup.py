@@ -21,18 +21,8 @@ class QTrapGroup(QTrap):
     ----------
     traps : list[QTrap]
         Direct children of this group (may include nested QTrapGroups).
-
-    Signals
-    -------
-    groupMoved : QtCore.pyqtSignal(object, object)
-        Emitted when the group is translated. Carries the list of all
-        leaf traps in the subtree and the translation delta as an
-        ``np.ndarray``. Emitted before the individual leaf ``changed``
-        signals so that observers can perform bulk invalidation.
     '''
 
-    #: Emitted with (leaves, delta) when the group is translated.
-    groupMoved = QtCore.pyqtSignal(object, object)
 
     def __len__(self) -> int:
         return sum(1 for _ in self)
@@ -93,16 +83,13 @@ class QTrapGroup(QTrap):
         '''Translate the group so its center moves to ``r``.
 
         Moves the group node and all descendants by the same delta,
-        emits ``groupMoved`` for bulk cache invalidation, then emits
-        ``changed`` on every leaf and on the group itself.
+        then emits ``changed`` on the group itself.  Individual leaf
+        ``changed`` signals are not emitted; observers that need a
+        per-leaf notification should connect to the group's ``changed``.
         '''
         new_r = np.asarray(r, dtype=float)
         delta = new_r - self._r
-        leaves = list(self.leaves())
         self._translateSilently(delta)
-        self.groupMoved.emit(leaves, delta)
-        for leaf in leaves:
-            leaf.changed.emit()
         self.changed.emit()
 
     def to_dict(self) -> dict:

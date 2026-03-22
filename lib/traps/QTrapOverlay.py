@@ -225,6 +225,8 @@ class QTrapOverlay(ScatterPlotItem):
                 functools.partial(self._onGroupReshaping, traps))
             traps.reshaped.connect(
                 functools.partial(self._onGroupReshaped, traps))
+        if isinstance(traps, QTrapGroup):
+            traps.changed.connect(self._onGroupChanged)
         self.trapAdded.emit(traps)
         return True
 
@@ -261,6 +263,11 @@ class QTrapOverlay(ScatterPlotItem):
                 self._traps.remove(t)
             t._index = None
             t.setParent(None)
+        if isinstance(group, QTrapGroup):
+            try:
+                group.changed.disconnect(self._onGroupChanged)
+            except (TypeError, RuntimeError):
+                pass
         group.setParent(None)
         self._rebuildSpots()
         return True
@@ -274,6 +281,11 @@ class QTrapOverlay(ScatterPlotItem):
         self._traps.clear()
         self.clear()
         for item in top_level:
+            if isinstance(item, QTrapGroup):
+                try:
+                    item.changed.disconnect(self._onGroupChanged)
+                except (TypeError, RuntimeError):
+                    pass
             item.setParent(None)
             self.trapRemoved.emit(item)
 
@@ -355,6 +367,17 @@ class QTrapOverlay(ScatterPlotItem):
         spot._data['x'] = trap.x
         spot._data['y'] = trap.y
         spot.updateItem()
+
+    @QtCore.pyqtSlot()
+    def _onGroupChanged(self) -> None:
+        '''Slot called when a group is translated; updates all leaf spots.'''
+        group: QTrapGroup = self.sender()
+        for trap in group.leaves():
+            if trap._index is not None:
+                spot = self.points()[trap._index]
+                spot._data['x'] = trap.x
+                spot._data['y'] = trap.y
+                spot.updateItem()
 
     def _setGroupBrush(self, group: QTrap, state: State) -> None:
         '''Set the brush of every leaf spot in a group to the given state.

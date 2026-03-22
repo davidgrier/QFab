@@ -217,7 +217,7 @@ class TestRepr(unittest.TestCase):
         self.assertIn('ntraps=', s)
 
 
-class TestGroupMoved(unittest.TestCase):
+class TestGroupTranslation(unittest.TestCase):
 
     def setUp(self):
         self.group = QTrapGroup(r=(0., 0., 0.))
@@ -225,35 +225,17 @@ class TestGroupMoved(unittest.TestCase):
         self.t2 = QTrap(r=(2., 0., 0.), phase=0.)
         self.group.addTrap([self.t1, self.t2])
 
-    def test_group_moved_emitted_on_translation(self):
-        spy = QtTest.QSignalSpy(self.group.groupMoved)
-        self.group.r = (3., 0., 0.)
-        self.assertEqual(len(spy), 1)
-
-    def test_group_moved_carries_leaves(self):
-        spy = QtTest.QSignalSpy(self.group.groupMoved)
-        self.group.r = (3., 0., 0.)
-        leaves, _ = spy[0]
-        self.assertIn(self.t1, leaves)
-        self.assertIn(self.t2, leaves)
-
-    def test_group_moved_carries_delta(self):
-        spy = QtTest.QSignalSpy(self.group.groupMoved)
-        self.group.r = (3., 0., 0.)
-        _, delta = spy[0]
-        np.testing.assert_array_almost_equal(delta, [3., 0., 0.])
-
-    def test_leaf_changed_emitted_after_group_move(self):
-        spy1 = QtTest.QSignalSpy(self.t1.changed)
-        spy2 = QtTest.QSignalSpy(self.t2.changed)
-        self.group.r = (3., 0., 0.)
-        self.assertEqual(len(spy1), 1)
-        self.assertEqual(len(spy2), 1)
-
     def test_group_changed_emitted_once(self):
         spy = QtTest.QSignalSpy(self.group.changed)
         self.group.r = (3., 0., 0.)
         self.assertEqual(len(spy), 1)
+
+    def test_leaf_changed_not_emitted_on_group_move(self):
+        spy1 = QtTest.QSignalSpy(self.t1.changed)
+        spy2 = QtTest.QSignalSpy(self.t2.changed)
+        self.group.r = (3., 0., 0.)
+        self.assertEqual(len(spy1), 0)
+        self.assertEqual(len(spy2), 0)
 
     def test_leaf_positions_updated(self):
         self.group.r = (3., 0., 0.)

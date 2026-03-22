@@ -94,8 +94,16 @@ class QHOT(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot(QTrap)
     def _onTrapAdded(self, trap: QTrap) -> None:
-        '''Connect each new leaf trap's changed signal and schedule a compute.
+        '''Connect each new trap's changed signals and schedule a compute.
+
+        For groups, the group's own ``changed`` is connected to handle
+        translation (individual leaves do not emit ``changed`` on group
+        moves).  Each leaf's ``changed`` and ``structureChanged`` are
+        also connected to handle independent leaf changes.
         '''
+        from QHOT.lib.traps.QTrapGroup import QTrapGroup
+        if isinstance(trap, QTrapGroup):
+            trap.changed.connect(self._scheduleCompute)
         for leaf in trap.leaves():
             leaf.changed.connect(self._scheduleCompute)
             if hasattr(leaf, 'structureChanged'):
