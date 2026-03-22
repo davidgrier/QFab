@@ -40,6 +40,7 @@ Issues = "https://github.com/davidgrier/QHOT/issues"
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov"]
 docs = ["pydata-sphinx-theme", "sphinx", "sphinx-autodoc-typehints"]
+torch = ["torch>=2.0"]
 
 [project.scripts]
 qhot = "QHOT.qhot:main"
