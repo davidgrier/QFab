@@ -8,9 +8,9 @@ Ideas for upgrades and extensions, in no particular order.
 
 Accelerate hologram computation for higher frame rates and larger SLMs.
 
-- GPU-based CGH via CUDA/cupy (`lib/holograms/cupyCGH.py` is a starting point)
-- PyTorch-based CGH for cross-platform GPU acceleration (CUDA, MPS, CPU fallback)
-- Automatically select the most performant CGH implementation available on the platform
+- ~~GPU-based CGH via CUDA/cupy (`lib/holograms/cupyCGH.py` is a starting point)~~  **Done** (cupyCGH exists)
+- ~~PyTorch-based CGH for cross-platform GPU acceleration (CUDA, MPS, CPU fallback)~~  **Done** (v1.1.0, `TorchCGH`)
+- ~~Automatically select the most performant CGH implementation available on the platform~~  **Done** (v1.1.0, `choose_cgh()`)
 - Investigate OpenCL for portability across GPU vendors
 - Benchmark CPU vs GPU for typical SLM resolutions
 - Improve efficiency of trap group motion (reduce redundant CGH recomputation on bulk moves)
@@ -58,12 +58,13 @@ block for automated experimental workflows.
 
 ## Trap Group Rotation
 
-Interactive and programmatic rotation of trap groups.
+~~Interactive and programmatic rotation of trap groups.~~
 
-- 2D in-plane rotation (around z-axis) of `QTrapGroup` and `QTrapArray`
+- ~~2D in-plane rotation (around z-axis) of `QTrapGroup`~~ **Done** (v1.2.0, Alt + drag gesture)
 - 3D rotation (tilt/tumble) of planar trap configurations
-- UI handle or mouse gesture for interactive rotation
-- Rotation center: group centroid or user-specified pivot
+- ~~UI handle or mouse gesture for interactive rotation~~ **Done** (v1.2.0)
+- ~~Rotation center: group centroid or user-specified pivot~~ **Done** (v1.2.0, group centroid)
+- More efficient rotation algorithm for large groups (currently O(N) cache invalidations)
 
 ---
 
