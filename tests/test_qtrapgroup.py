@@ -340,17 +340,17 @@ class TestRotate(unittest.TestCase):
         self.group.rotate(np.pi / 2., snap)
         self.assertAlmostEqual(self.t1._r[2], 5.)
 
-    def test_emits_changed_once(self):
+    def test_group_changed_emitted(self):
         spy = QtTest.QSignalSpy(self.group.changed)
         self.group.rotate(np.pi / 2., self.snap)
-        self.assertEqual(len(spy), 1)
+        self.assertGreaterEqual(len(spy), 1)
 
-    def test_leaf_changed_not_emitted(self):
+    def test_leaf_changed_emitted_for_cgh_invalidation(self):
         spy1 = QtTest.QSignalSpy(self.t1.changed)
         spy2 = QtTest.QSignalSpy(self.t2.changed)
         self.group.rotate(np.pi / 2., self.snap)
-        self.assertEqual(len(spy1), 0)
-        self.assertEqual(len(spy2), 0)
+        self.assertGreaterEqual(len(spy1), 1)
+        self.assertGreaterEqual(len(spy2), 1)
 
     def test_idempotent_with_same_snapshot(self):
         self.group.rotate(np.pi / 3., self.snap)
@@ -380,6 +380,19 @@ class TestRotate(unittest.TestCase):
         outer.rotate(np.pi / 2., snap)
         np.testing.assert_array_almost_equal(inner._r[:2], [0., 2.])
         np.testing.assert_array_almost_equal(leaf._r[:2], [0., 3.])
+
+    def test_inner_group_changed_emitted_for_cgh_invalidation(self):
+        outer = QTrapGroup(r=(0., 0., 0.))
+        inner = QTrapGroup(r=(2., 0., 0.))
+        leaf = QTrap(r=(3., 0., 0.), phase=0.)
+        inner.addTrap(leaf)
+        outer.addTrap(inner)
+        snap = outer._snapshot()
+        spy_inner = QtTest.QSignalSpy(inner.changed)
+        spy_leaf = QtTest.QSignalSpy(leaf.changed)
+        outer.rotate(np.pi / 2., snap)
+        self.assertGreaterEqual(len(spy_inner), 1)
+        self.assertGreaterEqual(len(spy_leaf), 1)
 
     def test_nested_leaf_rotates_around_outer_center(self):
         outer = QTrapGroup(r=(0., 0., 0.))
