@@ -37,10 +37,12 @@ class QVortex(QTrap):
         super().__init__(*args, **kwargs)
 
     def _registerProperties(self) -> None:
+        '''Register ``ell`` as an editable property in addition to base properties.'''
         super()._registerProperties()
         self.registerProperty('ell', decimals=0, tooltip=True)
 
     def appearance(self) -> dict:
+        '''Return the letter ``V`` as the scatter-plot symbol for this trap.'''
         return {'symbol': letterSymbol('V')}
 
     @property
@@ -54,6 +56,18 @@ class QVortex(QTrap):
         self.structureChanged.emit()
 
     def structure(self, cgh: CGH) -> np.ndarray:
+        '''Compute the helical phase structure ``exp(i ell θ)``.
+
+        Parameters
+        ----------
+        cgh : CGH
+            The hologram engine providing the angular coordinate array ``theta``.
+
+        Returns
+        -------
+        np.ndarray
+            Complex phase mask of shape ``cgh.shape``.
+        '''
         return np.exp(1j * self.ell * cgh.theta)
 
 

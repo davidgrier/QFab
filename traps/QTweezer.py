@@ -3,11 +3,11 @@ from QFab.lib.traps.QTrap import QTrap
 
 class QTweezer(QTrap):
 
-    '''Optical tweezer
+    '''Single Gaussian optical tweezer.
 
-    Inherits
-    --------
-    QTrap
+    Subclass of ``QTrap`` with no additional properties or structure.
+    The trapping beam is a plain focused Gaussian; all behaviour is
+    inherited directly from ``QTrap``.
     '''
 
 

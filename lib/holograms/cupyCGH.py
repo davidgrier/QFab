@@ -15,6 +15,12 @@ except (ImportError, ModuleNotFoundError):
 
 class cupyCGH(CGH):
     def __init__(self, *args, **kwargs) -> None:
+        '''Initialise the GPU pipeline and compile CUDA kernels.
+
+        Calls the base ``CGH.__init__``, verifies CUDA device availability,
+        then compiles the three raw CUDA kernels used for geometry computation
+        and phase quantization.
+        '''
         super(cupyCGH, self).__init__(*args, **kwargs)
 
         cp.cuda.Device()
@@ -91,24 +97,40 @@ class cupyCGH(CGH):
         ''', 'phase')
 
     def outeratan2f(self, a: cp.ndarray, b: cp.ndarray, out: cp.ndarray) -> None:
+        '''Compute the outer ``atan2(b[j], a[i])`` table on the GPU.'''
         self._outeratan2f(self.grid, self.block,
                           (a, b, out, cp.int32(a.size), cp.int32(b.size)))
 
     def outerhypot(self, a: cp.ndarray, b: cp.ndarray, out: cp.ndarray) -> None:
+        '''Compute the outer ``hypot(a[i], b[j])`` table on the GPU.'''
         self._outerhypot(self.grid, self.block,
                          (a, b, out, cp.int32(a.size), cp.int32(b.size)))
 
     def phase(self, a: cp.ndarray, out: cp.ndarray) -> None:
+        '''Quantize the phase of complex array ``a`` into uint8 array ``out``.'''
         self._phase(self.grid, self.block,
                     (a, out, cp.int32(a.shape[0]), cp.int32(a.shape[1])))
 
     def quantize(self, psi: cp.ndarray) -> np.ndarray:
+        '''Quantize a GPU complex field to a CPU uint8 phase array.
+
+        Parameters
+        ----------
+        psi : cp.ndarray
+            Complex field array on the GPU.
+
+        Returns
+        -------
+        np.ndarray
+            Phase encoded as uint8 in [0, 255], transferred to the CPU.
+        '''
         self.phase(psi, self._phi)
         self._phi.get(out=self.phi)
         return self.phi
 
     def compute_displace(self, amp: cp.ndarray, r: cp.ndarray,
                          buffer: cp.ndarray) -> None:
+        '''Compute the displacement field for one trap and accumulate into ``buffer``.'''
         r = self.map_coordinates(r)
         ex = cp.exp(self._iqx * r.x() + self._iqxz * r.z(),
                     dtype=cp.complex64)
@@ -117,6 +139,13 @@ class cupyCGH(CGH):
         cp.outer(amp * ey, ex, buffer)
 
     def updateGeometry(self) -> None:
+        '''Recompute GPU geometry arrays and copy working copies to the CPU.
+
+        Allocates GPU buffers for the complex field, phase output, angular
+        coordinates, and radial coordinates. Computes ``iqx``, ``iqy``,
+        ``iqxz``, ``iqyz``, ``theta``, and ``qr`` on the GPU, then copies
+        the arrays needed by CPU-side code back to the host.
+        '''
         # GPU variables
         self._psi = cp.zeros(self.shape, dtype=cp.complex64)
         self._phi = cp.zeros(self.shape, dtype=cp.uint8)
@@ -143,6 +172,18 @@ class cupyCGH(CGH):
         self.sigUpdateGeometry.emit()
 
     def bless(self, field: np.ndarray | None) -> cp.ndarray | None:
+        '''Cast a CPU array to ``complex64`` and transfer it to the GPU.
+
+        Parameters
+        ----------
+        field : np.ndarray or None
+            CPU array to transfer, or ``None``.
+
+        Returns
+        -------
+        cp.ndarray or None
+            Array as ``complex64`` on the GPU, or ``None`` if input is ``None``.
+        '''
         if field is None:
             return None
         gpu_field = cp.asarray(field.astype(cp.complex64))

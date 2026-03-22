@@ -13,9 +13,9 @@ class QTrapGroup(QTrap):
 
     '''Trap composed of multiple traps or nested groups.
 
-    Inherits
-    --------
-    QFab.lib.traps.QTrap
+    Subclass of ``QTrap``. Iterating a ``QTrapGroup`` yields its direct
+    children, which may themselves be groups. Use ``leaves()`` to
+    iterate only the leaf traps at the bottom of the hierarchy.
 
     Attributes
     ----------
@@ -27,23 +27,8 @@ class QTrapGroup(QTrap):
     groupMoved : QtCore.pyqtSignal(object, object)
         Emitted when the group is translated. Carries the list of all
         leaf traps in the subtree and the translation delta as an
-        np.ndarray. Emitted before the individual leaf ``changed``
+        ``np.ndarray``. Emitted before the individual leaf ``changed``
         signals so that observers can perform bulk invalidation.
-
-    Methods
-    -------
-    addTrap(traps: QTrap | list[QTrap]) -> None
-        Add one or more traps or groups as direct children.
-    removeTrap(trap: QTrap) -> None
-        Remove a direct child trap or group.
-    leaves() -> Iterator[QTrap]
-        Recursively yield all leaf traps in the subtree.
-
-    Notes
-    -----
-    Iterating a ``QTrapGroup`` yields its direct children (which may
-    themselves be groups). Use ``leaves()`` to iterate only the leaf
-    traps at the bottom of the hierarchy.
     '''
 
     groupMoved = QtCore.pyqtSignal(object, object)
@@ -104,6 +89,12 @@ class QTrapGroup(QTrap):
 
     @QTrap.r.setter
     def r(self, r: npt.ArrayLike) -> None:
+        '''Translate the group so its centre moves to ``r``.
+
+        Moves the group node and all descendants by the same delta,
+        emits ``groupMoved`` for bulk cache invalidation, then emits
+        ``changed`` on every leaf and on the group itself.
+        '''
         new_r = np.asarray(r, dtype=float)
         delta = new_r - self._r
         leaves = list(self.leaves())

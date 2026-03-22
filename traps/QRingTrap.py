@@ -46,11 +46,13 @@ class QRingTrap(QTrap):
         super().__init__(*args, **kwargs)
 
     def _registerProperties(self) -> None:
+        '''Register ``radius`` and ``ell`` as editable properties.'''
         super()._registerProperties()
         self.registerProperty('radius', tooltip=True)
         self.registerProperty('ell', decimals=0, tooltip=True)
 
     def appearance(self) -> dict:
+        '''Return the letter ``O`` as the scatter-plot symbol for this trap.'''
         return {'symbol': letterSymbol('O')}
 
     @property
@@ -74,6 +76,19 @@ class QRingTrap(QTrap):
         self.structureChanged.emit()
 
     def structure(self, cgh: CGH) -> np.ndarray:
+        '''Compute the Bessel-function amplitude and helical phase structure.
+
+        Parameters
+        ----------
+        cgh : CGH
+            The hologram engine providing the radial coordinate array ``qr``
+            and angular coordinate array ``theta``.
+
+        Returns
+        -------
+        np.ndarray
+            Complex structure mask of shape ``cgh.shape``.
+        '''
         return jv(self.ell, self.radius * cgh.qr) * np.exp(1j * self.ell * cgh.theta)
 
 
