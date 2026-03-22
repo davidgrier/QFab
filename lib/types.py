@@ -3,7 +3,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-__all__ = 'Field Hologram Shape Position'.split()
+__all__ = 'Field Hologram Shape Position Displacement'.split()
 
 
 # 2D complex array produced by the CGH pipeline.
@@ -18,3 +18,6 @@ Shape = tuple[int, int]
 
 # Three-dimensional trap position [pixels]: (x, y, z).
 Position = NDArray[np.float64]
+
+# Three-dimensional displacement vector [pixels]: (dx, dy, dz).
+Displacement = NDArray[np.float64]

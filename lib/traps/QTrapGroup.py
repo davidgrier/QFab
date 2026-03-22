@@ -1,5 +1,6 @@
 from pyqtgraph.Qt import QtCore
 from QHOT.lib.traps.QTrap import QTrap
+from QHOT.lib.types import Displacement
 from collections.abc import Iterator
 import numpy as np
 import numpy.typing as npt
@@ -69,8 +70,9 @@ class QTrapGroup(QTrap):
         if trap.parent() is self:
             trap.setParent(None)
 
-    def _translateSilently(self, delta: np.ndarray) -> None:
-        '''Translate this node and all descendants by delta without emitting signals.'''
+    def _translateSilently(self, delta: Displacement) -> None:
+        '''Translate this node and all descendants by delta
+        without emitting signals.'''
         self._r += delta
         for child in self:
             if isinstance(child, QTrapGroup):

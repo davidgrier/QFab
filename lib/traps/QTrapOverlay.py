@@ -10,7 +10,6 @@ from QHOT.lib.traps.commands import (
     MoveCommand, RotateCommand, WheelCommand, LockCommand)
 from QHOT.traps import QTweezer
 from enum import Enum
-import json
 import numpy as np
 from collections.abc import Callable, Iterator
 import functools
@@ -708,79 +707,15 @@ class QTrapOverlay(ScatterPlotItem):
     # QGraphicsItem event overrides (used when embedded in a PlotWidget)
 
     def mousePressEvent(self, event) -> None:
-        '''Handle press via QGraphicsItem dispatch (standalone / demo use).
-
-        Parameters
-        ----------
-        event : QGraphicsSceneMouseEvent
-            The mouse press event from Qt.
-        '''
-        signature = (event.button(), event.modifiers())
-        handler = self._handler.get(signature, self.selectGroup)
-        pos = event.pos()  # already in item coordinates
-        if handler(pos):
-            self._drag_last = pos
-        else:
-            self.startSelection(pos)
+        self.mousePress(event, event.pos())
         event.accept()
 
     def mouseMoveEvent(self, event) -> None:
-        '''Handle move via QGraphicsItem dispatch (standalone / demo use).
-
-        Parameters
-        ----------
-        event : QGraphicsSceneMouseEvent
-            The mouse move event from Qt.
-        '''
-        pos = event.pos()
-        if self._rotating is not None:
-            cx, cy = self._rotation_center
-            angle_now = np.arctan2(pos.y() - cy, pos.x() - cx)
-            angle = angle_now - self._rotation_angle0
-            angle = (angle + np.pi) % (2. * np.pi) - np.pi
-            self._rotation_angle = angle
-            self._rotating.rotate(angle, self._rotation_snapshot)
-        elif self._selected is not None and self._drag_last is not None:
-            dx = pos.x() - self._drag_last.x()
-            dy = pos.y() - self._drag_last.y()
-            new_r = self._selected._r.copy()
-            new_r[0] += dx
-            new_r[1] += dy
-            self._selected.r = new_r
-            self._drag_last = pos
-        elif self._selection.isVisible():
-            self.growSelection(pos)
+        self.mouseMove(event, event.pos())
         event.accept()
 
     def mouseReleaseEvent(self, event) -> None:
-        '''Handle release via QGraphicsItem dispatch (standalone / demo use).
-
-        Parameters
-        ----------
-        event : QGraphicsSceneMouseEvent
-            The mouse release event from Qt.
-        '''
-        if self._selection.isVisible():
-            self.endSelection()
-        if self._rotating is not None:
-            if abs(self._rotation_angle) > 1e-10:
-                self._undoStack.push(
-                    RotateCommand(self._rotating,
-                                  self._rotation_snapshot))
-            self._setGroupBrush(self._rotating, self.State.NORMAL)
-            self._rotating = None
-            self._rotation_snapshot = {}
-            self._rotation_angle = 0.
-        if self._selected is not None:
-            if (self._move_origin is not None
-                    and not np.allclose(self._selected._r,
-                                        self._move_origin)):
-                self._undoStack.push(
-                    MoveCommand(self._selected, self._move_origin))
-            self._setGroupBrush(self._selected, self.State.NORMAL)
-        self._selected = None
-        self._move_origin = None
-        self._drag_last = None
+        self.mouseRelease(event)
         event.accept()
 
     # Event handlers (called by QHOTScreen)
@@ -805,7 +740,7 @@ class QTrapOverlay(ScatterPlotItem):
         bool
             Always ``True``.
         '''
-        signature = (event.buttons(), event.modifiers())
+        signature = (event.button(), event.modifiers())
         handler = self._handler.get(signature, self.selectGroup)
         if not handler(pos):
             self.startSelection(pos)
@@ -939,51 +874,34 @@ class QTrapOverlay(ScatterPlotItem):
         QTrap
             The reconstructed trap or group, with children attached.
         '''
-        d = dict(d)
-        trap_type = d.pop('type')
-        children = d.pop('children', None)
-        mask = d.pop('mask', None)
-        r = (d.pop('x'), d.pop('y'), d.pop('z'))
-        cls = QTrap._registry.get(trap_type)
+        cls = QTrap._registry.get(d['type'])
         if cls is None:
-            raise KeyError(f'Unknown trap type {trap_type!r}. '
+            raise KeyError(f'Unknown trap type {d["type"]!r}. '
                            f'Import its module before calling load().')
-
-        kwargs: dict = {'r': r, **d}
-        if mask is not None:
-            kwargs['mask'] = np.array(mask, dtype=bool)
-        if trap_type == 'QTrapArray':
-            nx = int(kwargs.pop('nx'))
-            ny = int(kwargs.pop('ny'))
-            kwargs['shape'] = (nx, ny)
-        trap = cls(**kwargs)
-        if children is not None:
-            for child_d in children:
-                trap.addTrap(self._make_trap(child_d))
+        trap = cls.from_dict(d)
+        for child_d in d.get('children', []):
+            trap.addTrap(self._make_trap(child_d))
         return trap
 
-    def save(self, path: str) -> None:
-        '''Save all traps to a JSON file.
+    def to_list(self) -> list[dict]:
+        '''Serialise all traps to a list of plain dicts.
+
+        Returns
+        -------
+        list[dict]
+            One dict per top-level trap or group, as produced by
+            ``QTrap.to_dict()`` / ``QTrapGroup.to_dict()``.
+        '''
+        return [trap.to_dict() for trap in self]
+
+    def from_list(self, data: list[dict]) -> None:
+        '''Replace the current traps with those described by ``data``.
 
         Parameters
         ----------
-        path : str
-            Destination file path.
+        data : list[dict]
+            A list of dicts as produced by ``to_list()``.
         '''
-        data = [trap.to_dict() for trap in self]
-        with open(path, 'w') as f:
-            json.dump(data, f, indent=2)
-
-    def load(self, path: str) -> None:
-        '''Load traps from a JSON file, replacing the current configuration.
-
-        Parameters
-        ----------
-        path : str
-            Source file path produced by ``save()``.
-        '''
-        with open(path) as f:
-            data = json.load(f)
         self.clearTraps()
         for d in data:
             self.addTrap(self._make_trap(d))

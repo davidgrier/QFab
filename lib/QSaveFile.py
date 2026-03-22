@@ -6,6 +6,7 @@ from pathlib import Path
 from datetime import datetime
 import numpy as np
 import numpy.typing as npt
+import json
 import tomlkit
 import logging
 
@@ -165,7 +166,8 @@ class QSaveFile(QtCore.QObject):
             Path of the file that was written.
         '''
         filename = filename or self.filename(prefix='traps', suffix='.json')
-        overlay.save(filename)
+        with open(filename, 'w') as f:
+            json.dump(overlay.to_list(), f, indent=2)
         return filename
 
     def trapsAs(self, overlay) -> str:
@@ -204,7 +206,8 @@ class QSaveFile(QtCore.QObject):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(
             self.parent(), 'Open Traps', str(self.datadir), self.trap_format)
         if filename:
-            overlay.load(filename)
+            with open(filename) as f:
+                overlay.from_list(json.load(f))
             return filename
         return ''
 

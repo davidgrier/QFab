@@ -168,6 +168,34 @@ class QLetterArray(QTrapArray):
         self.mask = _char_mask(char)  # triggers _repopulate via mask.setter
 
     @classmethod
+    def from_dict(cls, d: dict) -> 'QLetterArray':
+        '''Reconstruct a QLetterArray from a serialised dict.
+
+        Overrides ``QTrapArray.from_dict`` because ``QLetterArray``
+        fixes ``shape`` at (5, 7) and does not serialise ``nx`` or
+        ``ny``.  The mask is applied after construction so it is not
+        passed directly to the constructor.
+
+        Parameters
+        ----------
+        d : dict
+            A dict as produced by ``QTrapArray.to_dict()``.
+
+        Returns
+        -------
+        QLetterArray
+            A new instance initialised from ``d``.
+        '''
+        r = (d['x'], d['y'], d['z'])
+        mask = d.get('mask')
+        kwargs = {k: v for k, v in d.items()
+                  if k not in ('type', 'x', 'y', 'z', 'mask')}
+        obj = cls(r=r, **kwargs)
+        if mask is not None:
+            obj.mask = np.array(mask, dtype=bool)
+        return obj
+
+    @classmethod
     def example(cls) -> None:  # pragma: no cover
         '''Demonstrate creation and character change.'''
         la = cls(char='N', separation=10.)

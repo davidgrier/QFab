@@ -206,6 +206,33 @@ class QTrapArray(QTrapGroup):
         d['mask'] = self._mask.tolist() if self._mask is not None else None
         return d
 
+    @classmethod
+    def from_dict(cls, d: dict) -> 'QTrapArray':
+        '''Reconstruct a QTrapArray from a serialised dict.
+
+        Overrides ``QTrap.from_dict`` to convert the serialised ``nx``
+        and ``ny`` values back into the ``shape`` constructor argument,
+        and to convert ``mask`` from a nested list to a numpy array.
+
+        Parameters
+        ----------
+        d : dict
+            A dict as produced by ``QTrapArray.to_dict()``.
+
+        Returns
+        -------
+        QTrapArray
+            A new instance initialised from ``d``.
+        '''
+        r = (d['x'], d['y'], d['z'])
+        shape = (int(d['nx']), int(d['ny']))
+        mask = d.get('mask')
+        if mask is not None:
+            mask = np.array(mask, dtype=bool)
+        kwargs = {k: v for k, v in d.items()
+                  if k not in ('type', 'x', 'y', 'z', 'nx', 'ny', 'mask')}
+        return cls(r=r, shape=shape, mask=mask, **kwargs)
+
     def _repopulate(self) -> None:
         '''Signal, clear direct children, repopulate, and signal again.'''
         self.reshaping.emit()

@@ -24,7 +24,7 @@ class QTrap(QtCore.QObject):
 
     Attributes
     ----------
-    r : npt.NDArray[np.float64]
+    r : Position
         Three-dimensional location of the trap [pixels].
     x : float
         x-coordinate of the trap [pixels].
@@ -44,7 +44,7 @@ class QTrap(QtCore.QObject):
     '''
 
     #: Emitted when any trap property changes.
-    changed = QtCore.Signal()
+    changed = QtCore.pyqtSignal()
 
     def __init__(self,
                  r: npt.ArrayLike = (0., 0., 0.),
@@ -226,6 +226,25 @@ class QTrap(QtCore.QObject):
         if self._locked:
             d['locked'] = True
         return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> 'QTrap':
+        '''Reconstruct a trap from a serialised dict.
+
+        Parameters
+        ----------
+        d : dict
+            A dict as produced by ``to_dict()``.
+
+        Returns
+        -------
+        QTrap
+            A new instance of ``cls`` initialised from ``d``.
+        '''
+        r = (d['x'], d['y'], d['z'])
+        kwargs = {k: v for k, v in d.items()
+                  if k not in ('type', 'x', 'y', 'z', 'children')}
+        return cls(r=r, **kwargs)
 
     @classmethod
     def example(cls) -> None:  # pragma: no cover
