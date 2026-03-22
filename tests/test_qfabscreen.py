@@ -207,39 +207,6 @@ class TestOverlayPos(unittest.TestCase):
         self.assertIsInstance(pos, QtCore.QPointF)
 
 
-class TestSizeHints(unittest.TestCase):
-    '''Cover sizeHint, hasHeightForWidth, heightForWidth with a mock source.'''
-
-    def setUp(self):
-        self.screen = make_screen()
-        self.shape = QtCore.QSize(640, 480)
-        source = MagicMock()
-        source.source.shape = self.shape
-        self.screen.source = source
-
-    def test_size_hint_returns_camera_shape(self):
-        self.assertEqual(self.screen.sizeHint(), self.shape)
-
-    def test_has_height_for_width_true_with_source(self):
-        self.assertTrue(self.screen.hasHeightForWidth())
-
-    def test_has_height_for_width_false_without_source(self):
-        screen = make_screen()  # fresh screen with no source
-        self.assertFalse(screen.hasHeightForWidth())
-
-    def test_height_for_width_preserves_aspect_ratio(self):
-        # 640×480 → height for width=320 should be 240
-        h = self.screen.heightForWidth(320)
-        self.assertEqual(h, 240)
-
-    def test_height_for_width_without_source_delegates(self):
-        screen = make_screen()  # fresh screen with no source
-        try:
-            screen.heightForWidth(320)
-        except Exception as e:
-            self.fail(f'heightForWidth raised {e} without source')
-
-
 class TestSetImageRendered(unittest.TestCase):
     '''Cover the rendered signal branch in setImage.'''
 

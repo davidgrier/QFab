@@ -38,6 +38,7 @@ class QFabScreen(QVideoScreen):
         should be synchronized with the display cadence.
     '''
 
+    status = QtCore.pyqtSignal(str)
     rendered = QtCore.pyqtSignal()
 
     def _setupUi(self) -> None:
@@ -47,29 +48,6 @@ class QFabScreen(QVideoScreen):
         self.view.addItem(self.overlay)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
                            QtWidgets.QSizePolicy.Policy.Expanding)
-
-    @QtCore.pyqtSlot(QtCore.QSize)
-    def updateShape(self, shape: QtCore.QSize) -> None:
-        '''Update the ViewBox range and notify the layout of the new size hint.'''
-        super().updateShape(shape)
-        self.updateGeometry()
-
-    def sizeHint(self) -> QtCore.QSize:
-        '''Return the camera's natural frame size as the preferred widget size.'''
-        if self.source is not None:
-            return self.source.source.shape
-        return super().sizeHint()
-
-    def hasHeightForWidth(self) -> bool:
-        '''Return True when the camera frame size is known.'''
-        return self.source is not None
-
-    def heightForWidth(self, width: int) -> int:
-        '''Return the height that preserves the camera aspect ratio.'''
-        if self.source is not None:
-            shape = self.source.source.shape
-            return width * shape.height() // shape.width()
-        return super().heightForWidth(width)
 
     def _overlayPos(self, event: QtGui.QInputEvent) -> QtCore.QPointF:
         '''Map a widget event position to overlay item coordinates.
