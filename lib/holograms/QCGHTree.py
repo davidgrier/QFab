@@ -57,23 +57,34 @@ class QCGHTree(ParameterTree):
         '''Return the parameter tree description for all CGH settings.'''
         instr = dict(name='instrument', type='group', children=[
             dict(name='wavelength', type='float',
-                 value=1.064, decimals=4, suffix='μm'),
-            dict(name='n_m', type='float', value=1.340, decimals=4),
-            dict(name='magnification', type='float', value=100., suffix='×'),
-            dict(name='focallength', type='float', value=200., suffix='μm'),
-            dict(name='camerapitch', type='float', value=4.8, suffix='μm'),
-            dict(name='slmpitch', type='float', value=8., suffix='μm'),
-            dict(name='splay', type='float', value=0.01)])
+                 value=1.064, default=1.064, decimals=4, suffix='μm'),
+            dict(name='n_m', type='float',
+                 value=1.340, default=1.340, decimals=4),
+            dict(name='magnification', type='float',
+                 value=100., default=100., suffix='×'),
+            dict(name='focallength', type='float',
+                 value=200., default=200., suffix='μm'),
+            dict(name='camerapitch', type='float',
+                 value=4.8, default=4.8, suffix='μm'),
+            dict(name='slmpitch', type='float',
+                 value=8., default=8., suffix='μm'),
+            dict(name='splay', type='float', value=0.01, default=0.01)])
         slm = dict(name='SLM', type='group', children=[
-            dict(name='xs', type='float', value=256., suffix='phixels'),
-            dict(name='ys', type='float', value=256., suffix='phixels'),
-            dict(name='phis', type='float', value=8., suffix='°'),
-            dict(name='scale', type='float', value=3.)])
+            dict(name='xs', type='float',
+                 value=256., default=256., suffix='phixels'),
+            dict(name='ys', type='float',
+                 value=256., default=256., suffix='phixels'),
+            dict(name='phis', type='float', value=8., default=8., suffix='°'),
+            dict(name='scale', type='float', value=3., default=3.)])
         camera = dict(name='camera', type='group', children=[
-            dict(name='xc', type='float', value=320., suffix='pixels'),
-            dict(name='yc', type='float', value=240., suffix='pixels'),
-            dict(name='zc', type='float', value=0., suffix='pixels'),
-            dict(name='thetac', type='float', value=0., suffix='°')])
+            dict(name='xc', type='float',
+                 value=320., default=320., suffix='pixels'),
+            dict(name='yc', type='float',
+                 value=240., default=240., suffix='pixels'),
+            dict(name='zc', type='float',
+                 value=0., default=0., suffix='pixels'),
+            dict(name='thetac', type='float',
+                 value=0., default=0., suffix='°')])
         return Parameter.create(name='params', type='group',
                                 children=[instr, slm, camera])
 
