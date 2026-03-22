@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 from pyqtgraph.Qt import QtCore, QtWidgets, QtTest
 
-from QHOT.tasks.QTask import QTask
-from QHOT.tasks.QTaskManager import QTaskManager
+from QHOT.lib.tasks.QTask import QTask
+from QHOT.lib.tasks.QTaskManager import QTaskManager
 
 app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 

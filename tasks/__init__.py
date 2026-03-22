@@ -1,4 +1,3 @@
-from .QTask import QTask
-from .QTaskManager import QTaskManager
+from QHOT.lib.tasks import QTask, QTaskManager
 
 __all__ = 'QTask QTaskManager'.split()

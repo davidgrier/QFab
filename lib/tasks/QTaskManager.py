@@ -7,7 +7,7 @@ from QVideo.dvr import QDVRWidget
 from QHOT.lib.QHOTScreen import QHOTScreen
 from QHOT.lib.traps.QTrapOverlay import QTrapOverlay
 from QHOT.lib.holograms.CGH import CGH
-from QHOT.tasks.QTask import QTask
+from QHOT.lib.tasks.QTask import QTask
 
 
 logger = logging.getLogger(__name__)
