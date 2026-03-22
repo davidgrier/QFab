@@ -1,17 +1,13 @@
-from __future__ import annotations
-
 import logging
 from collections import deque
-from typing import TYPE_CHECKING
 
 from pyqtgraph.Qt import QtCore
 
+from QVideo.dvr import QDVRWidget
+from QHOT.lib.QHOTScreen import QHOTScreen
+from QHOT.lib.traps.QTrapOverlay import QTrapOverlay
+from QHOT.lib.holograms.CGH import CGH
 from QHOT.tasks.QTask import QTask
-
-if TYPE_CHECKING:
-    from QHOT.lib.QHOTScreen import QHOTScreen
-    from QHOT.lib.traps.QTrapOverlay import QTrapOverlay
-    from QHOT.lib.holograms.CGH import CGH
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +42,7 @@ class QTaskManager(QtCore.QObject):
         it.  ``None`` if not available.
     cgh : CGH or None
         Hologram computation engine, stored as ``self.cgh``.
-    dvr : object or None
+    dvr : QDVRWidget or None
         Video recorder, stored as ``self.dvr``.
 
     Attributes
@@ -60,11 +56,11 @@ class QTaskManager(QtCore.QObject):
     '''
 
     def __init__(self,
-                 screen: 'QHOTScreen',
+                 screen: QHOTScreen,
                  *,
-                 overlay: 'QTrapOverlay | None' = None,
-                 cgh: 'CGH | None' = None,
-                 dvr: object | None = None,
+                 overlay: QTrapOverlay | None = None,
+                 cgh: CGH | None = None,
+                 dvr: QDVRWidget | None = None,
                  parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
         self.overlay = overlay
@@ -182,15 +178,14 @@ class QTaskManager(QtCore.QObject):
     def _onBlockingFinished(self) -> None:
         task = self.sender()
         if self._current is task:
-            logger.debug('Blocking task %s finished',
-                         type(task).__name__)
+            logger.debug(f'Blocking task {type(task).__name__} finished')
             self._activateNext(previous=task)
 
     @QtCore.pyqtSlot(str)
     def _onBlockingFailed(self, reason: str) -> None:
         task = self.sender()
-        logger.error('Blocking task %s failed (%s); clearing queue',
-                     type(task).__name__, reason)
+        logger.error(f'Blocking task {type(task).__name__} '
+                     f'failed ({reason}); clearing queue')
         self._queue.clear()
         if self._current is task:
             self._current = None
@@ -198,16 +193,15 @@ class QTaskManager(QtCore.QObject):
     @QtCore.pyqtSlot()
     def _onBackgroundFinished(self) -> None:
         task = self.sender()
-        logger.debug('Background task %s finished',
-                     type(task).__name__)
+        logger.debug(f'Background task {type(task).__name__} finished')
         if task in self._background:
             self._background.remove(task)
 
     @QtCore.pyqtSlot(str)
     def _onBackgroundFailed(self, reason: str) -> None:
         task = self.sender()
-        logger.error('Background task %s failed: %s',
-                     type(task).__name__, reason)
+        logger.error(f'Background task {type(task).__name__} '
+                     f'failed: {reason}')
         if task in self._background:
             self._background.remove(task)
 
@@ -219,7 +213,6 @@ class QTaskManager(QtCore.QObject):
         if self._queue:
             self._current = self._queue.popleft()
             self._current._start(previous)
-            logger.debug('Activating %s',
-                         type(self._current).__name__)
+            logger.debug(f'Activating {type(self._current).__name__}')
         else:
             self._current = None

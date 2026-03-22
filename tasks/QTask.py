@@ -1,14 +1,11 @@
-from __future__ import annotations
-
 import logging
 from enum import Enum, auto
-from typing import TYPE_CHECKING
 
 from pyqtgraph.Qt import QtCore
 
-if TYPE_CHECKING:
-    from QHOT.lib.traps.QTrapOverlay import QTrapOverlay
-    from QHOT.lib.holograms.CGH import CGH
+from QVideo.dvr import QDVRWidget
+from QHOT.lib.traps.QTrapOverlay import QTrapOverlay
+from QHOT.lib.holograms.CGH import CGH
 
 
 logger = logging.getLogger(__name__)
@@ -47,7 +44,7 @@ class QTask(QtCore.QObject):
         instantiated without hardware for testing.
     cgh : CGH or None
         Hologram computation engine.  ``None`` if not needed.
-    dvr : object or None
+    dvr : QDVRWidget or None
         Video recorder.  ``None`` if not needed.
     delay : int
         Number of rendered frames to skip before ``initialize()``
@@ -91,10 +88,10 @@ class QTask(QtCore.QObject):
     failed   = QtCore.pyqtSignal(str)
 
     def __init__(self,
-                 overlay: 'QTrapOverlay | None' = None,
+                 overlay: QTrapOverlay | None = None,
                  *,
-                 cgh: 'CGH | None' = None,
-                 dvr: object | None = None,
+                 cgh: CGH | None = None,
+                 dvr: QDVRWidget | None = None,
                  delay: int = 0,
                  duration: int | None = None,
                  parent: QtCore.QObject | None = None) -> None:
@@ -108,7 +105,7 @@ class QTask(QtCore.QObject):
         self._state   = self.State.PENDING
         self._frame   = 0
         self._skip    = 0
-        self.previous: QTask | None = None
+        self.previous: 'QTask | None' = None
 
     # ------------------------------------------------------------------
     # Public read-only state
@@ -170,8 +167,7 @@ class QTask(QtCore.QObject):
             signal.
         '''
         if self._state in (self.State.PENDING, self.State.RUNNING):
-            logger.warning('%s aborted: %s',
-                           type(self).__name__, reason)
+            logger.warning(f'{type(self).__name__} aborted: {reason}')
             self._state = self.State.FAILED
             self.failed.emit(reason)
 
@@ -230,6 +226,6 @@ class QTask(QtCore.QObject):
         self.finished.emit()
 
     def _fail(self, reason: str) -> None:
-        logger.error('%s failed: %s', type(self).__name__, reason)
+        logger.error(f'{type(self).__name__} failed: {reason}')
         self._state = self.State.FAILED
         self.failed.emit(reason)
