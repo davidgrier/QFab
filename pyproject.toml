@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "QFab"
@@ -37,7 +37,8 @@ Repository = "https://github.com/davidgrier/QFab"
 Issues = "https://github.com/davidgrier/QFab/issues"
 
 [project.optional-dependencies]
-dev = ["coverage"]
+dev = ["pytest", "pytest-cov"]
+docs = ["pydata-sphinx-theme", "sphinx", "sphinx-autodoc-typehints"]
 
 [project.scripts]
 pyfab = "QFab.pyfab:main"
@@ -48,3 +49,24 @@ include = ["QFab*"]
 
 [tool.setuptools.package-data]
 QFab = ["PyFab.ui", "help/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["QFab"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/old/*",
+    "*/.ipynb_checkpoints/*",
+    "*/holograms/cupyCGH.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "@classmethod",
+]
