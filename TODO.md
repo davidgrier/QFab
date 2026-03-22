@@ -17,6 +17,30 @@ Accelerate hologram computation for higher frame rates and larger SLMs.
 
 ---
 
+## CGH Diffraction Efficiency
+
+The linear-superposition algorithm in `CGH` already improves diffraction
+efficiency by (1) randomizing the relative phases of the traps and (2)
+introducing a small amount of position jitter in trap arrays to break
+their symmetry.  Further improvements are possible:
+
+- **Phase optimisation** (method 3): iteratively optimize the relative
+  phases of all traps to maximize diffraction efficiency, using the
+  algorithm described by Curtis et al. (2002).
+  https://doi.org/10.1016/S0030-4018(02)01524-9
+- **Direct binary search** (method 4): optimize both diffraction
+  efficiency and fidelity by direct binary search over the hologram
+  pixels, using the method described by Polin et al. (2005).
+  M. Polin, K. Ladavac, S.-H. Lee, Y. Roichman, and D. G. Grier,
+  "Optimized holographic optical traps," *Opt. Express* **13**, 5831
+  (2005). https://doi.org/10.1364/OPEX.13.005831
+
+Both methods are likely too slow for real-time use, but could be applied
+in a background thread to iteratively refine static trapping patterns
+while the interactive session continues.
+
+---
+
 ## Task Framework
 
 A *task* is an operation on traps that may also coordinate other subsystems
