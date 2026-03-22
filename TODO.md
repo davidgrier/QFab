@@ -43,40 +43,75 @@ while the interactive session continues.
 
 ## Task Framework
 
-A *task* is an operation on traps that may also coordinate other subsystems
-(camera, stage, laser shutter, data recorder, etc.).  Tasks are the building
-block for automated experimental workflows.
+~~Core infrastructure: `QTask` (frame-synchronized base class with
+PENDING / RUNNING / COMPLETED / FAILED state machine) and
+`QTaskManager` (blocking queue + parallel background tasks, driven
+by `QHOTScreen.rendered`).~~  **Done** (`lib/tasks/`)
 
-**Architecture**
+Concrete task implementations still to be written (`tasks/lib/`):
 
-- Each task is a self-contained, asynchronous unit (e.g. a `QThread` subclass
-  or coroutine) with a well-defined start, progress signal, and completion signal
-- Tasks may read and write trap state via the existing trap/overlay API
-- Tasks may subscribe to camera frames, instrument events, or other signals
-- Simple tasks can be composed into compound tasks (sequential, parallel, or
-  conditional pipelines)
-- The `tasks/` directory is reserved for this work
+**Timing and control**
 
-**Example tasks**
+- `Delay` — wait N frames before the next task starts; the simplest
+  building block for sequenced experiments
+- `Repeat` — run a sub-sequence of tasks a fixed number of times
 
-- *Rearrangement*: move existing traps from one configuration to another
-  without inter-trap collisions (collision-free routing, e.g. A* or RRT on
-  the trap graph)
-- *Interaction measurement*: combine controlled trap motion with synchronised
-  video recording to measure colloidal interaction potentials (approach/separation
-  curves, force via trap stiffness)
-- *Automatic trapping*: detect particles in the camera field of view and
-  create tweezers to capture them (integrates with the Automatic Object
-  Detection section above)
-- *Compound task*: chain simple tasks — e.g. automatically trap a set of
-  particles and then rearrange them into a target pattern
+**Trap manipulation**
 
-**Supporting infrastructure**
+- `ClearTraps` — remove all traps from the overlay
+  (`duration=0`, action in `initialize()`)
+- `AddTrap` — add a single tweezer at a specified position
+- `Move` — translate a trap or group smoothly from its current
+  position to a target along a parameterized trajectory; supports
+  linear interpolation and spline smoothing
+- `Translate` — convenience wrapper around `Move` for a simple
+  displacement vector
+- `Circle` — move a trap (or each trap in a group) around a
+  circular arc at a controlled angular speed
+- `Spiral` — move a trap outward/inward along an Archimedean spiral;
+  useful for sweeping a trapping region
+- `RotateGroup` — rotate a `QTrapGroup` by a specified angle around
+  its centroid over N frames
+- `MorphPattern` — interpolate smoothly between two complete trap
+  configurations loaded from JSON files
 
-- Task queue / scheduler so multiple tasks can be enqueued and run in order
-- Progress and status reporting back to the main UI
-- Trap stiffness calibration primitives (Brownian motion analysis, escape-force
-  method) usable as building blocks inside larger tasks
+**Recording and I/O**
+
+- `Record` — start the DVR at `initialize()` and stop it at
+  `complete()`; runs as a non-blocking background task so that
+  motion tasks proceed in parallel
+- `Snapshot` — save a single camera frame to disk via `QSaveFile`
+- `SaveTraps` — serialise the current overlay to JSON via `QSaveFile`
+- `LoadTraps` — deserialise a JSON trap file into the overlay
+
+**Hologram control**
+
+- `SetHologram` — display a pre-computed phase pattern on the SLM
+  directly, bypassing the CGH pipeline; useful for replaying
+  optimized holograms
+- `OptimizePhases` — background task that iteratively improves trap
+  phases using the Curtis et al. algorithm; emits updated holograms
+  as it converges (see CGH Diffraction Efficiency section)
+
+**Measurement**
+
+- `Approach` — bring two traps together at a controlled rate while
+  recording video; foundation for colloidal interaction measurements
+- `Separate` — move two traps apart at a controlled rate
+- `MeasureStiffness` — hold a trap stationary for N frames, record
+  Brownian motion of the trapped particle, and estimate trap
+  stiffness from the mean-square displacement
+- `EscapeForce` — ramp trap velocity until the particle escapes,
+  measuring the escape speed as a proxy for trap stiffness
+
+**Assembly and rearrangement**
+
+- `Assemble` — rearrange traps from an arbitrary initial
+  configuration to a target pattern using collision-free routing
+  (A* or RRT on the trap graph); pairs naturally with `Record`
+- `AutoTrap` — detect candidate particles in the camera field of
+  view and place tweezers on them automatically (requires particle
+  detection backend; see Automatic Object Detection section)
 
 ---
 
