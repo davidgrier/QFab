@@ -5,7 +5,8 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets, QtGui, uic
 
 from QVideo.lib import choose_camera, QCameraTree
-from QHOT.lib import QSLM, QSLMWidget, QSaveFile  # noqa: F401
+from QVideo.lib.chooser import camera_parser
+from QHOT.lib import QSLM, QSLMWidget, QSaveFile, cgh_parser, choose_cgh  # noqa: F401
 from QHOT.lib.holograms import CGH, QCGHTree      # noqa: F401
 from QHOT.lib.traps import QTrap, QTrapMenu       # noqa: F401
 
@@ -26,6 +27,11 @@ class QHOT(QtWidgets.QMainWindow):
     ----------
     cameraTree : QCameraTree
         Configured camera tree providing the live video source.
+    slm : QSLM or None
+        SLM display window.  Created automatically if not provided.
+    cgh : CGH or None
+        Hologram computation engine.  If not provided, a default
+        ``CGH`` is created using ``slm.shape``.
     *args, **kwargs
         Forwarded to ``QMainWindow``.
     '''
@@ -37,12 +43,15 @@ class QHOT(QtWidgets.QMainWindow):
     _computeRequested = QtCore.pyqtSignal(list)
 
     def __init__(self, cameraTree: QCameraTree,
-                 *args, **kwargs) -> None:
+                 *args,
+                 slm: QSLM | None = None,
+                 cgh: CGH | None = None,
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.cameraTree = cameraTree
         self.source = self.cameraTree.source
-        self.slm = QSLM()
-        self.cgh = CGH(shape=self.slm.shape)
+        self.slm = slm or QSLM()
+        self.cgh = cgh or CGH(shape=self.slm.shape)
         self._cghThread = QtCore.QThread(self)
         self.cgh.moveToThread(self._cghThread)
         self._trapsChanged: bool = False
@@ -305,10 +314,19 @@ class QHOT(QtWidgets.QMainWindow):
 
 
 def main() -> None:
-    '''Launch the QHOT application.'''
+    '''Launch the QHOT application.
+
+    Parses command-line arguments for both the camera backend (QVideo
+    flags) and the CGH backend (QHOT flags) from a shared parser, so
+    that ``-h`` shows all options together.  The CGH backend is
+    auto-selected (TorchCGH → cupyCGH → CGH) when no flag is given.
+    '''
     app = pg.mkQApp('QHOT')
-    cameraTree = choose_camera().start()
-    hot = QHOT(cameraTree)
+    parser = cgh_parser(camera_parser())
+    slm = QSLM()
+    cgh = choose_cgh(parser, shape=slm.shape)
+    cameraTree = choose_camera(parser).start()
+    hot = QHOT(cameraTree, slm=slm, cgh=cgh)
     hot.show()
     pg.exec()
 
