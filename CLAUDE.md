@@ -72,6 +72,8 @@ pyfab.py (QFabWindow)
 
 - Prefer single quotes over double quotes for strings, including docstrings.
 - Docstrings use NumPy style.
+- Use split-string style for `__all__`: `__all__ = 'Foo Bar Baz'.split()`
+- Keep all lines within 79 columns, including comments and docstrings.
 
 ## Circular imports
 
@@ -86,7 +88,36 @@ if TYPE_CHECKING:
 
 ## Naming conventions
 
-Follow the PyQt camelCase convention for all instance attributes on Qt classes:
-- Use `camelCase` for private attributes (e.g. `self._ignoreSync`, `self._isOpen`).
+Follow the PyQt camelCase convention throughout:
+- Module files are named after the class they contain: `QFoo.py` holds `class QFoo`. Do **not** rename modules to snake_case.
+- Use `camelCase` for private instance attributes on Qt classes (e.g. `self._ignoreSync`, `self._isOpen`).
 - Use `snake_case` only for pure-Python, non-Qt classes.
 - When renaming, update both the source file and all corresponding test files.
+
+## `__init__.py` re-exports and `mock.patch`
+
+Because every module `QFoo.py` defines a class `QFoo` with the same name, doing
+`from .QFoo import QFoo` in an `__init__.py` shadows the submodule with the class.
+`mock.patch('pkg.QFoo.attr')` resolves names via `getattr`, so it then finds the
+class instead of the module and fails.
+
+The fix is to use `patch.object` in tests rather than string-based patch targets.
+`import pkg.mod as alias` also uses attribute lookup, so it has the same problem.
+Use `importlib.import_module` instead, which looks up `sys.modules` directly:
+
+```python
+# avoid — breaks when QFoo is re-exported from __init__.py
+with patch('QFab.lib.QFoo.some_name'):
+
+# avoid — import alias also uses attribute lookup, gets the class
+import QFab.lib.QFoo as _mod
+
+# preferred — importlib bypasses attribute lookup, always returns the module
+import importlib as _importlib
+from QFab.lib.QFoo import QFoo
+_mod = _importlib.import_module('QFab.lib.QFoo')
+with patch.object(_mod, 'some_name'):
+```
+
+When adding a class to an `__init__.py` re-export, update any string-based patches
+in the corresponding test file to use `patch.object` at the same time.

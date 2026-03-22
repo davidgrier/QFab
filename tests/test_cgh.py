@@ -4,7 +4,9 @@ import weakref
 from unittest.mock import MagicMock, patch
 import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets, QtTest
+import importlib as _importlib
 from QFab.lib.holograms.CGH import CGH
+_cgh_mod = _importlib.import_module('QFab.lib.holograms.CGH')
 from QFab.lib.traps.QTrap import QTrap
 
 app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
@@ -230,7 +232,7 @@ class TestSettings(unittest.TestCase):
             self.fail(f'settings setter raised unexpectedly: {e}')
 
     def test_setter_unknown_key_logs_warning(self):
-        with patch('QFab.lib.holograms.CGH.logger') as mock_logger:
+        with patch.object(_cgh_mod, 'logger') as mock_logger:
             self.cgh.settings = {'nonexistent': 42}
             mock_logger.warning.assert_called_once()
 

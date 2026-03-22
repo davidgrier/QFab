@@ -1,7 +1,9 @@
-from pyqtgraph.Qt import QtCore
 import numpy as np
 import numpy.typing as npt
+from pyqtgraph.Qt import QtCore
+
 from QFab.lib.traps.QTrapGroup import QTrapGroup
+from QFab.lib.types import Shape
 from .QTweezer import QTweezer
 
 
@@ -62,7 +64,7 @@ class QTrapArray(QTrapGroup):
     reshaped = QtCore.pyqtSignal()
 
     def __init__(self, *args,
-                 shape: tuple[int, int] = (4, 4),
+                 shape: Shape = (4, 4),
                  separation: float = 50.,
                  mask: npt.ArrayLike | None = None,
                  fuzz: float = 0.,
@@ -90,12 +92,12 @@ class QTrapArray(QTrapGroup):
     # --- shape/nx/ny/separation properties ---
 
     @property
-    def shape(self) -> tuple[int, int]:
+    def shape(self) -> Shape:
         '''Grid dimensions (nx, ny).'''
         return (self._nx, self._ny)
 
     @shape.setter
-    def shape(self, shape: tuple[int, int]) -> None:
+    def shape(self, shape: Shape) -> None:
         self._nx, self._ny = (max(1, int(n)) for n in shape)
         self._mask = None
         self._repopulate()

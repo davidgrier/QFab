@@ -1,13 +1,13 @@
+import logging
+
+import numpy as np
 from pyqtgraph import GraphicsLayoutWidget, ImageItem
 from pyqtgraph.Qt import QtCore, QtGui
-import numpy as np
-import numpy.typing as npt
-import logging
+
+from QFab.lib.types import Hologram, Shape
 
 
 logger = logging.getLogger(__name__)
-
-Hologram = npt.NDArray[np.uint8]
 
 
 class QSLM(GraphicsLayoutWidget):
@@ -81,12 +81,12 @@ class QSLM(GraphicsLayoutWidget):
         self.setData(np.zeros(self.shape, dtype=np.uint8))
 
     @property
-    def shape(self) -> tuple[int, int]:
+    def shape(self) -> Shape:
         '''Current dimensions of the SLM window.
 
         Returns
         -------
-        tuple[int, int]
+        Shape
             (height, width) in pixels.
         '''
         return (self.height(), self.width())

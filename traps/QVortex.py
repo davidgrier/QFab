@@ -8,6 +8,7 @@ import numpy as np
 
 if TYPE_CHECKING:
     from QFab.lib.holograms.CGH import CGH
+    from QFab.lib.types import Field
 
 
 class QVortex(QTrap):
@@ -55,17 +56,18 @@ class QVortex(QTrap):
         self._ell = int(ell)
         self.structureChanged.emit()
 
-    def structure(self, cgh: CGH) -> np.ndarray:
+    def structure(self, cgh: CGH) -> Field:
         '''Compute the helical phase structure ``exp(i ell θ)``.
 
         Parameters
         ----------
         cgh : CGH
-            The hologram engine providing the angular coordinate array ``theta``.
+            The hologram engine providing the angular coordinate
+            array ``theta``.
 
         Returns
         -------
-        np.ndarray
+        Field
             Complex phase mask of shape ``cgh.shape``.
         '''
         return np.exp(1j * self.ell * cgh.theta)

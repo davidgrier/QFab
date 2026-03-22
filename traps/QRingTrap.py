@@ -9,6 +9,7 @@ from scipy.special import jv
 
 if TYPE_CHECKING:
     from QFab.lib.holograms.CGH import CGH
+    from QFab.lib.types import Field
 
 
 class QRingTrap(QTrap):
@@ -75,18 +76,18 @@ class QRingTrap(QTrap):
         self._ell = float(ell)
         self.structureChanged.emit()
 
-    def structure(self, cgh: CGH) -> np.ndarray:
+    def structure(self, cgh: CGH) -> Field:
         '''Compute the Bessel-function amplitude and helical phase structure.
 
         Parameters
         ----------
         cgh : CGH
-            The hologram engine providing the radial coordinate array ``qr``
-            and angular coordinate array ``theta``.
+            The hologram engine providing the radial coordinate array
+            ``qr`` and angular coordinate array ``theta``.
 
         Returns
         -------
-        np.ndarray
+        Field
             Complex structure mask of shape ``cgh.shape``.
         '''
         return jv(self.ell, self.radius * cgh.qr) * np.exp(1j * self.ell * cgh.theta)

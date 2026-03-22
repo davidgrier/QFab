@@ -3,7 +3,9 @@ import unittest
 from unittest.mock import MagicMock, patch
 import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
+import importlib as _importlib
 from QFab.lib.QSLM import QSLM
+_qslm_mod = _importlib.import_module('QFab.lib.QSLM')
 
 app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -131,7 +133,7 @@ class TestScreenSelection(unittest.TestCase):
     def test_single_screen_does_not_maximize(self):
         mock_qtgui = MagicMock()
         mock_qtgui.QGuiApplication.screens.return_value = [MagicMock()]
-        with patch('QFab.lib.QSLM.QtGui', mock_qtgui):
+        with patch.object(_qslm_mod, 'QtGui', mock_qtgui):
             with patch.object(QSLM, 'showMaximized') as mock_max:
                 slm = QSLM(fake=False)
                 mock_max.assert_not_called()
@@ -144,7 +146,7 @@ class TestScreenSelection(unittest.TestCase):
         mock_qtgui = MagicMock()
         mock_qtgui.QGuiApplication.screens.return_value = [
             MagicMock(), mock_screen]
-        with patch('QFab.lib.QSLM.QtGui', mock_qtgui):
+        with patch.object(_qslm_mod, 'QtGui', mock_qtgui):
             with patch.object(QSLM, 'showMaximized') as mock_max:
                 slm = QSLM(fake=False)
                 mock_max.assert_called_once()
@@ -157,7 +159,7 @@ class TestScreenSelection(unittest.TestCase):
         mock_qtgui = MagicMock()
         mock_qtgui.QGuiApplication.screens.return_value = [
             MagicMock(), mock_screen]
-        with patch('QFab.lib.QSLM.QtGui', mock_qtgui):
+        with patch.object(_qslm_mod, 'QtGui', mock_qtgui):
             with patch.object(QSLM, 'move') as mock_move:
                 slm = QSLM(fake=False)
                 mock_move.assert_called_once_with(mock_point)
@@ -167,7 +169,7 @@ class TestScreenSelection(unittest.TestCase):
         mock_qtgui = MagicMock()
         mock_qtgui.QGuiApplication.screens.return_value = [
             MagicMock(), MagicMock()]
-        with patch('QFab.lib.QSLM.QtGui', mock_qtgui):
+        with patch.object(_qslm_mod, 'QtGui', mock_qtgui):
             with patch.object(QSLM, 'showMaximized') as mock_max:
                 slm = QSLM(fake=True)
                 mock_max.assert_not_called()

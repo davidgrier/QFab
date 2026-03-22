@@ -1,10 +1,15 @@
+from __future__ import annotations
+
+import logging
+import weakref
+from functools import partial
+
+import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui
+
+from QFab.lib.types import Field, Hologram, Shape
 from QFab.lib.traps.QTrap import QTrap
 from QFab.lib.traps.QTrapGroup import QTrapGroup
-from functools import partial
-import weakref
-import numpy as np
-import logging
 
 
 logger = logging.getLogger(__name__)
@@ -87,7 +92,7 @@ class CGH(QtCore.QObject):
         '_matrix_attrs contains entries not in _fields'
 
     def __init__(self, *,
-                 shape: tuple[int, int] = (512, 512),
+                 shape: Shape = (512, 512),
                  wavelength: float = 1.064,
                  n_m: float = 1.340,
                  magnification: float = 100.,
@@ -461,17 +466,17 @@ class CGH(QtCore.QObject):
     # Methods for computing holograms
 
     @staticmethod
-    def quantize(field: np.ndarray) -> np.ndarray:
+    def quantize(field: Field) -> Hologram:
         '''Scale the phase of a complex field to an 8-bit integer array.
 
         Parameters
         ----------
-        field : np.ndarray
+        field : Field
             Complex-valued field array.
 
         Returns
         -------
-        np.ndarray
+        Hologram
             Phase encoded as uint8 in the range [0, 255].
         '''
         return ((128./np.pi)*np.angle(field) + 127.).astype(np.uint8)
@@ -515,7 +520,7 @@ class CGH(QtCore.QObject):
         r *= QtGui.QVector3D(fac, fac, 1.)
         return r
 
-    def fieldOf(self, trap: QTrap) -> np.ndarray:
+    def fieldOf(self, trap: QTrap) -> Field:
         '''Compute the complex field contribution of a single trap.
 
         The displacement field and structure field are cached separately.
@@ -530,7 +535,7 @@ class CGH(QtCore.QObject):
 
         Returns
         -------
-        np.ndarray
+        Field
             Complex field array with shape equal to ``self.shape``.
         '''
         if trap not in self._connected_traps:
@@ -559,7 +564,7 @@ class CGH(QtCore.QObject):
         return self._field_cache[trap] * self._structure_cache[trap]
 
     @QtCore.pyqtSlot(list)
-    def compute(self, traps: list[QTrap]) -> np.ndarray:
+    def compute(self, traps: list[QTrap]) -> Hologram:
         '''Compute the phase hologram for a list of traps.
 
         For traps belonging to a group, the group's accumulated complex
@@ -575,7 +580,7 @@ class CGH(QtCore.QObject):
 
         Returns
         -------
-        np.ndarray
+        Hologram
             Quantized phase hologram as a uint8 array.
         '''
         logger.debug(f'computing hologram for {len(traps)} traps')
@@ -598,17 +603,17 @@ class CGH(QtCore.QObject):
         self.hologramReady.emit(self.phase)
         return self.phase
 
-    def bless(self, field: np.ndarray | None) -> np.ndarray | None:
+    def bless(self, field: Field | None) -> Field | None:
         '''Cast a field array to ``self.dtype``, or return None.
 
         Parameters
         ----------
-        field : np.ndarray or None
+        field : Field or None
             Array to cast, or None.
 
         Returns
         -------
-        np.ndarray or None
+        Field or None
             Field cast to ``self.dtype``, or None if input is None.
         '''
         if field is None:

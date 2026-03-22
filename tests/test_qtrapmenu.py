@@ -2,7 +2,9 @@
 import unittest
 from unittest.mock import patch
 from pyqtgraph.Qt import QtCore, QtWidgets, QtTest
+import importlib as _importlib
 from QFab.lib.traps.QTrapMenu import QTrapMenu
+_qtrapmenu_mod = _importlib.import_module('QFab.lib.traps.QTrapMenu')
 import QFab.traps
 
 app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
@@ -77,7 +79,7 @@ class TestTrapRequested(unittest.TestCase):
 
     def test_unknown_trap_logs_warning(self):
         menu = QTrapMenu()
-        with patch('QFab.lib.traps.QTrapMenu.logger') as mock_log:
+        with patch.object(_qtrapmenu_mod, 'logger') as mock_log:
             menu._onTrapSelected('NoSuchTrap')
             mock_log.warning.assert_called_once()
 

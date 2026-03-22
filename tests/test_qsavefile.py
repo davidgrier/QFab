@@ -9,7 +9,9 @@ import numpy as np
 from pyqtgraph import ImageItem
 from pyqtgraph.Qt import QtCore, QtWidgets
 
+import importlib as _importlib
 from QFab.lib.QSaveFile import QSaveFile
+_qsavefile_mod = _importlib.import_module('QFab.lib.QSaveFile')
 
 
 app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
@@ -145,22 +147,22 @@ class TestImageWithImageItem(_Base):
         self.item = ImageItem(np.zeros((10, 10), dtype=np.uint8))
 
     def test_calls_image_exporter(self):
-        with patch('QFab.lib.QSaveFile.ImageExporter') as MockExp:
+        with patch.object(_qsavefile_mod, 'ImageExporter') as MockExp:
             self.save.image(self.item, filename='out.png')
         MockExp.assert_called_once_with(self.item)
 
     def test_calls_export_with_filename(self):
-        with patch('QFab.lib.QSaveFile.ImageExporter') as MockExp:
+        with patch.object(_qsavefile_mod, 'ImageExporter') as MockExp:
             self.save.image(self.item, filename='out.png')
         MockExp.return_value.export.assert_called_once_with('out.png')
 
     def test_returns_provided_filename(self):
-        with patch('QFab.lib.QSaveFile.ImageExporter'):
+        with patch.object(_qsavefile_mod, 'ImageExporter'):
             result = self.save.image(self.item, filename='out.png')
         self.assertEqual(result, 'out.png')
 
     def test_auto_generates_filename_when_none(self):
-        with patch('QFab.lib.QSaveFile.ImageExporter'):
+        with patch.object(_qsavefile_mod, 'ImageExporter'):
             result = self.save.image(self.item)
         self.assertTrue(result.endswith('.png'))
         self.assertIn(str(self.save.datadir), result)
@@ -177,34 +179,34 @@ class TestImageWithArray(_Base):
         self.array = np.zeros((10, 10), dtype=np.uint8)
 
     def test_calls_make_qimage(self):
-        with patch('QFab.lib.QSaveFile.pg') as mock_pg:
+        with patch.object(_qsavefile_mod, 'pg') as mock_pg:
             self.save.image(self.array, filename='out.png')
         mock_pg.makeQImage.assert_called_once()
 
     def test_passes_array_to_make_qimage(self):
-        with patch('QFab.lib.QSaveFile.pg') as mock_pg:
+        with patch.object(_qsavefile_mod, 'pg') as mock_pg:
             self.save.image(self.array, filename='out.png')
         arg = mock_pg.makeQImage.call_args[0][0]
         np.testing.assert_array_equal(arg, self.array)
 
     def test_calls_save_with_filename(self):
-        with patch('QFab.lib.QSaveFile.pg') as mock_pg:
+        with patch.object(_qsavefile_mod, 'pg') as mock_pg:
             self.save.image(self.array, filename='out.png')
         mock_pg.makeQImage.return_value.save.assert_called_once_with('out.png')
 
     def test_returns_provided_filename(self):
-        with patch('QFab.lib.QSaveFile.pg'):
+        with patch.object(_qsavefile_mod, 'pg'):
             result = self.save.image(self.array, filename='out.png')
         self.assertEqual(result, 'out.png')
 
     def test_auto_generates_filename_when_none(self):
-        with patch('QFab.lib.QSaveFile.pg'):
+        with patch.object(_qsavefile_mod, 'pg'):
             result = self.save.image(self.array)
         self.assertTrue(result.endswith('.png'))
         self.assertIn(str(self.save.datadir), result)
 
     def test_custom_prefix_in_auto_filename(self):
-        with patch('QFab.lib.QSaveFile.pg'):
+        with patch.object(_qsavefile_mod, 'pg'):
             result = self.save.image(self.array, prefix='hologram')
         self.assertIn('hologram', Path(result).name)
 
@@ -220,8 +222,9 @@ class TestImageAs(_Base):
         self.array = np.zeros((10, 10), dtype=np.uint8)
 
     def _patch_dialog(self, chosen):
-        return patch('QFab.lib.QSaveFile.QtWidgets.QFileDialog.getSaveFileName',
-                     return_value=(chosen, 'PNG Image (*.png)'))
+        return patch.object(_qsavefile_mod.QtWidgets.QFileDialog,
+                            'getSaveFileName',
+                            return_value=(chosen, 'PNG Image (*.png)'))
 
     def test_cancelled_returns_empty_string(self):
         with self._patch_dialog(''):
@@ -248,8 +251,8 @@ class TestImageAs(_Base):
             captured['default'] = default
             return ('', '')
 
-        with patch('QFab.lib.QSaveFile.QtWidgets.QFileDialog.getSaveFileName',
-                   side_effect=fake_dialog):
+        with patch.object(_qsavefile_mod.QtWidgets.QFileDialog,
+                          'getSaveFileName', side_effect=fake_dialog):
             self.save.imageAs(self.array, prefix='hologram')
         self.assertIn('hologram', Path(captured['default']).name)
 

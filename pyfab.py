@@ -1,15 +1,13 @@
-from pyqtgraph.Qt import QtCore, QtWidgets, QtGui, uic
-import pyqtgraph as pg
-from pathlib import Path
-from QVideo.lib import choose_camera, QCameraTree
-from QFab.lib.QSLM import QSLM
-from QFab.lib.holograms.CGH import CGH
-from QFab.lib.holograms.QCGHTree import QCGHTree  # noqa: F401 — needed for uic
-from QFab.lib.traps.QTrap import QTrap
-from QFab.lib.traps.QTrapMenu import QTrapMenu  # noqa: F401 — needed for uic
-from QFab.lib.QSLMWidget import QSLMWidget  # noqa: F401 — needed for uic
-from QFab.lib.QSaveFile import QSaveFile
 import logging
+from pathlib import Path
+
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtCore, QtWidgets, QtGui, uic
+
+from QVideo.lib import choose_camera, QCameraTree
+from QFab.lib import QSLM, QSLMWidget, QSaveFile  # noqa: F401
+from QFab.lib.holograms import CGH, QCGHTree      # noqa: F401
+from QFab.lib.traps import QTrap, QTrapMenu       # noqa: F401
 
 
 logger = logging.getLogger(__name__)
@@ -96,7 +94,8 @@ class PyFab(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot(QTrap)
     def _onTrapAdded(self, trap: QTrap) -> None:
-        '''Connect each new leaf trap's changed signal and schedule a compute.'''
+        '''Connect each new leaf trap's changed signal and schedule a compute.
+        '''
         for leaf in trap.leaves():
             leaf.changed.connect(self._scheduleCompute)
             if hasattr(leaf, 'structureChanged'):
@@ -203,7 +202,8 @@ class PyFab(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def saveSettings(self) -> None:
         '''Save window geometry and CGH calibration settings.'''
-        QtCore.QSettings(*self.SETTINGS).setValue('geometry', self.saveGeometry())
+        settings = QtCore.QSettings(*self.SETTINGS)
+        settings.setValue('geometry', self.saveGeometry())
         filename = self.save.toToml(self.cghTree)
         self.setStatus(f'Configuration saved to {filename}')
 
@@ -252,7 +252,8 @@ class PyFab(QtWidgets.QMainWindow):
         QtCore.QTimer.singleShot(0, self._constrainAspectRatio)
 
     def _constrainAspectRatio(self) -> None:
-        '''Snap the window height so the screen matches the camera aspect ratio.
+        '''Snap the window height so the screen matches the camera
+        aspect ratio.
 
         Reads the screen widget's actual width after the layout has
         settled, computes the ideal height, and resizes the window if

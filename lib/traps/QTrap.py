@@ -1,8 +1,11 @@
-from pyqtgraph.Qt import QtCore
-from collections.abc import Iterator
+import logging
+
 import numpy as np
 import numpy.typing as npt
-import logging
+from pyqtgraph.Qt import QtCore
+from collections.abc import Iterator
+
+from QFab.lib.types import Position
 
 
 logger = logging.getLogger(__name__)
@@ -83,7 +86,7 @@ class QTrap(QtCore.QObject):
         self.registerProperty('phase')
 
     @property
-    def r(self) -> npt.NDArray[np.float64]:
+    def r(self) -> Position:
         '''Three-dimensional location of the trap [pixels]'''
         return self._r.copy()
 
