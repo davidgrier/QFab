@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
 
 '''CUDA-accelerated CGH computation pipeline implemented with cupy.'''
 
 from .CGH import CGH
 import math
+import numpy as np
 
 try:
     import cupy as cp
@@ -12,7 +14,7 @@ except (ImportError, ModuleNotFoundError):
 
 
 class cupyCGH(CGH):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super(cupyCGH, self).__init__(*args, **kwargs)
 
         cp.cuda.Device()
@@ -88,24 +90,25 @@ class cupyCGH(CGH):
         }
         ''', 'phase')
 
-    def outeratan2f(self, a, b, out):
+    def outeratan2f(self, a: cp.ndarray, b: cp.ndarray, out: cp.ndarray) -> None:
         self._outeratan2f(self.grid, self.block,
                           (a, b, out, cp.int32(a.size), cp.int32(b.size)))
 
-    def outerhypot(self, a, b, out):
+    def outerhypot(self, a: cp.ndarray, b: cp.ndarray, out: cp.ndarray) -> None:
         self._outerhypot(self.grid, self.block,
                          (a, b, out, cp.int32(a.size), cp.int32(b.size)))
 
-    def phase(self, a, out):
+    def phase(self, a: cp.ndarray, out: cp.ndarray) -> None:
         self._phase(self.grid, self.block,
                     (a, out, cp.int32(a.shape[0]), cp.int32(a.shape[1])))
 
-    def quantize(self, psi):
+    def quantize(self, psi: cp.ndarray) -> np.ndarray:
         self.phase(psi, self._phi)
         self._phi.get(out=self.phi)
         return self.phi
 
-    def compute_displace(self, amp, r, buffer):
+    def compute_displace(self, amp: cp.ndarray, r: cp.ndarray,
+                         buffer: cp.ndarray) -> None:
         r = self.map_coordinates(r)
         ex = cp.exp(self._iqx * r.x() + self._iqxz * r.z(),
                     dtype=cp.complex64)
@@ -113,7 +116,7 @@ class cupyCGH(CGH):
                     dtype=cp.complex64)
         cp.outer(amp * ey, ex, buffer)
 
-    def updateGeometry(self):
+    def updateGeometry(self) -> None:
         # GPU variables
         self._psi = cp.zeros(self.shape, dtype=cp.complex64)
         self._phi = cp.zeros(self.shape, dtype=cp.uint8)
@@ -139,7 +142,7 @@ class cupyCGH(CGH):
         self.qr = self._rho.get().astype(cp.float64)
         self.sigUpdateGeometry.emit()
 
-    def bless(self, field):
+    def bless(self, field: np.ndarray | None) -> cp.ndarray | None:
         if field is None:
             return None
         gpu_field = cp.asarray(field.astype(cp.complex64))

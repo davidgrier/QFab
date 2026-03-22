@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 from QFab.lib.traps.QTrap import QTrap
 from QFab.lib.letterSymbol import letterSymbol
 from pyqtgraph.Qt import QtCore
+from typing import TYPE_CHECKING
 import numpy as np
+
+if TYPE_CHECKING:
+    from QFab.lib.holograms.CGH import CGH
 
 
 class QVortex(QTrap):
@@ -47,7 +53,7 @@ class QVortex(QTrap):
         self._ell = int(ell)
         self.structureChanged.emit()
 
-    def structure(self, cgh) -> np.ndarray:
+    def structure(self, cgh: CGH) -> np.ndarray:
         return np.exp(1j * self.ell * cgh.theta)
 
 
