@@ -1,13 +1,13 @@
 Architecture
 ============
 
-QFab is organised into four layers.  Each layer depends only on the
+QHOT is organised into four layers.  Each layer depends only on the
 layers below it.
 
 .. code-block:: text
 
    ┌──────────────────────────────────────────────────┐
-   │  PyFab  (main window, PyFab.ui)                  │  application layer
+   │  QHOT  (main window, QHOT.ui)                    │  application layer
    ├──────────────────┬───────────────────────────────┤
    │  QCGHTree        │  QHOTScreen  QSLMWidget        │  UI layer
    │                  │  QSaveFile   QSLM              │
@@ -86,10 +86,10 @@ screen and exposes a ``setData`` slot that accepts a uint8 phase array.
 :class:`~QHOT.lib.QSLMWidget.QSLMWidget` shows a preview of the current
 hologram inside the main window.
 
-Application layer — ``QHOT.pyfab``
--------------------------------------
+Application layer — ``QHOT.qhot``
+----------------------------------
 
-:class:`~QHOT.pyfab.PyFab` loads ``PyFab.ui`` and wires all subsystems
+:class:`~QHOT.qhot.QHOT` loads ``QHOT.ui`` and wires all subsystems
 together via Qt signals.
 
 **File menu.**  The File menu is organised into three groups:

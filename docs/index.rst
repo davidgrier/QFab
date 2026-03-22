@@ -1,7 +1,7 @@
-QFab
+QHOT
 ====
 
-QFab is a Python application for holographic optical trapping — controlling
+QHOT is a Python application for holographic optical trapping — controlling
 spatial light modulators (SLMs) to create, move, and reconfigure optical
 traps in real time using a live camera feed.
 

@@ -1,4 +1,4 @@
-'''Sphinx configuration for QFab.'''
+'''Sphinx configuration for QHOT.'''
 
 import os
 import sys
@@ -8,8 +8,8 @@ from pathlib import Path
 # without a display (required on ReadTheDocs and other headless build hosts).
 os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 
-# The repo root is two levels up from docs/ (docs/ -> QFab/ -> parent/).
-# Adding the parent lets autodoc import QFab as a package without requiring
+# The repo root is two levels up from docs/ (docs/ -> QHOT/ -> parent/).
+# Adding the parent lets autodoc import QHOT as a package without requiring
 # an editable install.
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
