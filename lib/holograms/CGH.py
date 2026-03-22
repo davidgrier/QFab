@@ -18,6 +18,12 @@ class CGH(QtCore.QObject):
 
     '''Base class for computing computer-generated holograms.
 
+    Implements the linear-superposition CGH algorithm: the hologram
+    field is the coherent sum of the individual trap fields, each
+    computed as a phase-ramp (lateral displacement) combined with a
+    quadratic phase (axial displacement) and an optional structure
+    factor [1]_.
+
     For each trap, the coordinate r obtained from the fabscreen is
     measured relative to the calibrated location rc of the zeroth-order
     focal point, which itself is measured relative to the center of the
@@ -74,6 +80,12 @@ class CGH(QtCore.QObject):
         Emitted with the quantized phase array when a hologram is computed.
     recalculate : QtCore.pyqtSignal()
         Emitted when the geometry or transformation matrix is updated.
+
+    References
+    ----------
+    .. [1] J. E. Curtis, B. A. Koss, and D. G. Grier, "Dynamic holographic
+       optical tweezers," *Opt. Commun.* **207**, 169 (2002).
+       https://doi.org/10.1016/S0030-4018(02)01524-9
     '''
 
     #: Emitted with the quantized phase array when a hologram is computed.
@@ -592,16 +604,20 @@ class CGH(QtCore.QObject):
             Quantized phase hologram as a uint8 array.
         '''
         logger.debug(f'computing hologram for {len(traps)} traps')
-        self.field.fill(0j)
-        seen: set = set()
-        for trap in traps:
-            item = self._topLevel(trap)
-            if item not in seen:
-                self.field += self.fieldOf(item)
-                seen.add(item)
-        self.phase = self.quantize(self.field)
-        self.hologramReady.emit(self.phase)
-        return self.phase
+        try:
+            self.field.fill(0j)
+            seen: set = set()
+            for trap in traps:
+                item = self._topLevel(trap)
+                if item not in seen:
+                    self.field += self.fieldOf(item)
+                    seen.add(item)
+            self.phase = self.quantize(self.field)
+            self.hologramReady.emit(self.phase)
+            return self.phase
+        except Exception:
+            logger.exception('hologram computation failed')
+            raise
 
     def bless(self, field: Field | None) -> Field | None:
         '''Cast a field array to ``self.dtype``, or return None.

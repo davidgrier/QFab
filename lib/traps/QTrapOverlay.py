@@ -281,7 +281,7 @@ class QTrapOverlay(ScatterPlotItem):
             try:
                 t.changed.disconnect(self._onTrapChanged)
             except (TypeError, RuntimeError):
-                pass
+                logger.debug('could not disconnect changed from %r', t)
             if t in self._traps:
                 self._traps.remove(t)
             t._index = None
@@ -290,7 +290,8 @@ class QTrapOverlay(ScatterPlotItem):
             try:
                 group.changed.disconnect(self._onGroupChanged)
             except (TypeError, RuntimeError):
-                pass
+                logger.debug(
+                    'could not disconnect changed from group %r', group)
         group.setParent(None)
         self._rebuildSpots()
 
@@ -876,6 +877,9 @@ class QTrapOverlay(ScatterPlotItem):
         '''
         cls = QTrap._registry.get(d['type'])
         if cls is None:
+            logger.error('Unknown trap type %r; '
+                         'import its module before calling load()',
+                         d['type'])
             raise KeyError(f'Unknown trap type {d["type"]!r}. '
                            f'Import its module before calling load().')
         trap = cls.from_dict(d)

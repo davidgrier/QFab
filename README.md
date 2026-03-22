@@ -86,6 +86,17 @@ QHOT/
 └── tests/            — Unit tests
 ```
 
+## References
+
+- E. R. Dufresne and D. G. Grier, "Optical tweezer arrays and optical substrates
+  created with diffractive optics," *Rev. Sci. Instrum.* **69**, 1974 (1998).
+  https://doi.org/10.1063/1.1148883
+- J. E. Curtis, B. A. Koss, and D. G. Grier, "Dynamic holographic optical
+  tweezers," *Opt. Commun.* **207**, 169 (2002).
+  https://doi.org/10.1016/S0030-4018(02)01524-9
+- D. G. Grier, "A revolution in optical manipulation," *Nature* **424**,
+  810 (2003). https://doi.org/10.1038/nature01935
+
 ## Acknowledgments
 This project is maintained with support from the National Science Foundation of the United States under Award Number DMR-2428983.
 

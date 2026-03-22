@@ -166,17 +166,19 @@ class QHOT(QtWidgets.QMainWindow):
             try:
                 trap.changed.disconnect(self._scheduleCompute)
             except (TypeError, RuntimeError):
-                pass
+                logger.debug('could not disconnect changed from %r', trap)
         for leaf in trap.leaves():
             try:
                 leaf.changed.disconnect(self._scheduleCompute)
             except (TypeError, RuntimeError):
-                pass
+                logger.debug('could not disconnect changed from %r', leaf)
             if hasattr(leaf, 'structureChanged'):
                 try:
                     leaf.structureChanged.disconnect(self._scheduleCompute)
                 except (TypeError, RuntimeError):
-                    pass
+                    logger.debug(
+                        'could not disconnect structureChanged from %r',
+                        leaf)
         self._scheduleCompute()
 
     @QtCore.pyqtSlot(QtCore.QPointF, QTrap)
@@ -300,8 +302,10 @@ class QHOT(QtWidgets.QMainWindow):
         else:
             QtCore.QTimer.singleShot(0, self._fitToCamera)
         if (filename := self.save.fromToml(self.cghTree)):
+            logger.info('Configuration restored from %s', filename)
             self.setStatus(f'Configuration restored from {filename}')
         else:
+            logger.warning('Configuration file not found or invalid')
             self.setStatus('Configuration file not found or invalid')
 
     @property

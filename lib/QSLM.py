@@ -69,12 +69,14 @@ class QSLM(GraphicsLayoutWidget):
 
         screens = QtGui.QGuiApplication.screens()
         if len(screens) > 1 and not fake:
-            logger.debug('Opening SLM on secondary screen')
+            logger.info('Opening SLM on secondary screen')
             screen = screens[1]
             geometry = screen.geometry()
             self.move(geometry.topLeft())
             self.showMaximized()
         else:
+            logger.warning('No secondary screen detected; '
+                           'opening SLM on primary screen')
             x0, y0, w, h = 100, 100, 640, 480
             self.setGeometry(x0, y0, w, h)
             self.show()
@@ -109,7 +111,6 @@ class QSLM(GraphicsLayoutWidget):
             raise ValueError(
                 f'hologram shape {hologram.shape} does not match '
                 f'SLM shape {self.shape}')
-        logger.debug('Setting SLM data')
         self.image.setImage(hologram, autoLevels=False)
 
     @property
