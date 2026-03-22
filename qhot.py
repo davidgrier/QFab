@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 
 class QHOT(QtWidgets.QMainWindow):
 
-    '''Main application window for the QFab optical trapping system.
+    '''Main application window for the QHOT optical trapping system.
 
     Integrates a live camera view (``QHOTScreen``) with an SLM display
     (``QSLM``), a hologram computation engine (``CGH``), a parameter
     tree (``QCGHTree``), and a DVR for recording.  The UI layout is
-    defined in ``PyFab.ui``.
+    defined in ``QHOT.ui``.
 
     Parameters
     ----------
@@ -234,8 +234,9 @@ class QHOT(QtWidgets.QMainWindow):
 
         Sets the splitter so the screen gets exactly the camera's native
         width, then resizes the window height to the larger of the camera
-        height and the panel's preferred height, plus chrome.  Only called
-        on first launch when no saved geometry exists.
+        height and the panel's preferred height, plus chrome.  The result
+        is clamped to the available display geometry.  Only called on
+        first launch when no saved geometry exists.
         '''
         cam = self.screen.sizeHint()
         if not cam.isValid():
@@ -243,8 +244,12 @@ class QHOT(QtWidgets.QMainWindow):
         panel_w = self.tabWidget.sizeHint().width()
         panel_h = self.tabWidget.sizeHint().height()
         self.splitter.setSizes([cam.width(), panel_w])
-        self.resize(cam.width() + panel_w + self.splitter.handleWidth(),
-                    max(cam.height(), panel_h) + self._chromeHeight)
+        available = QtWidgets.QApplication.primaryScreen().availableGeometry()
+        total_w = min(cam.width() + panel_w + self.splitter.handleWidth(),
+                      available.width())
+        total_h = min(max(cam.height(), panel_h) + self._chromeHeight,
+                      available.height())
+        self.resize(total_w, total_h)
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         '''Schedule an aspect-ratio correction after every resize.'''
@@ -270,7 +275,10 @@ class QHOT(QtWidgets.QMainWindow):
             return
         ideal_h = screen_w * cam.height() // cam.width()
         min_panel_h = self.tabWidget.minimumSizeHint().height()
-        desired_h = max(ideal_h, min_panel_h) + self._chromeHeight
+        available_h = (QtWidgets.QApplication.primaryScreen()
+                       .availableGeometry().height())
+        desired_h = min(max(ideal_h, min_panel_h) + self._chromeHeight,
+                        available_h)
         if self.height() != desired_h:
             self.resize(self.width(), desired_h)
 
@@ -289,11 +297,11 @@ class QHOT(QtWidgets.QMainWindow):
 
 
 def main() -> None:
-    '''Launch the PyFab application.'''
-    app = pg.mkQApp('pyfab')
+    '''Launch the QHOT application.'''
+    app = pg.mkQApp('QHOT')
     cameraTree = choose_camera().start()
-    fab = PyFab(cameraTree)
-    fab.show()
+    hot = QHOT(cameraTree)
+    hot.show()
     pg.exec()
 
 
