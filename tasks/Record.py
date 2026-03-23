@@ -6,35 +6,47 @@ class Record(QTask):
     '''Record video from the camera to a file.
 
     Calls ``dvr.record()`` in ``initialize()`` and ``dvr.stop()`` in
-    ``complete()``.  Set ``duration`` to record a fixed number of
-    frames; leave it as ``None`` to record until the task is stopped
-    manually.
+    ``complete()``.  Set ``nframes`` to record a fixed number of
+    frames; leave it as ``0`` (default) to record until the task is
+    stopped manually.
 
     Typically registered as a non-blocking (background) task so that
     trap-manipulation tasks proceed in parallel::
 
-        manager.register(Record(dvr=dvr, duration=300), blocking=False)
+        manager.register(Record(dvr=dvr, nframes=300), blocking=False)
         manager.register(Move(overlay, trap, target))
 
     Parameters
     ----------
     dvr : QDVRWidget
         The video recorder.  Required.
-    filename : str or None
-        If provided, set ``dvr.filename`` before recording starts.
-        If ``None`` (default), the DVR's current filename is used.
+    filename : str
+        If non-empty, set ``dvr.filename`` before recording starts.
+        If ``''`` (default), the DVR's current filename is used.
+    nframes : int
+        Number of frames to record.  ``0`` (default) records until
+        the task is stopped manually.
     **kwargs
-        Forwarded to ``QTask`` (e.g. ``duration``, ``delay``).
+        Forwarded to ``QTask`` (e.g. ``delay``).
     '''
 
-    def __init__(self, *args, filename: str | None = None,
+    parameters = [
+        dict(name='filename', type='str', value='', default=''),
+        dict(name='nframes', type='int', value=0, default=0, min=0),
+    ]
+
+    def __init__(self, *args,
+                 filename: str = '',
+                 nframes: int = 0,
                  **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self._filename = filename
+        duration = nframes if nframes > 0 else None
+        super().__init__(*args, duration=duration, **kwargs)
+        self.filename = filename
+        self.nframes  = nframes
 
     def initialize(self) -> None:
-        if self._filename is not None:
-            self.dvr.filename = self._filename
+        if self.filename:
+            self.dvr.filename = self.filename
         self.dvr.record()
 
     def complete(self) -> None:

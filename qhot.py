@@ -6,8 +6,9 @@ from pyqtgraph.Qt import QtCore, QtWidgets, QtGui, uic
 
 from QVideo.lib import choose_camera, QCameraTree
 from QHOT.lib import (QSLM, QSLMWidget, QSaveFile,  # noqa: F401
-                      build_parser, choose_cgh)
+                      build_parser, choose_cgh, choose_slm)
 from QHOT.lib.holograms import CGH, QCGHTree      # noqa: F401
+from QHOT.lib.tasks import QTaskManager
 from QHOT.lib.traps import QTrap, QTrapGroup, QTrapMenu  # noqa: F401
 
 
@@ -34,6 +35,12 @@ class QHOT(QtWidgets.QMainWindow):
         ``CGH`` is created using ``slm.shape``.
     *args, **kwargs
         Forwarded to ``QMainWindow``.
+
+    Attributes
+    ----------
+    manager : QTaskManager
+        Frame-synchronised task scheduler.  Register tasks with
+        ``self.manager.register(task)`` to queue them for execution.
     '''
 
     UIFILE = Path(__file__).parent / 'QHOT.ui'
@@ -59,8 +66,20 @@ class QHOT(QtWidgets.QMainWindow):
         self._setupUi()
         self._connectSignals()
         self._addFilters()
+        self.manager = QTaskManager(
+            self.screen,
+            overlay=self.screen.overlay,
+            cgh=self.cgh,
+            dvr=self.dvr,
+            parent=self)
+        self.taskManagerWidget.manager = self.manager
+        self.menuQueue.manager = self.manager
+        self.menuQueue.overlay = self.screen.overlay
+        self.menuQueue.cgh = self.cgh
+        self.menuQueue.dvr = self.dvr
         self.save = QSaveFile(self)
-        self._trapFile: str | None = None
+        self._trapFile:  str | None = None
+        self._queueFile: str | None = None
         self.restoreSettings()
         self._cghThread.start()
 
@@ -99,15 +118,18 @@ class QHOT(QtWidgets.QMainWindow):
         self.menubar.insertMenu(self.menuTasks.menuAction(), editMenu)
 
     def _setupShortcuts(self) -> None:
-        '''Assign keyboard shortcuts to menu actions.'''
+        '''Assign platform-adaptive keyboard shortcuts to menu actions.
+
+        Fixed shortcuts (e.g. Ctrl+Backspace for Clear Traps) are
+        declared in QHOT.ui.  Only StandardKey shortcuts, which adapt
+        per platform (Ctrl vs Cmd on macOS), are set here.
+        '''
         self.actionOpenTraps.setShortcut(
             QtGui.QKeySequence.StandardKey.Open)
         self.actionSaveTraps.setShortcut(
             QtGui.QKeySequence.StandardKey.Save)
         self.actionSaveTrapsAs.setShortcut(
             QtGui.QKeySequence.StandardKey.SaveAs)
-        self.actionClearTraps.setShortcut(
-            QtGui.QKeySequence('Ctrl+Backspace'))
         addAction = QtGui.QAction('Add &Tweezer', self)
         addAction.setShortcut(QtGui.QKeySequence('Ctrl+T'))
         addAction.triggered.connect(self.addTweezerAtCenter)
@@ -116,15 +138,21 @@ class QHOT(QtWidgets.QMainWindow):
         self.menuTasks.insertAction(clearAction, addAction)
 
     def _connectSignals(self) -> None:
-        '''Wire signals and slots between subsystems.'''
+        '''Wire signals and slots between subsystems.
+
+        PyQt6 uic only handles no-argument connections from .ui files;
+        typed signals (str, bool) must be connected here.  The
+        no-argument ``screen.rendered → _onFrame`` connection is
+        declared in QHOT.ui.
+        '''
         self.dvr.playing.connect(self.dvrPlayback)
         self.dvr.recording.connect(self.cameraTree.setDisabled)
         self.cgh.hologramReady.connect(self.slm.setData)
         self.cgh.hologramReady.connect(self.slmView.setData)
         self.cgh.hologramReady.connect(self._onHologramReady)
         self._computeRequested.connect(self.cgh.compute)
-        self.screen.rendered.connect(self._onFrame)
         self.screen.status.connect(self.setStatus)
+        self.taskManagerWidget.status.connect(self.setStatus)
         overlay = self.screen.overlay
         overlay.trapAdded.connect(self.traps.registerTrap)
         overlay.trapRemoved.connect(self.traps.unregisterTrap)
@@ -254,6 +282,37 @@ class QHOT(QtWidgets.QMainWindow):
             self.setStatus(f'Saved traps to {filename}')
         else:
             self.setStatus('Save traps canceled')
+
+    @QtCore.pyqtSlot()
+    def openQueue(self) -> None:
+        '''Prompt for a JSON queue file and append tasks from it.'''
+        was_idle = (self.manager.active is None
+                    and not self.manager.background)
+        filename = self.save.openQueue(self.manager)
+        if filename:
+            if was_idle:
+                self.manager.pause(True)
+            self._queueFile = filename
+            self.setStatus(f'Loaded queue from {filename}')
+        else:
+            self.setStatus('Open queue canceled')
+
+    @QtCore.pyqtSlot()
+    def saveQueue(self) -> None:
+        '''Save the pending queue to the current file, or prompt if none set.'''
+        filename = self.save.queue(self.manager, self._queueFile)
+        self._queueFile = filename
+        self.setStatus(f'Saved queue to {filename}')
+
+    @QtCore.pyqtSlot()
+    def saveQueueAs(self) -> None:
+        '''Prompt for a filename and save the pending queue to it.'''
+        filename = self.save.queueAs(self.manager)
+        if filename:
+            self._queueFile = filename
+            self.setStatus(f'Saved queue to {filename}')
+        else:
+            self.setStatus('Save queue canceled')
 
     @QtCore.pyqtSlot()
     def saveImage(self) -> None:
@@ -394,7 +453,7 @@ def main() -> None:
     '''
     app = pg.mkQApp('QHOT')
     parser = build_parser()
-    slm = QSLM()
+    slm = choose_slm(parser)
     cgh = choose_cgh(parser, shape=slm.shape)
     cameraTree = choose_camera(parser).start()
     hot = QHOT(cameraTree, slm=slm, cgh=cgh)

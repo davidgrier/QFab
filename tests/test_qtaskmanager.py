@@ -56,7 +56,7 @@ class TestQTaskManagerRegistration(unittest.TestCase):
     def test_first_blocking_task_becomes_active(self):
         task = QTask()
         self.manager.register(task)
-        self.assertIs(self.manager.active, task)
+        self.assertIs(self.manager.active_raw, task)
 
     def test_first_blocking_task_starts_running(self):
         task = QTask()
@@ -103,6 +103,25 @@ class TestQTaskManagerRegistration(unittest.TestCase):
         bg = self.manager.background
         bg.clear()
         self.assertEqual(len(self.manager.background), 1)
+
+    def test_queued_empty_initially(self):
+        self.assertEqual(self.manager.queued, [])
+
+    def test_queued_contains_pending_tasks(self):
+        t1, t2 = QTask(), QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        # t1 activated but not yet stepped — still in queued
+        self.assertIn(t1, self.manager.queued)
+        self.assertIn(t2, self.manager.queued)
+
+    def test_queued_property_is_copy(self):
+        t1, t2 = QTask(), QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        q = self.manager.queued
+        q.clear()
+        self.assertEqual(len(self.manager.queued), 2)
 
 
 class TestQTaskManagerFrameDispatch(unittest.TestCase):
@@ -182,7 +201,7 @@ class TestQTaskManagerSequencing(unittest.TestCase):
         self.manager.register(t2)
         self._emit(1)
         self.assertEqual(t1.state, QTask.State.COMPLETED)
-        self.assertIs(self.manager.active, t2)
+        self.assertIs(self.manager.active_raw, t2)
 
     def test_previous_passed_from_first_to_second(self):
         t1 = QTask(duration=1)
@@ -321,6 +340,144 @@ class TestQTaskManagerBackground(unittest.TestCase):
         self._emit(1)
         blocking._step.assert_called_once()
         bg._step.assert_called_once()
+
+
+class TestQTaskManagerLoad(unittest.TestCase):
+
+    def setUp(self):
+        self.screen  = MockScreen()
+        self.overlay = MagicMock()
+        self.cgh     = MagicMock()
+        self.dvr     = MagicMock()
+        self.manager = QTaskManager(
+            self.screen,
+            overlay=self.overlay,
+            cgh=self.cgh,
+            dvr=self.dvr)
+
+    def test_load_registers_tasks(self):
+        from QHOT.tasks.ClearTraps import ClearTraps
+        t1, t2 = ClearTraps(), ClearTraps()
+        self.manager.register(t1)   # becomes active
+        self.manager.register(t2)   # queued
+        dicts = [t.to_dict() for t in self.manager.queued]
+        self.manager.stop()
+        self.manager.load(dicts)
+        self.assertIsNotNone(self.manager.active_raw)
+
+    def test_load_injects_overlay(self):
+        from QHOT.tasks.ClearTraps import ClearTraps
+        d = ClearTraps().to_dict()
+        self.manager.load([d])
+        self.assertIs(self.manager.active_raw.overlay, self.overlay)
+
+    def test_load_injects_cgh(self):
+        from QHOT.tasks.ClearTraps import ClearTraps
+        d = ClearTraps().to_dict()
+        self.manager.load([d])
+        self.assertIs(self.manager.active_raw.cgh, self.cgh)
+
+    def test_load_injects_dvr(self):
+        from QHOT.tasks.ClearTraps import ClearTraps
+        d = ClearTraps().to_dict()
+        self.manager.load([d])
+        self.assertIs(self.manager.active_raw.dvr, self.dvr)
+
+    def test_load_preserves_task_params(self):
+        from QHOT.tasks.Delay import Delay
+        d = Delay(frames=99).to_dict()
+        self.manager.load([d])
+        self.assertEqual(self.manager.active_raw.frames, 99)
+
+    def test_load_appends_to_existing_queue(self):
+        from QHOT.tasks.ClearTraps import ClearTraps
+        self.manager.register(QTask())       # becomes active
+        self.manager.register(QTask())       # queued
+        self.manager.load([ClearTraps().to_dict()])
+        self.assertEqual(self.manager.queue_size, 2)
+
+    def test_load_multiple_tasks_in_order(self):
+        from QHOT.tasks.Delay import Delay
+        dicts = [Delay(frames=i).to_dict() for i in (10, 20, 30)]
+        self.manager.load(dicts)
+        # first task activated (not yet stepped) — still in queued
+        queued = self.manager.queued
+        frames = [t.frames for t in queued]
+        self.assertEqual(frames, [10, 20, 30])
+
+    def test_load_empty_list_is_noop(self):
+        self.manager.load([])
+        self.assertIsNone(self.manager.active)
+        self.assertEqual(self.manager.queue_size, 0)
+
+
+class TestQTaskManagerChanged(unittest.TestCase):
+
+    def setUp(self):
+        self.screen  = MockScreen()
+        self.manager = QTaskManager(self.screen)
+
+    def _emit(self, n: int = 1) -> None:
+        for _ in range(n):
+            self.screen.rendered.emit()
+
+    def test_changed_emitted_on_first_blocking_register(self):
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self.manager.register(QTask())
+        self.assertGreater(len(spy), 0)
+
+    def test_changed_emitted_on_queued_blocking_register(self):
+        self.manager.register(QTask())           # activates
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self.manager.register(QTask())           # queues
+        self.assertGreater(len(spy), 0)
+
+    def test_changed_emitted_on_background_register(self):
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self.manager.register(QTask(), blocking=False)
+        self.assertGreater(len(spy), 0)
+
+    def test_changed_emitted_on_pause(self):
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self.manager.pause(True)
+        self.assertEqual(len(spy), 1)
+
+    def test_changed_not_emitted_on_repeated_pause(self):
+        self.manager.pause(True)
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self.manager.pause(True)          # same state — no change
+        self.assertEqual(len(spy), 0)
+
+    def test_changed_emitted_on_resume(self):
+        self.manager.pause(True)
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self.manager.pause(False)
+        self.assertEqual(len(spy), 1)
+
+    def test_changed_emitted_on_stop(self):
+        self.manager.register(QTask())
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self.manager.stop()
+        self.assertGreater(len(spy), 0)
+
+    def test_changed_emitted_when_task_completes(self):
+        self.manager.register(QTask(duration=1))
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self._emit(1)
+        self.assertGreater(len(spy), 0)
+
+    def test_changed_emitted_when_background_completes(self):
+        self.manager.register(QTask(duration=1), blocking=False)
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self._emit(1)
+        self.assertGreater(len(spy), 0)
+
+    def test_changed_emitted_when_task_fails(self):
+        task = QTask()
+        self.manager.register(task)
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        task.abort('test')
+        self.assertGreater(len(spy), 0)
 
 
 if __name__ == '__main__':

@@ -34,6 +34,7 @@ class QSaveFile(QtCore.QObject):
                     'TIFF Image (*.tif *.tiff)')
 
     trap_format: str = 'Trap Configuration (*.json)'
+    queue_format: str = 'Task Queue (*.json)'
 
     def __init__(self, parent: QtWidgets.QMainWindow) -> None:
         super().__init__(parent)
@@ -208,6 +209,80 @@ class QSaveFile(QtCore.QObject):
         if filename:
             with open(filename) as f:
                 overlay.from_list(json.load(f))
+            return filename
+        return ''
+
+    def queue(self, manager, filename: str | None = None) -> str:
+        '''Save the pending task queue to a JSON file.
+
+        Only tasks that are waiting to run (``manager.queued``) are
+        saved; the active task and background tasks are excluded.
+
+        Parameters
+        ----------
+        manager : QTaskManager
+            The task manager whose pending queue will be saved.
+        filename : str or None
+            Destination path.  If ``None``, a timestamped ``.json``
+            file is created in the data directory.
+
+        Returns
+        -------
+        str
+            Path of the file that was written.
+        '''
+        filename = filename or self.filename(prefix='queue', suffix='.json')
+        task_list = [task.to_dict() for task in manager.queued]
+        with open(filename, 'w') as f:
+            json.dump(task_list, f, indent=2)
+        return filename
+
+    def queueAs(self, manager) -> str:
+        '''Save the pending task queue to a user-chosen JSON file.
+
+        Parameters
+        ----------
+        manager : QTaskManager
+            The task manager whose pending queue will be saved.
+
+        Returns
+        -------
+        str
+            Path of the file that was written, or empty string if
+            canceled.
+        '''
+        default = self.filename(prefix='queue', suffix='.json')
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self.parent(), 'Save Queue As', default, self.queue_format)
+        if filename:
+            return self.queue(manager, filename)
+        return ''
+
+    def openQueue(self, manager) -> str:
+        '''Load a task queue from a user-chosen JSON file.
+
+        Reconstructed tasks are appended to the manager's existing
+        queue.  Dependencies (overlay, cgh, dvr) are injected by
+        ``manager.load()``.
+
+        Parameters
+        ----------
+        manager : QTaskManager
+            The task manager to receive the loaded tasks.
+
+        Returns
+        -------
+        str
+            Path of the file that was read, or empty string if
+            canceled.
+        '''
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self.parent(), 'Open Queue', str(self.datadir),
+            self.queue_format)
+        if filename:
+            with open(filename) as f:
+                task_list = json.load(f)
+            manager.load(task_list)
             return filename
         return ''
 

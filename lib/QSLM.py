@@ -75,8 +75,11 @@ class QSLM(GraphicsLayoutWidget):
             self.move(geometry.topLeft())
             self.showMaximized()
         else:
-            logger.warning('No secondary screen detected; '
-                           'opening SLM on primary screen')
+            if fake:
+                logger.info('Opening SLM on primary screen (fake mode)')
+            else:
+                logger.warning('No secondary screen detected; '
+                               'opening SLM on primary screen')
             x0, y0, w, h = 100, 100, 640, 480
             self.setGeometry(x0, y0, w, h)
             self.show()

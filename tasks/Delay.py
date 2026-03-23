@@ -11,7 +11,7 @@ class Delay(QTask):
     Parameters
     ----------
     frames : int
-        Number of frames to wait.
+        Number of frames to wait.  Default: 30.
     **kwargs
         Forwarded to ``QTask``.  ``duration`` may not be supplied.
 
@@ -19,13 +19,18 @@ class Delay(QTask):
     --------
     Record for 60 frames, wait 30 frames, then record again::
 
-        manager.register(Record(dvr=dvr, duration=60))
+        manager.register(Record(dvr=dvr, nframes=60))
         manager.register(Delay(30))
-        manager.register(Record(dvr=dvr, duration=60))
+        manager.register(Record(dvr=dvr, nframes=60))
     '''
 
-    def __init__(self, frames: int, **kwargs) -> None:
+    parameters = [
+        dict(name='frames', type='int', value=30, default=30, min=0),
+    ]
+
+    def __init__(self, frames: int = 30, **kwargs) -> None:
         if 'duration' in kwargs:
             raise TypeError("'duration' may not be set on Delay; "
                             'use frames instead')
         super().__init__(duration=frames, **kwargs)
+        self.frames = frames

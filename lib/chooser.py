@@ -27,8 +27,9 @@ from argparse import ArgumentParser
 from typing import NamedTuple
 
 from QHOT.lib.holograms import CGH
+from QHOT.lib.QSLM import QSLM
 
-__all__ = 'build_parser cgh_parser choose_cgh'.split()
+__all__ = 'build_parser cgh_parser choose_cgh choose_slm'.split()
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +123,10 @@ def build_parser(description: str = 'QHOT holographic optical trapping'
                                action='store_true')
     parser.add_argument('cameraID', nargs='?', type=int, default=0,
                         help='camera ID number (default: %(default)d)')
+    parser.add_argument('-s', '--fake-slm', dest='fake_slm',
+                        action='store_true',
+                        help='open SLM on the primary screen even when '
+                             'a secondary screen is present')
     return cgh_parser(parser)
 
 
@@ -183,3 +188,36 @@ def choose_cgh(parser: ArgumentParser | None = None,
 
     logger.info('Using CPU CGH backend')
     return CGH(**kwargs)
+
+
+def choose_slm(parser: ArgumentParser | None = None) -> QSLM:
+    '''Return an SLM instance, optionally forced to the primary screen.
+
+    Reads the ``-s``/``--fake-slm`` flag from the shared argument
+    parser.  Pass the same ``parser`` used for camera and CGH selection
+    so that all flags are parsed in one pass.
+
+    Parameters
+    ----------
+    parser : ArgumentParser or None
+        Parser already extended with other flags, or ``None`` to use
+        the ``build_parser`` default.  The ``-s``/``--fake-slm`` flag
+        is added if not already present.
+
+    Returns
+    -------
+    QSLM
+        An SLM instance on the secondary screen (default) or on the
+        primary screen if ``--fake-slm`` was supplied.
+    '''
+    parser = parser or ArgumentParser()
+    if '-s' not in parser._option_string_actions:
+        parser.add_argument('-s', '--fake-slm', dest='fake_slm',
+                            action='store_true',
+                            help='open SLM on the primary screen even '
+                                 'when a secondary screen is present')
+    args, _ = parser.parse_known_args()
+    fake = getattr(args, 'fake_slm', False)
+    if fake:
+        logger.info('Using fake SLM (primary screen)')
+    return QSLM(fake=fake)

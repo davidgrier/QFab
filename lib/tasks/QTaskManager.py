@@ -55,6 +55,11 @@ class QTaskManager(QtCore.QObject):
         Video recorder.
     '''
 
+    #: Emitted whenever the active task, queue, background list, or
+    #: pause state changes.  Connect widgets to this signal and call
+    #: their refresh method to stay up to date.
+    changed = QtCore.pyqtSignal()
+
     def __init__(self,
                  screen: QHOTScreen,
                  *,
@@ -66,10 +71,11 @@ class QTaskManager(QtCore.QObject):
         self.overlay = overlay
         self.cgh     = cgh
         self.dvr     = dvr
-        self._queue:      deque[QTask] = deque()
-        self._background: list[QTask]  = []
-        self._current:    QTask | None = None
-        self._paused:     bool         = False
+        self._queue:           deque[QTask] = deque()
+        self._background:      list[QTask]  = []
+        self._current:         QTask | None = None
+        self._current_stepped: bool         = False
+        self._paused:          bool         = False
         screen.rendered.connect(self._onFrame)
 
     # ------------------------------------------------------------------
@@ -82,13 +88,39 @@ class QTaskManager(QtCore.QObject):
 
     @property
     def active(self) -> QTask | None:
-        '''The currently executing blocking task, or ``None``.'''
+        '''The blocking task that has received at least one frame, or ``None``.
+
+        A task that has been activated but not yet stepped (e.g. because
+        the manager is paused) is not considered active; it appears in
+        ``queued`` instead.
+        '''
+        return self._current if self._current_stepped else None
+
+    @property
+    def active_raw(self) -> QTask | None:
+        '''The activated blocking task whether or not it has been stepped.
+
+        Used internally.  Prefer ``active`` for display and ``queued``
+        for the full list of not-yet-completed tasks.
+        '''
         return self._current
 
     @property
     def queue_size(self) -> int:
         '''Number of blocking tasks waiting (excludes active task).'''
         return len(self._queue)
+
+    @property
+    def queued(self) -> list[QTask]:
+        '''All blocking tasks not yet receiving frames.
+
+        Includes the activated-but-not-yet-stepped task (if any) at
+        position 0, followed by the remaining pending tasks.  This is
+        the canonical list for the queue display and for saving.
+        '''
+        head = ([] if self._current_stepped or self._current is None
+                else [self._current])
+        return head + list(self._queue)
 
     @property
     def background(self) -> list[QTask]:
@@ -131,11 +163,14 @@ class QTaskManager(QtCore.QObject):
             self._queue.append(task)
             if self._current is None:
                 self._activateNext()
+            else:
+                self.changed.emit()
         else:
             task.finished.connect(self._onBackgroundFinished)
             task.failed.connect(self._onBackgroundFailed)
             self._background.append(task)
             task._start()
+            self.changed.emit()
         return task
 
     def pause(self, state: bool = True) -> None:
@@ -146,7 +181,32 @@ class QTaskManager(QtCore.QObject):
         state : bool
             ``True`` to pause (default), ``False`` to resume.
         '''
-        self._paused = state
+        if state != self._paused:
+            self._paused = state
+            self.changed.emit()
+
+    def load(self, task_dicts: list[dict]) -> None:
+        '''Deserialise a list of task dicts and append them to the queue.
+
+        Dependencies (overlay, cgh, dvr) held by the manager are
+        injected into each reconstructed task before registration.
+
+        ``QHOT.tasks`` is imported lazily here to ensure all concrete
+        subclasses have registered themselves via ``__init_subclass__``
+        before ``QTask.from_dict`` is called.
+
+        Parameters
+        ----------
+        task_dicts : list[dict]
+            Dicts previously produced by ``QTask.to_dict()``.
+        '''
+        import QHOT.tasks  # noqa: F401 — populate QTask._registry
+        for d in task_dicts:
+            task = QTask.from_dict(d)
+            task.overlay = self.overlay
+            task.cgh     = self.cgh
+            task.dvr     = self.dvr
+            self.register(task)
 
     def stop(self) -> None:
         '''Abort all tasks and clear the blocking queue.
@@ -158,9 +218,11 @@ class QTaskManager(QtCore.QObject):
         if self._current is not None:
             self._current.abort('manager stopped')
             self._current = None
+            self._current_stepped = False
         for task in list(self._background):
             task.abort('manager stopped')
         self._background.clear()
+        self.changed.emit()
 
     # ------------------------------------------------------------------
     # Private slots
@@ -170,6 +232,9 @@ class QTaskManager(QtCore.QObject):
         if self._paused:
             return
         if self._current is not None:
+            if not self._current_stepped:
+                self._current_stepped = True
+                self.changed.emit()   # task moves from queue to active display
             self._current._step()
         for task in list(self._background):
             task._step()
@@ -189,6 +254,8 @@ class QTaskManager(QtCore.QObject):
         self._queue.clear()
         if self._current is task:
             self._current = None
+            self._current_stepped = False
+        self.changed.emit()
 
     @QtCore.pyqtSlot()
     def _onBackgroundFinished(self) -> None:
@@ -196,6 +263,7 @@ class QTaskManager(QtCore.QObject):
         logger.debug(f'Background task {type(task).__name__} finished')
         if task in self._background:
             self._background.remove(task)
+        self.changed.emit()
 
     @QtCore.pyqtSlot(str)
     def _onBackgroundFailed(self, reason: str) -> None:
@@ -204,6 +272,7 @@ class QTaskManager(QtCore.QObject):
                      f'failed: {reason}')
         if task in self._background:
             self._background.remove(task)
+        self.changed.emit()
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -212,7 +281,10 @@ class QTaskManager(QtCore.QObject):
                       previous: QTask | None = None) -> None:
         if self._queue:
             self._current = self._queue.popleft()
+            self._current_stepped = False
             self._current._start(previous)
             logger.debug(f'Activating {type(self._current).__name__}')
         else:
             self._current = None
+            self._current_stepped = False
+        self.changed.emit()

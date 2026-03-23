@@ -10,10 +10,17 @@ from QHOT.lib.holograms.CGH import CGH
 
 logger = logging.getLogger(__name__)
 
+__all__ = ['QTask']
+
 
 class QTask(QtCore.QObject):
 
     '''Base class for QHOT experimental tasks.
+
+    Subclasses declare a ``parameters`` class variable listing
+    pyqtgraph ``Parameter`` specs for their configurable fields.
+    ``to_dict()`` and ``from_dict()`` use this declaration together
+    with the class registry to serialise and reconstruct tasks.
 
     A task is a frame-synchronized operation on the trapping system.
     The task manager connects each registered task to
@@ -75,17 +82,31 @@ class QTask(QtCore.QObject):
 
     class State(Enum):
         '''Lifecycle state of a QTask.'''
-        PENDING   = auto()  #: not yet started
-        RUNNING   = auto()  #: actively receiving frames
+        PENDING = auto()  #: not yet started
+        RUNNING = auto()  #: actively receiving frames
         COMPLETED = auto()  #: finished successfully
-        FAILED    = auto()  #: ended by error or abort
+        FAILED = auto()  #: ended by error or abort
 
     #: Emitted immediately after ``initialize()`` returns.
-    started  = QtCore.pyqtSignal()
+    started = QtCore.pyqtSignal()
     #: Emitted after ``complete()`` returns successfully.
     finished = QtCore.pyqtSignal()
     #: Emitted with an error description when the task cannot complete.
-    failed   = QtCore.pyqtSignal(str)
+    failed = QtCore.pyqtSignal(str)
+
+    #: Registry mapping class name → class, populated by
+    #: ``__init_subclass__``.
+    _registry: 'dict[str, type[QTask]]' = {}
+
+    #: pyqtgraph Parameter specs for task-specific configurable fields.
+    #: Override in subclasses.  Each entry is a dict accepted by
+    #: ``Parameter.create``, e.g.
+    #: ``dict(name='filename', type='str', value='')``.
+    parameters: list[dict] = []
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        super().__init_subclass__(**kwargs)
+        QTask._registry[cls.__name__] = cls
 
     def __init__(self,
                  overlay: QTrapOverlay | None = None,
@@ -96,15 +117,15 @@ class QTask(QtCore.QObject):
                  duration: int | None = None,
                  parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
-        self.overlay  = overlay
-        self.cgh      = cgh
-        self.dvr      = dvr
-        self.delay    = int(delay)
+        self.overlay = overlay
+        self.cgh = cgh
+        self.dvr = dvr
+        self.delay = int(delay)
         self.duration = (int(duration)
                          if duration is not None else None)
-        self._state   = self.State.PENDING
-        self._frame   = 0
-        self._skip    = 0
+        self._state = self.State.PENDING
+        self._frame = 0
+        self._skip = 0
         self.previous: 'QTask | None' = None
 
     # ------------------------------------------------------------------
@@ -172,6 +193,56 @@ class QTask(QtCore.QObject):
             self.failed.emit(reason)
 
     # ------------------------------------------------------------------
+    # Serialisation
+
+    def to_dict(self) -> dict:
+        '''Serialise the task to a plain dict.
+
+        Returns
+        -------
+        dict
+            Contains ``'type'`` (class name), ``'delay'``, and the
+            current value of each declared parameter attribute.  Pass
+            the result to ``QTask.from_dict()`` to reconstruct an
+            equivalent task.
+        '''
+        d: dict = {'type': type(self).__name__, 'delay': self.delay}
+        d.update({p['name']: getattr(self, p['name'])
+                  for p in type(self).parameters})
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> 'QTask':
+        '''Reconstruct a task from a serialised dict.
+
+        Parameters
+        ----------
+        d : dict
+            A dict previously produced by ``to_dict()``.
+
+        Returns
+        -------
+        QTask
+            A new instance of the appropriate subclass.
+
+        Raises
+        ------
+        ValueError
+            If the ``'type'`` key does not match any registered class.
+        '''
+        d = dict(d)
+        typename = d.pop('type')
+        klass = cls._registry.get(typename)
+        if klass is None:
+            raise ValueError(f'unknown task type: {typename!r}')
+        return klass(**d)
+
+    @classmethod
+    def make(cls, d: dict) -> 'QTask':
+        '''Alias for ``from_dict``; reconstruct a task from a dict.'''
+        return cls.from_dict(d)
+
+    # ------------------------------------------------------------------
     # Internal machinery — called by QTaskManager
 
     def _start(self, previous: 'QTask | None' = None) -> None:
@@ -184,7 +255,7 @@ class QTask(QtCore.QObject):
             or ``None`` if this is first in the queue.
         '''
         self.previous = previous
-        self._state   = self.State.RUNNING
+        self._state = self.State.RUNNING
 
     @QtCore.pyqtSlot()
     def _step(self) -> None:

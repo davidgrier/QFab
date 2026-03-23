@@ -71,6 +71,16 @@
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="tasksTab">
+        <attribute name="title">
+         <string>Tasks</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <item>
+          <widget class="QTaskManagerWidget" name="taskManagerWidget"/>
+         </item>
+        </layout>
+       </widget>
        <widget class="QWidget" name="cghTab">
         <attribute name="title">
          <string>CGH</string>
@@ -187,6 +197,10 @@
     <addaction name="actionSaveTraps"/>
     <addaction name="actionSaveTrapsAs"/>
     <addaction name="separator"/>
+    <addaction name="actionOpenQueue"/>
+    <addaction name="actionSaveQueue"/>
+    <addaction name="actionSaveQueueAs"/>
+    <addaction name="separator"/>
     <addaction name="menuExport"/>
     <addaction name="separator"/>
     <addaction name="menuPreferences"/>
@@ -202,8 +216,15 @@
       <string>Add Trap</string>
      </property>
     </widget>
+    <widget class="QueueMenu" name="menuQueue">
+     <property name="title">
+      <string>Queue</string>
+     </property>
+    </widget>
     <addaction name="menuAddTrap"/>
     <addaction name="actionClearTraps"/>
+    <addaction name="separator"/>
+    <addaction name="menuQueue"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTasks"/>
@@ -224,6 +245,21 @@
     <string>Save Traps As ...</string>
    </property>
   </action>
+  <action name="actionOpenQueue">
+   <property name="text">
+    <string>Open Queue ...</string>
+   </property>
+  </action>
+  <action name="actionSaveQueue">
+   <property name="text">
+    <string>Save Queue</string>
+   </property>
+  </action>
+  <action name="actionSaveQueueAs">
+   <property name="text">
+    <string>Save Queue As ...</string>
+   </property>
+  </action>
   <action name="actionSaveImage">
    <property name="text">
     <string>Save Image</string>
@@ -237,6 +273,9 @@
   <action name="actionClearTraps">
    <property name="text">
     <string>Clear Traps</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Backspace</string>
    </property>
   </action>
   <action name="actionRestoreSettings">
@@ -279,6 +318,7 @@
    <extends>QGraphicsView</extends>
    <header>QHOT.lib.QHOTScreen</header>
    <slots>
+    <signal>rendered()</signal>
     <signal>status(str)</signal>
     <slot>clearTraps()</slot>
     <slot>saveImage()</slot>
@@ -289,6 +329,9 @@
    <extends>QFrame</extends>
    <header>QVideo.dvr.QDVRWidget</header>
    <container>1</container>
+   <slots>
+    <signal>playing(bool)</signal>
+   </slots>
   </customwidget>
   <customwidget>
    <class>QTrapWidget</class>
@@ -297,9 +340,22 @@
    <container>1</container>
   </customwidget>
   <customwidget>
+   <class>QTaskManagerWidget</class>
+   <extends>QWidget</extends>
+   <header>QHOT.lib.tasks.QTaskManagerWidget</header>
+   <slots>
+    <signal>status(str)</signal>
+   </slots>
+  </customwidget>
+  <customwidget>
    <class>QTrapMenu</class>
    <extends>QMenu</extends>
    <header>QHOT.lib.traps.QTrapMenu</header>
+  </customwidget>
+  <customwidget>
+   <class>QueueMenu</class>
+   <extends>QMenu</extends>
+   <header>QHOT.lib.tasks.QueueMenu</header>
   </customwidget>
   <customwidget>
    <class>QCGHTree</class>
@@ -424,6 +480,36 @@
      <x>325</x>
      <y>262</y>
     </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionOpenQueue</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openQueue()</slot>
+   <hints>
+    <hint type="sourcelabel"><x>-1</x><y>-1</y></hint>
+    <hint type="destinationlabel"><x>510</x><y>257</y></hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionSaveQueue</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>saveQueue()</slot>
+   <hints>
+    <hint type="sourcelabel"><x>-1</x><y>-1</y></hint>
+    <hint type="destinationlabel"><x>510</x><y>257</y></hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionSaveQueueAs</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>saveQueueAs()</slot>
+   <hints>
+    <hint type="sourcelabel"><x>-1</x><y>-1</y></hint>
+    <hint type="destinationlabel"><x>510</x><y>257</y></hint>
    </hints>
   </connection>
   <connection>
@@ -570,6 +656,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>screen</sender>
+   <signal>rendered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>_onFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>325</x>
+     <y>262</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>510</x>
+     <y>257</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>setStatus(str)</slot>
@@ -582,5 +684,10 @@
   <slot>saveHologramAs()</slot>
   <slot>saveSettings()</slot>
   <slot>restoreSettings()</slot>
+  <slot>_onFrame()</slot>
+  <slot>dvrPlayback(bool)</slot>
+  <slot>openQueue()</slot>
+  <slot>saveQueue()</slot>
+  <slot>saveQueueAs()</slot>
  </slots>
 </ui>

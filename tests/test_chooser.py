@@ -7,8 +7,10 @@ import importlib as _importlib
 
 app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
-from QHOT.lib.chooser import build_parser, cgh_parser, choose_cgh, _CGH_BACKENDS
+from QHOT.lib.chooser import (build_parser, cgh_parser, choose_cgh,
+                               choose_slm, _CGH_BACKENDS)
 from QHOT.lib.holograms.CGH import CGH
+from QHOT.lib.QSLM import QSLM
 _chooser_mod = _importlib.import_module('QHOT.lib.chooser')
 
 
@@ -234,6 +236,18 @@ class TestBuildParser(unittest.TestCase):
         self.assertTrue(args.basler)
         self.assertTrue(args.torch)
 
+    def test_fake_slm_flag_registered(self):
+        self.assertIn('-s', self.parser._option_string_actions)
+        self.assertIn('--fake-slm', self.parser._option_string_actions)
+
+    def test_fake_slm_default_false(self):
+        args = self.parser.parse_args([])
+        self.assertFalse(args.fake_slm)
+
+    def test_fake_slm_flag_sets_true(self):
+        args, _ = self.parser.parse_known_args(['-s'])
+        self.assertTrue(args.fake_slm)
+
     def test_choose_camera_sees_registered_flags(self):
         from QVideo.lib import choose_camera
         # choose_camera should work with the pre-built parser without
@@ -242,6 +256,47 @@ class TestBuildParser(unittest.TestCase):
             choose_camera(self.parser)
         except SystemExit:
             pass  # expected when no camera hardware is present
+
+
+class TestChooseSlm(unittest.TestCase):
+
+    def _patched_parser(self, fake_slm=False):
+        '''Return a minimal parser whose parse_known_args is mocked.'''
+        from argparse import Namespace
+        parser = ArgumentParser()
+        patch.object(parser, 'parse_known_args',
+                     return_value=(Namespace(fake_slm=fake_slm), [])
+                     ).start()
+        self.addCleanup(patch.stopall)
+        return parser
+
+    def test_returns_qslm_instance(self):
+        # choose_slm() with no parser uses ArgumentParser() (no
+        # positional args), so pytest's sys.argv is safe to ignore.
+        result = choose_slm()
+        self.assertIsInstance(result, QSLM)
+        result.close()
+
+    def test_fake_flag_passes_through(self):
+        with patch.object(_chooser_mod, 'QSLM') as MockSLM:
+            MockSLM.return_value = MagicMock(spec=QSLM)
+            choose_slm(self._patched_parser(fake_slm=True))
+        MockSLM.assert_called_once_with(fake=True)
+
+    def test_no_flag_uses_real_slm(self):
+        with patch.object(_chooser_mod, 'QSLM') as MockSLM:
+            MockSLM.return_value = MagicMock(spec=QSLM)
+            choose_slm(self._patched_parser(fake_slm=False))
+        MockSLM.assert_called_once_with(fake=False)
+
+    def test_idempotent_flag_registration(self):
+        # Parser that already has -s; choose_slm must not try to add it again.
+        parser = self._patched_parser()
+        parser.add_argument('-s', '--fake-slm', dest='fake_slm',
+                            action='store_true')
+        with patch.object(_chooser_mod, 'QSLM') as MockSLM:
+            MockSLM.return_value = MagicMock(spec=QSLM)
+            choose_slm(parser)  # should not raise
 
 
 if __name__ == '__main__':
