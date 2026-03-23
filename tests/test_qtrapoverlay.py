@@ -1473,5 +1473,159 @@ class TestLockedSerialisation(unittest.TestCase):
         self.assertNotIn('locked', data[0])
 
 
+class TestToggleMark(unittest.TestCase):
+
+    def setUp(self):
+        self.overlay = make_overlay()
+        self.trap = QTrap(r=(5., 5., 0.), phase=0.)
+        self.overlay.addTrap(self.trap)
+
+    def test_returns_false_no_trap(self):
+        with patch.object(self.overlay, 'trapAt', return_value=None):
+            result = self.overlay.toggleMark(QtCore.QPointF(99., 99.))
+        self.assertFalse(result)
+
+    def test_returns_true_when_trap_found(self):
+        with patch.object(self.overlay, 'trapAt', return_value=self.trap):
+            result = self.overlay.toggleMark(QtCore.QPointF(5., 5.))
+        self.assertTrue(result)
+
+    def test_mark_adds_group_to_marked_set(self):
+        with patch.object(self.overlay, 'trapAt', return_value=self.trap):
+            self.overlay.toggleMark(QtCore.QPointF(5., 5.))
+        self.assertIn(self.trap, self.overlay._marked)
+
+    def test_second_toggle_removes_from_marked_set(self):
+        with patch.object(self.overlay, 'trapAt', return_value=self.trap):
+            self.overlay.toggleMark(QtCore.QPointF(5., 5.))
+            self.overlay.toggleMark(QtCore.QPointF(5., 5.))
+        self.assertNotIn(self.trap, self.overlay._marked)
+
+    def test_mark_sets_special_brush(self):
+        with patch.object(self.overlay, 'trapAt', return_value=self.trap):
+            self.overlay.toggleMark(QtCore.QPointF(5., 5.))
+        spot = self.overlay.points()[0]
+        self.assertEqual(
+            spot.brush().color(),
+            self.overlay.brush[self.overlay.State.SPECIAL].color())
+
+    def test_unmark_restores_normal_brush(self):
+        with patch.object(self.overlay, 'trapAt', return_value=self.trap):
+            self.overlay.toggleMark(QtCore.QPointF(5., 5.))
+            self.overlay.toggleMark(QtCore.QPointF(5., 5.))
+        spot = self.overlay.points()[0]
+        self.assertEqual(
+            spot.brush().color(),
+            self.overlay.brush[self.overlay.State.NORMAL].color())
+
+    def test_unmark_locked_trap_restores_static_brush(self):
+        self.trap.locked = True
+        self.overlay._setGroupBrush(self.trap, self.overlay.State.STATIC)
+        with patch.object(self.overlay, 'trapAt', return_value=self.trap):
+            self.overlay.toggleMark(QtCore.QPointF(5., 5.))
+            self.overlay.toggleMark(QtCore.QPointF(5., 5.))
+        spot = self.overlay.points()[0]
+        self.assertEqual(
+            spot.brush().color(),
+            self.overlay.brush[self.overlay.State.STATIC].color())
+
+    def test_mark_group_adds_group_not_leaf(self):
+        g = QTrapGroup()
+        g.setParent(self.overlay)
+        t1 = QTrap(r=(1., 1., 0.), phase=0.)
+        t2 = QTrap(r=(2., 2., 0.), phase=0.)
+        t1.setParent(g)
+        t2.setParent(g)
+        self.overlay._addTrap(g)
+        with patch.object(self.overlay, 'trapAt', return_value=t1):
+            self.overlay.toggleMark(QtCore.QPointF(1., 1.))
+        self.assertIn(g, self.overlay._marked)
+        self.assertNotIn(t1, self.overlay._marked)
+
+
+class TestMarkedProperty(unittest.TestCase):
+
+    def setUp(self):
+        self.overlay = make_overlay()
+
+    def test_marked_empty_initially(self):
+        self.assertEqual(list(self.overlay.marked), [])
+
+    def test_marked_yields_leaf_of_single_trap(self):
+        trap = QTrap(r=(1., 1., 0.), phase=0.)
+        self.overlay.addTrap(trap)
+        self.overlay._marked.add(trap)
+        self.assertIn(trap, list(self.overlay.marked))
+
+    def test_marked_yields_leaves_of_group(self):
+        g = QTrapGroup()
+        g.setParent(self.overlay)
+        t1 = QTrap(r=(1., 1., 0.), phase=0.)
+        t2 = QTrap(r=(2., 2., 0.), phase=0.)
+        t1.setParent(g)
+        t2.setParent(g)
+        self.overlay._addTrap(g)
+        self.overlay._marked.add(g)
+        leaves = list(self.overlay.marked)
+        self.assertIn(t1, leaves)
+        self.assertIn(t2, leaves)
+
+    def test_marked_excludes_unmarked_traps(self):
+        t1 = QTrap(r=(1., 1., 0.), phase=0.)
+        t2 = QTrap(r=(2., 2., 0.), phase=0.)
+        self.overlay.addTrap(t1)
+        self.overlay.addTrap(t2)
+        self.overlay._marked.add(t1)
+        leaves = list(self.overlay.marked)
+        self.assertIn(t1, leaves)
+        self.assertNotIn(t2, leaves)
+
+
+class TestClearMarked(unittest.TestCase):
+
+    def setUp(self):
+        self.overlay = make_overlay()
+        self.t1 = QTrap(r=(1., 1., 0.), phase=0.)
+        self.t2 = QTrap(r=(2., 2., 0.), phase=0.)
+        self.overlay.addTrap(self.t1)
+        self.overlay.addTrap(self.t2)
+
+    def test_clear_empties_marked_set(self):
+        self.overlay._marked.update({self.t1, self.t2})
+        self.overlay.clearMarked()
+        self.assertEqual(len(self.overlay._marked), 0)
+
+    def test_clear_restores_normal_brush(self):
+        self.overlay._marked.add(self.t1)
+        self.overlay._setGroupBrush(self.t1, self.overlay.State.SPECIAL)
+        self.overlay.clearMarked()
+        spot = self.overlay.points()[0]
+        self.assertEqual(
+            spot.brush().color(),
+            self.overlay.brush[self.overlay.State.NORMAL].color())
+
+    def test_clear_on_empty_set_does_not_raise(self):
+        self.overlay.clearMarked()   # should not raise
+
+    def test_remove_trap_clears_from_marked(self):
+        self.overlay._marked.add(self.t1)
+        self.overlay._removeTrap(self.t1)
+        self.assertNotIn(self.t1, self.overlay._marked)
+
+
+class TestToggleMarkBinding(unittest.TestCase):
+    '''toggleMark is wired to Ctrl+left in the default binding.'''
+
+    def test_togglemark_in_default_descriptions(self):
+        handlers = [hname for (_, hname) in QTrapOverlay.default]
+        self.assertIn('toggleMark', handlers)
+
+    def test_ctrl_left_maps_to_togglemark(self):
+        overlay = make_overlay()
+        sig = (QtCore.Qt.MouseButton.LeftButton,
+               QtCore.Qt.KeyboardModifier.ControlModifier)
+        self.assertEqual(overlay._handler[sig], overlay.toggleMark)
+
+
 if __name__ == '__main__':
     unittest.main()

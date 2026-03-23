@@ -37,6 +37,7 @@ class FakeOverlay:
 
     def __init__(self, *traps):
         self._traps = list(traps)
+        self.marked = []   # tests may override to simulate marked traps
 
     def __iter__(self):
         return iter(self._traps)
@@ -223,6 +224,63 @@ class TestMoveTrapsParamSync(unittest.TestCase):
         tree._params.child('step').setValue(2.)
         self.assertAlmostEqual(task.step, 2.)
         self.assertEqual(task.duration, 5)
+
+
+class TestMoveTrapsSelectedOnly(unittest.TestCase):
+
+    def setUp(self):
+        self.t1 = FakeTrap(r=(0., 0., 0.))
+        self.t2 = FakeTrap(r=(10., 10., 0.))
+
+    def _make_overlay_with_marked(self, *marked):
+        '''Overlay that iterates both traps; marked returns only *marked.'''
+        overlay = FakeOverlay(self.t1, self.t2)
+        overlay.marked = iter(marked)
+        return overlay
+
+    def _run(self, task):
+        task._start()
+        for _ in range(task.duration):
+            task._step()
+
+    def test_selected_only_false_moves_all_traps(self):
+        overlay = FakeOverlay(self.t1, self.t2)
+        task = MoveTraps(overlay=overlay, dx=5., step=5.,
+                         selected_only=False)
+        self._run(task)
+        np.testing.assert_array_almost_equal(self.t1._r, [5., 0., 0.])
+        np.testing.assert_array_almost_equal(self.t2._r, [15., 10., 0.])
+
+    def test_selected_only_true_moves_only_marked_traps(self):
+        overlay = FakeOverlay(self.t1, self.t2)
+        overlay.marked = [self.t1]     # only t1 is marked
+        task = MoveTraps(overlay=overlay, dx=5., step=5.,
+                         selected_only=True)
+        self._run(task)
+        np.testing.assert_array_almost_equal(self.t1._r, [5., 0., 0.])
+        np.testing.assert_array_almost_equal(self.t2._r, [10., 10., 0.])
+
+    def test_selected_only_true_empty_marked_moves_nothing(self):
+        overlay = FakeOverlay(self.t1, self.t2)
+        overlay.marked = []
+        task = MoveTraps(overlay=overlay, dx=5., step=5.,
+                         selected_only=True)
+        self._run(task)
+        np.testing.assert_array_equal(self.t1._r, [0., 0., 0.])
+        np.testing.assert_array_equal(self.t2._r, [10., 10., 0.])
+
+    def test_selected_only_default_is_false(self):
+        task = MoveTraps()
+        self.assertFalse(task.selected_only)
+
+    def test_selected_only_in_parameters(self):
+        names = [p['name'] for p in MoveTraps.parameters]
+        self.assertIn('selected_only', names)
+
+    def test_selected_only_round_trip(self):
+        task = MoveTraps(dx=5., selected_only=True)
+        restored = QTask.from_dict(task.to_dict())
+        self.assertTrue(restored.selected_only)
 
 
 class TestMoveTrapsSerialization(unittest.TestCase):

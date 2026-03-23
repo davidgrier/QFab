@@ -42,10 +42,13 @@ class MoveTraps(QTask):
     '''
 
     parameters = [
-        dict(name='dx',   type='float', value=0.,  default=0.),
-        dict(name='dy',   type='float', value=0.,  default=0.),
-        dict(name='dz',   type='float', value=0.,  default=0.),
-        dict(name='step', type='float', value=1.,  default=1., min=0.01),
+        dict(name='dx',           type='float', value=0., default=0.),
+        dict(name='dy',           type='float', value=0., default=0.),
+        dict(name='dz',           type='float', value=0., default=0.),
+        dict(name='step',         type='float', value=1., default=1.,
+             min=0.01),
+        dict(name='selected_only', type='bool', value=False,
+             default=False),
     ]
 
     def __init__(self,
@@ -53,6 +56,7 @@ class MoveTraps(QTask):
                  dy: float = 0.,
                  dz: float = 0.,
                  step: float = 1.,
+                 selected_only: bool = False,
                  **kwargs) -> None:
         if 'duration' in kwargs:
             raise TypeError("'duration' may not be set on MoveTraps; "
@@ -66,10 +70,11 @@ class MoveTraps(QTask):
         _dist = math.sqrt(_dx**2 + _dy**2 + _dz**2)
         _n = max(1, math.ceil(_dist / _step_size))
         super().__init__(duration=_n, **kwargs)
-        self._dx        = _dx
-        self._dy        = _dy
-        self._dz        = _dz
-        self._step_size = _step_size
+        self._dx          = _dx
+        self._dy          = _dy
+        self._dz          = _dz
+        self._step_size   = _step_size
+        self.selected_only = bool(selected_only)
         self._starts: dict = {}
 
     # ------------------------------------------------------------------
@@ -131,12 +136,18 @@ class MoveTraps(QTask):
     # QTask lifecycle hooks
 
     def initialize(self) -> None:
-        '''Record starting positions of all leaf traps.'''
-        self._starts = {
-            trap: trap.r.copy()
-            for top in self.overlay
-            for trap in top.leaves()
-        }
+        '''Record starting positions of the traps to be moved.
+
+        Uses ``overlay.marked`` when ``selected_only`` is ``True``,
+        otherwise uses all leaf traps in the overlay.
+        '''
+        if self.selected_only:
+            traps = list(self.overlay.marked)
+        else:
+            traps = [trap
+                     for top in self.overlay
+                     for trap in top.leaves()]
+        self._starts = {trap: trap.r.copy() for trap in traps}
 
     def process(self, frame: int) -> None:
         '''Interpolate each trap toward its target position.'''

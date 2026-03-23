@@ -40,6 +40,7 @@ class QTrapOverlay(ScatterPlotItem):
     Ctrl + Shift + left click    Remove trap
     Alt + Shift + left click     Break group
     Ctrl + Alt + left click      Lock / unlock trap
+    Ctrl + left click            Mark / unmark trap
     Alt + left drag              Rotate group
     Left drag (no modifier)      Move group
     Left drag (no target)        Rubber-band select / group
@@ -116,6 +117,7 @@ class QTrapOverlay(ScatterPlotItem):
                              (('left', 'ctrl|shift'), 'removeTrap'),
                              (('left', 'alt|shift'), 'breakGroup'),
                              (('left', 'ctrl|alt'), 'toggleLock'),
+                             (('left', 'ctrl'), 'toggleMark'),
                              (('left', 'alt'), 'startRotation'))
 
     def __init__(self, *args,
@@ -133,13 +135,15 @@ class QTrapOverlay(ScatterPlotItem):
             Defaults:
                 shift+left → addTrap
                 ctrl+shift+left → removeTrap
-                alt+shift+left → breakGroup.
+                alt+shift+left → breakGroup
+                ctrl+left → toggleMark.
         *args, **kwargs
             Forwarded to ``ScatterPlotItem``.
         '''
         super().__init__(*args, size=size, **kwargs)
         self._setupUi()
         self._traps: list[QTrap] = []
+        self._marked: set[QTrap] = set()
         self._selected: QTrap | None = None
         self._move_origin = None
         self._drag_last: QtCore.QPointF | None = None
@@ -276,6 +280,7 @@ class QTrapOverlay(ScatterPlotItem):
         group : QTrap
             The top-level trap or group to remove.
         '''
+        self._marked.discard(group)
         self.trapRemoved.emit(group)
         for t in list(group.leaves()):
             try:
@@ -620,6 +625,65 @@ class QTrapOverlay(ScatterPlotItem):
                 direct.setParent(None)
             self.trapAdded.emit(trap)
         return True
+
+    # ------------------------------------------------------------------
+    # Marking traps for task operations
+
+    @property
+    def marked(self) -> Iterator[QTrap]:
+        '''Yield all leaf traps in marked groups.
+
+        Yields
+        ------
+        QTrap
+            Each leaf trap belonging to a group in the marked set.
+        '''
+        for group in self._marked:
+            yield from group.leaves()
+
+    def toggleMark(self, pos: QtCore.QPointF) -> bool:
+        '''Toggle the SPECIAL (marked) state of the group at pos.
+
+        Marked groups are highlighted with the ``SPECIAL`` brush.
+        Clicking a marked group a second time clears its mark.
+        Used as the ``Ctrl+left`` mouse handler so the user can
+        designate traps for scripted task operations.
+
+        Parameters
+        ----------
+        pos : QPointF
+            Click position in item coordinates.
+
+        Returns
+        -------
+        bool
+            ``True`` if a trap was found, ``False`` otherwise.
+        '''
+        trap = self.trapAt(pos)
+        if trap is None:
+            return False
+        group = self.groupOf(trap)
+        if group in self._marked:
+            self._marked.discard(group)
+            state = (self.State.STATIC if group.locked
+                     else self.State.NORMAL)
+            self._setGroupBrush(group, state)
+        else:
+            self._marked.add(group)
+            self._setGroupBrush(group, self.State.SPECIAL)
+        return True
+
+    def clearMarked(self) -> None:
+        '''Remove the SPECIAL mark from all currently marked groups.
+
+        Restores each group's brush to ``STATIC`` (if locked) or
+        ``NORMAL``, then clears the marked set.
+        '''
+        for group in list(self._marked):
+            state = (self.State.STATIC if group.locked
+                     else self.State.NORMAL)
+            self._setGroupBrush(group, state)
+        self._marked.clear()
 
     def selectGroup(self, pos: QtCore.QPointF) -> bool:
         '''Select the trap group at pos for dragging.
