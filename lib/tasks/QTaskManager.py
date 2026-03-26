@@ -180,6 +180,7 @@ class QTaskManager(QtCore.QObject):
             The registered task, for inspection or chaining.
         '''
         if blocking:
+            task.manager = self
             task.finished.connect(self._onBlockingFinished)
             task.failed.connect(self._onBlockingFailed)
             self._schedule.append(task)
@@ -272,6 +273,30 @@ class QTaskManager(QtCore.QObject):
             return
         self.clear()
         self.load(specs)
+
+    def inject(self, tasks: 'list[QTask]') -> None:
+        '''Prepend tasks to the blocking queue without adding to the schedule.
+
+        Used by ``Repeat`` to insert fresh copies of a sub-sequence at
+        the front of the queue.  The manager's resources are injected
+        into each task and signal connections are wired up, but the
+        tasks are **not** added to ``_schedule``, so they do not persist
+        across ``stop()`` / ``restart()`` calls.
+
+        Parameters
+        ----------
+        tasks : list[QTask]
+            Tasks to insert, in execution order.
+        '''
+        for task in tasks:
+            task.overlay = self.overlay
+            task.cgh     = self.cgh
+            task.dvr     = self.dvr
+            task.save    = self.save
+            task.manager = self
+            task.finished.connect(self._onBlockingFinished)
+            task.failed.connect(self._onBlockingFailed)
+        self._queue.extendleft(reversed(tasks))
 
     # ------------------------------------------------------------------
     # Private slots

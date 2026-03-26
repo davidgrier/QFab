@@ -131,6 +131,7 @@ class QTask(QtCore.QObject):
         self._frame = 0
         self._skip = 0
         self.previous: 'QTask | None' = None
+        self.manager: 'object | None' = None  # set by QTaskManager
 
     # ------------------------------------------------------------------
     # Public read-only state
