@@ -565,6 +565,72 @@ class TestQTaskManagerLoad(unittest.TestCase):
         self.assertEqual(self.manager.queue_size, 0)
 
 
+class TestQTaskManagerRemove(unittest.TestCase):
+
+    def setUp(self):
+        self.screen  = MockScreen()
+        self.manager = QTaskManager(self.screen)
+
+    def _register(self, n: int) -> list:
+        tasks = [QTask() for _ in range(n)]
+        for t in tasks:
+            self.manager.register(t)
+        return tasks
+
+    def test_remove_pending_task_from_schedule(self):
+        t1, t2 = self._register(2)
+        self.manager.remove(t2)
+        self.assertNotIn(t2, self.manager.scheduled)
+
+    def test_remove_pending_task_from_queue(self):
+        t1, t2 = self._register(2)
+        self.manager.remove(t2)
+        self.assertEqual(self.manager.queue_size, 0)
+
+    def test_remove_active_task_is_ignored(self):
+        t1, t2 = self._register(2)
+        # t1 is active
+        self.manager.remove(t1)
+        self.assertIn(t1, self.manager.scheduled)
+        self.assertIs(self.manager.active_raw, t1)
+
+    def test_remove_active_logs_warning(self):
+        t1 = self._register(1)[0]
+        with self.assertLogs('QHOT.lib.tasks.QTaskManager', level='WARNING'):
+            self.manager.remove(t1)
+
+    def test_remove_task_not_in_schedule_is_noop(self):
+        t1 = self._register(1)[0]
+        outsider = QTask()
+        self.manager.remove(outsider)   # should not raise
+        self.assertEqual(len(self.manager.scheduled), 1)
+
+    def test_remove_completed_task(self):
+        from QHOT.tasks.Delay import Delay
+        mgr = QTaskManager(self.screen)
+        d1 = Delay(frames=0)
+        d2 = Delay(frames=0)
+        mgr.register(d1)
+        mgr.register(d2)
+        self.screen.rendered.emit()   # d1 completes
+        self.assertEqual(d1.state, QTask.State.COMPLETED)
+        mgr.remove(d1)
+        self.assertNotIn(d1, mgr.scheduled)
+
+    def test_remove_emits_changed(self):
+        t1, t2 = self._register(2)
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self.manager.remove(t2)
+        self.assertGreater(len(spy), 0)
+
+    def test_remove_only_removes_one_task(self):
+        t1, t2, t3 = self._register(3)
+        self.manager.remove(t2)
+        self.assertEqual(len(self.manager.scheduled), 2)
+        self.assertIn(t1, self.manager.scheduled)
+        self.assertIn(t3, self.manager.scheduled)
+
+
 class TestQTaskManagerChanged(unittest.TestCase):
 
     def setUp(self):

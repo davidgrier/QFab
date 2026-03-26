@@ -274,6 +274,29 @@ class QTaskManager(QtCore.QObject):
         self.clear()
         self.load(specs)
 
+    def remove(self, task: QTask) -> None:
+        '''Remove a task from the schedule and pending queue.
+
+        Has no effect if *task* is not in the schedule, or if it is
+        the currently active (running) task.
+
+        Parameters
+        ----------
+        task : QTask
+            The task to remove.
+        '''
+        if task is self._current:
+            logger.warning('remove: cannot remove the active task')
+            return
+        if task not in self._schedule:
+            return
+        self._schedule.remove(task)
+        try:
+            self._queue.remove(task)
+        except ValueError:
+            pass  # completed or failed — not in the pending queue
+        self.changed.emit()
+
     def reorder(self, tasks: 'list[QTask]') -> None:
         '''Reorder the persistent schedule and pending queue.
 

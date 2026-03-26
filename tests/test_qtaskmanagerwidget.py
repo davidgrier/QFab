@@ -377,6 +377,77 @@ class TestQTaskManagerWidgetParamTree(unittest.TestCase):
         self.assertIs(self.widget._selectedTask, t2)
 
 
+class TestQTaskManagerWidgetRemove(unittest.TestCase):
+
+    def setUp(self):
+        self.screen, self.manager, self.widget = _make_wired()
+
+    def test_delete_key_removes_selected_pending_task(self):
+        t1, t2 = QTask(), QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        self.widget._queueList.setCurrentRow(1)   # select t2
+        self.widget._onDeletePressed()
+        self.assertNotIn(t2, self.manager.scheduled)
+
+    def test_delete_key_does_not_remove_active_task(self):
+        t1 = QTask()
+        self.manager.register(t1)
+        self.widget._queueList.setCurrentRow(0)   # select t1 (running)
+        self.widget._onDeletePressed()
+        self.assertIn(t1, self.manager.scheduled)
+
+    def test_delete_key_no_selection_is_noop(self):
+        t1 = QTask()
+        self.manager.register(t1)
+        self.widget._queueList.clearSelection()
+        self.widget._onDeletePressed()   # should not raise
+        self.assertIn(t1, self.manager.scheduled)
+
+    def test_delete_key_no_manager_is_noop(self):
+        self.widget.manager = None
+        self.widget._onDeletePressed()   # should not raise
+
+    def test_context_menu_remove_action_calls_manager_remove(self):
+        import sys
+        from unittest.mock import patch, MagicMock
+        t1, t2 = QTask(), QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        item = self.widget._queueList.item(1)
+        fake_menu = MagicMock()
+        remove_action = MagicMock()
+        fake_menu.addAction.return_value = remove_action
+        fake_menu.exec.return_value = remove_action
+        module = sys.modules['QHOT.lib.tasks.QTaskManagerWidget']
+        with patch.object(module, 'QtWidgets') as mock_qtw:
+            mock_qtw.QMenu.return_value = fake_menu
+            with patch.object(self.manager, 'remove') as mock_remove:
+                self.widget._onQueueContextMenu(
+                    self.widget._queueList.visualItemRect(item).center())
+                mock_remove.assert_called_once_with(t2)
+
+    def test_context_menu_remove_disabled_for_active_task(self):
+        import sys
+        from unittest.mock import patch, MagicMock
+        t1 = QTask()
+        self.manager.register(t1)
+        item = self.widget._queueList.item(0)
+        fake_menu = MagicMock()
+        remove_action = MagicMock()
+        fake_menu.addAction.return_value = remove_action
+        fake_menu.exec.return_value = None
+        module = sys.modules['QHOT.lib.tasks.QTaskManagerWidget']
+        with patch.object(module, 'QtWidgets') as mock_qtw:
+            mock_qtw.QMenu.return_value = fake_menu
+            self.widget._onQueueContextMenu(
+                self.widget._queueList.visualItemRect(item).center())
+            remove_action.setEnabled.assert_called_once_with(False)
+
+    def test_context_menu_no_item_is_noop(self):
+        self.widget._onQueueContextMenu(QtCore.QPoint(0, 0))  # empty list area
+
+
 class TestQTaskManagerWidgetDragReorder(unittest.TestCase):
 
     def setUp(self):

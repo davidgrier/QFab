@@ -98,6 +98,8 @@ class QTaskManagerWidget(QtWidgets.QWidget):
         self._queueList.setSelectionMode(
             QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
         self._queueList.setMaximumHeight(120)
+        self._queueList.setContextMenuPolicy(
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         queueLayout.addWidget(self._queueList)
         layout.addWidget(queueGroup)
 
@@ -136,6 +138,14 @@ class QTaskManagerWidget(QtWidgets.QWidget):
         self._queueList.itemClicked.connect(self._onTaskItemClicked)
         self._bgList.itemClicked.connect(self._onTaskItemClicked)
         self._queueList.model().rowsMoved.connect(self._onRowsMoved)
+        self._queueList.customContextMenuRequested.connect(
+            self._onQueueContextMenu)
+        delete_shortcut = QtGui.QShortcut(
+            QtGui.QKeySequence(QtCore.Qt.Key.Key_Delete), self._queueList)
+        delete_shortcut.activated.connect(self._onDeletePressed)
+        backspace_shortcut = QtGui.QShortcut(
+            QtGui.QKeySequence(QtCore.Qt.Key.Key_Backspace), self._queueList)
+        backspace_shortcut.activated.connect(self._onDeletePressed)
 
     # ------------------------------------------------------------------
     # manager property
@@ -234,6 +244,33 @@ class QTaskManagerWidget(QtWidgets.QWidget):
             self._taskTree = QTaskTree(task)
             self._taskTree.setMinimumHeight(80)
             self._paramsLayout.addWidget(self._taskTree)
+
+    @QtCore.pyqtSlot(QtCore.QPoint)
+    def _onQueueContextMenu(self, pos: QtCore.QPoint) -> None:
+        '''Show a context menu for the queue item at *pos*.'''
+        if self._manager is None:
+            return
+        item = self._queueList.itemAt(pos)
+        if item is None:
+            return
+        task = item.data(_ROLE)
+        menu = QtWidgets.QMenu(self)
+        remove_action = menu.addAction('Remove')
+        remove_action.setEnabled(task is not self._manager.active_raw)
+        chosen = menu.exec(self._queueList.mapToGlobal(pos))
+        if chosen is remove_action:
+            self._manager.remove(task)
+
+    @QtCore.pyqtSlot()
+    def _onDeletePressed(self) -> None:
+        '''Remove the currently selected queue item (Delete / Backspace).'''
+        if self._manager is None:
+            return
+        items = self._queueList.selectedItems()
+        if not items:
+            return
+        task = items[0].data(_ROLE)
+        self._manager.remove(task)
 
     @QtCore.pyqtSlot(QtCore.QModelIndex, int, int, QtCore.QModelIndex, int)
     def _onRowsMoved(self,
