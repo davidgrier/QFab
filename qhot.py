@@ -361,7 +361,7 @@ class QHOT(QtWidgets.QMainWindow):
         else:
             QtCore.QTimer.singleShot(0, self._fitToCamera)
         if (filename := self.save.fromToml(self.cghTree)):
-            logger.info('Configuration restored from %s', filename)
+            logger.info(f'Configuration restored from {filename}')
             self.setStatus(f'Configuration restored from {filename}')
         else:
             logger.warning('Configuration file not found or invalid')
