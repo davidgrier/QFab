@@ -14,6 +14,32 @@ __all__ = ['QTaskManagerWidget']
 _ROLE = QtCore.Qt.ItemDataRole.UserRole
 
 
+class _DraggableQueueList(QtWidgets.QListWidget):
+    '''QListWidget that allows PENDING tasks to be reordered by dragging.
+
+    Drops above the first PENDING item are rejected so that completed
+    and running tasks stay anchored at the top of the list.
+    '''
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.setDragDropMode(
+            QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
+        self.setDefaultDropAction(QtCore.Qt.DropAction.MoveAction)
+
+    def dropEvent(self, event: QtGui.QDropEvent) -> None:
+        index = self.indexAt(event.position().toPoint())
+        target_row = index.row() if index.isValid() else self.count()
+        first_pending = next(
+            (i for i in range(self.count())
+             if self.item(i).data(_ROLE).state is QTask.State.PENDING),
+            self.count())
+        if target_row < first_pending:
+            event.ignore()
+            return
+        super().dropEvent(event)
+
+
 class QTaskManagerWidget(QtWidgets.QWidget):
 
     '''Widget for monitoring and controlling a QTaskManager.
@@ -68,7 +94,7 @@ class QTaskManagerWidget(QtWidgets.QWidget):
         # Blocking queue (all scheduled tasks; active shown bold)
         queueGroup = QtWidgets.QGroupBox('Queue')
         queueLayout = QtWidgets.QVBoxLayout(queueGroup)
-        self._queueList = QtWidgets.QListWidget()
+        self._queueList = _DraggableQueueList()
         self._queueList.setSelectionMode(
             QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
         self._queueList.setMaximumHeight(120)
@@ -109,6 +135,7 @@ class QTaskManagerWidget(QtWidgets.QWidget):
         self._clearButton.clicked.connect(self._onClearClicked)
         self._queueList.itemClicked.connect(self._onTaskItemClicked)
         self._bgList.itemClicked.connect(self._onTaskItemClicked)
+        self._queueList.model().rowsMoved.connect(self._onRowsMoved)
 
     # ------------------------------------------------------------------
     # manager property
@@ -137,6 +164,9 @@ class QTaskManagerWidget(QtWidgets.QWidget):
         '''Create a list item styled according to the task's state.'''
         item = QtWidgets.QListWidgetItem(type(task).__name__)
         item.setData(_ROLE, task)
+        # Strip drag flag; only PENDING items get it back below
+        item.setFlags(
+            item.flags() & ~QtCore.Qt.ItemFlag.ItemIsDragEnabled)
         state = task.state
         if state is QTask.State.RUNNING:
             font = item.font()
@@ -148,6 +178,9 @@ class QTaskManagerWidget(QtWidgets.QWidget):
         elif state is QTask.State.FAILED:
             item.setForeground(QtGui.QBrush(
                 QtGui.QColor(192, 0, 0)))
+        else:  # PENDING — allow the user to drag this item
+            item.setFlags(
+                item.flags() | QtCore.Qt.ItemFlag.ItemIsDragEnabled)
         return item
 
     def _reselectTask(self) -> None:
@@ -201,6 +234,19 @@ class QTaskManagerWidget(QtWidgets.QWidget):
             self._taskTree = QTaskTree(task)
             self._taskTree.setMinimumHeight(80)
             self._paramsLayout.addWidget(self._taskTree)
+
+    @QtCore.pyqtSlot(QtCore.QModelIndex, int, int, QtCore.QModelIndex, int)
+    def _onRowsMoved(self,
+                     parent: QtCore.QModelIndex,
+                     start: int, end: int,
+                     destination: QtCore.QModelIndex,
+                     row: int) -> None:
+        '''Forward a drag-reorder to the task manager.'''
+        if self._manager is None:
+            return
+        tasks = [self._queueList.item(i).data(_ROLE)
+                 for i in range(self._queueList.count())]
+        self._manager.reorder(tasks)
 
     @QtCore.pyqtSlot()
     def _refresh(self) -> None:

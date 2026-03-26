@@ -6,7 +6,7 @@ from pyqtgraph.Qt import QtCore, QtWidgets, QtTest
 
 from QHOT.lib.tasks.QTask import QTask
 from QHOT.lib.tasks.QTaskManager import QTaskManager
-from QHOT.lib.tasks.QTaskManagerWidget import QTaskManagerWidget
+from QHOT.lib.tasks.QTaskManagerWidget import QTaskManagerWidget, _ROLE
 
 app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
@@ -23,6 +23,14 @@ def _make_manager():
 def _make_manager_with_screen():
     screen = MockScreen()
     return QTaskManager(screen), screen
+
+
+def _make_wired():
+    screen = MockScreen()
+    manager = QTaskManager(screen)
+    widget = QTaskManagerWidget()
+    widget.manager = manager
+    return screen, manager, widget
 
 
 class TestQTaskManagerWidgetInit(unittest.TestCase):
@@ -367,6 +375,69 @@ class TestQTaskManagerWidgetParamTree(unittest.TestCase):
         self.assertIs(self.widget._selectedTask, t2)
         self.manager.pause(True)
         self.assertIs(self.widget._selectedTask, t2)
+
+
+class TestQTaskManagerWidgetDragReorder(unittest.TestCase):
+
+    def setUp(self):
+        self.screen, self.manager, self.widget = _make_wired()
+
+    def _emit(self, n: int = 1) -> None:
+        for _ in range(n):
+            self.screen.rendered.emit()
+
+    def test_queue_list_has_internal_move(self):
+        from pyqtgraph.Qt import QtWidgets as _QtW
+        self.assertEqual(
+            self.widget._queueList.dragDropMode(),
+            _QtW.QAbstractItemView.DragDropMode.InternalMove)
+
+    def test_pending_items_are_draggable(self):
+        t1, t2 = QTask(), QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        # t1 is active (RUNNING), t2 is PENDING
+        item_t2 = self.widget._queueList.item(1)
+        drag_flag = QtCore.Qt.ItemFlag.ItemIsDragEnabled
+        self.assertTrue(bool(item_t2.flags() & drag_flag))
+
+    def test_running_item_is_not_draggable(self):
+        t1 = QTask()
+        self.manager.register(t1)
+        item_t1 = self.widget._queueList.item(0)
+        drag_flag = QtCore.Qt.ItemFlag.ItemIsDragEnabled
+        self.assertFalse(bool(item_t1.flags() & drag_flag))
+
+    def test_on_rows_moved_calls_reorder(self):
+        from unittest.mock import MagicMock, patch
+        t1, t2, t3 = QTask(), QTask(), QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        self.manager.register(t3)
+        with patch.object(self.manager, 'reorder') as mock_reorder:
+            # Simulate rowsMoved: pretend t3 (row 2) moved to row 1
+            self.widget._onRowsMoved(
+                QtCore.QModelIndex(), 2, 2, QtCore.QModelIndex(), 1)
+            mock_reorder.assert_called_once()
+            args = mock_reorder.call_args[0][0]
+            self.assertEqual(len(args), 3)
+            self.assertTrue(all(isinstance(t, QTask) for t in args))
+
+    def test_on_rows_moved_no_manager_does_nothing(self):
+        self.widget.manager = None
+        # Should not raise
+        self.widget._onRowsMoved(
+            QtCore.QModelIndex(), 0, 0, QtCore.QModelIndex(), 1)
+
+    def test_reorder_reflected_in_queue_list(self):
+        t1, t2, t3 = QTask(), QTask(), QTask()
+        self.manager.register(t1)
+        self.manager.register(t2)
+        self.manager.register(t3)
+        self.manager.reorder([t1, t3, t2])
+        items = [self.widget._queueList.item(i).data(_ROLE)
+                 for i in range(self.widget._queueList.count())]
+        self.assertEqual(items, [t1, t3, t2])
 
 
 if __name__ == '__main__':

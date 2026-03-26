@@ -274,6 +274,33 @@ class QTaskManager(QtCore.QObject):
         self.clear()
         self.load(specs)
 
+    def reorder(self, tasks: 'list[QTask]') -> None:
+        '''Reorder the persistent schedule and pending queue.
+
+        Accepts a permutation of the current ``scheduled`` list and
+        updates the manager so that pending tasks run in the new order.
+        Already-running and completed tasks are left in place; only the
+        relative order of ``PENDING`` tasks changes.
+
+        Has no effect if *tasks* does not contain exactly the same task
+        objects as ``scheduled`` (checked by identity, not equality).
+
+        Parameters
+        ----------
+        tasks : list[QTask]
+            All scheduled tasks in the desired new order.
+        '''
+        if {id(t) for t in tasks} != {id(t) for t in self._schedule}:
+            logger.warning('reorder: task set mismatch; ignoring')
+            return
+        self._schedule[:] = tasks
+        pending = [t for t in tasks
+                   if t.state is QTask.State.PENDING
+                   and t is not self._current]
+        self._queue.clear()
+        self._queue.extend(pending)
+        self.changed.emit()
+
     def inject(self, tasks: 'list[QTask]') -> None:
         '''Prepend tasks to the blocking queue without adding to the schedule.
 

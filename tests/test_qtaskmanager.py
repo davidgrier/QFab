@@ -634,5 +634,75 @@ class TestQTaskManagerChanged(unittest.TestCase):
         self.assertGreater(len(spy), 0)
 
 
+class TestQTaskManagerReorder(unittest.TestCase):
+
+    def setUp(self):
+        self.screen  = MockScreen()
+        self.manager = QTaskManager(self.screen)
+
+    def _register(self, n: int) -> list:
+        tasks = [QTask() for _ in range(n)]
+        for t in tasks:
+            self.manager.register(t)
+        return tasks
+
+    def test_reorder_changes_schedule_order(self):
+        t1, t2, t3 = self._register(3)
+        self.manager.reorder([t3, t1, t2])
+        self.assertEqual(self.manager.scheduled, [t3, t1, t2])
+
+    def test_reorder_changes_queue_order(self):
+        t1, t2, t3 = self._register(3)
+        # t1 is active (running), t2 and t3 are pending in queue
+        self.manager.reorder([t1, t3, t2])
+        self.assertEqual(list(self.manager._queue), [t3, t2])
+
+    def test_reorder_active_task_excluded_from_queue(self):
+        t1, t2, t3 = self._register(3)
+        # t1 is currently active (_current); reorder puts t1 last
+        self.manager.reorder([t2, t3, t1])
+        # t1 is still _current, not re-enqueued
+        self.assertIs(self.manager.active_raw, t1)
+        self.assertNotIn(t1, list(self.manager._queue))
+
+    def test_reorder_with_wrong_tasks_ignored(self):
+        t1, t2 = self._register(2)
+        outsider = QTask()
+        original = self.manager.scheduled[:]
+        self.manager.reorder([t1, outsider])
+        self.assertEqual(self.manager.scheduled, original)
+
+    def test_reorder_emits_changed(self):
+        t1, t2 = self._register(2)
+        spy = QtTest.QSignalSpy(self.manager.changed)
+        self.manager.reorder([t2, t1])
+        self.assertGreater(len(spy), 0)
+
+    def test_reorder_completed_tasks_stay_in_place(self):
+        screen = self.screen
+        t1, t2, t3 = self._register(3)
+        # Complete t1 by stepping it (t1 has duration=None, won't complete)
+        # Use a zero-duration task instead
+        from QHOT.tasks.Delay import Delay
+        mgr = QTaskManager(screen)
+        d1 = Delay(frames=0)
+        d2 = Delay(frames=0)
+        d3 = Delay(frames=0)
+        mgr.register(d1)
+        mgr.register(d2)
+        mgr.register(d3)
+        screen.rendered.emit()   # d1 completes, d2 activates
+        self.assertEqual(d1.state, QTask.State.COMPLETED)
+        # Reorder d2 and d3 (both PENDING/RUNNING)
+        mgr.reorder([d1, d3, d2])
+        self.assertEqual(mgr.scheduled, [d1, d3, d2])
+
+    def test_reorder_preserves_same_set(self):
+        t1, t2, t3 = self._register(3)
+        self.manager.reorder([t3, t2, t1])
+        self.assertEqual(set(id(t) for t in self.manager.scheduled),
+                         {id(t1), id(t2), id(t3)})
+
+
 if __name__ == '__main__':
     unittest.main()
