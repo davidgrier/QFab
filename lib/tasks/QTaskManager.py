@@ -49,6 +49,8 @@ class QTaskManager(QtCore.QObject):
         Hologram computation engine, stored as ``self.cgh``.
     dvr : QDVRWidget or None
         Video recorder, stored as ``self.dvr``.
+    save : QSaveFile or None
+        File-save helper, stored as ``self.save``.
 
     Attributes
     ----------
@@ -58,6 +60,8 @@ class QTaskManager(QtCore.QObject):
         Hologram computation engine.
     dvr : object or None
         Video recorder.
+    save : object or None
+        File-save helper.
     '''
 
     #: Emitted whenever the active task, queue, background list, or
@@ -71,11 +75,13 @@ class QTaskManager(QtCore.QObject):
                  overlay: QTrapOverlay | None = None,
                  cgh: CGH | None = None,
                  dvr: QDVRWidget | None = None,
+                 save=None,
                  parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
         self.overlay = overlay
         self.cgh     = cgh
         self.dvr     = dvr
+        self.save    = save
         self._schedule:        list[QTask]  = []
         self._queue:           deque[QTask] = deque()
         self._background:      list[QTask]  = []
@@ -223,6 +229,7 @@ class QTaskManager(QtCore.QObject):
             task.overlay = self.overlay
             task.cgh     = self.cgh
             task.dvr     = self.dvr
+            task.save    = self.save
             self.register(task)
 
     def stop(self) -> None:

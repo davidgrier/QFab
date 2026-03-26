@@ -53,6 +53,8 @@ class QTask(QtCore.QObject):
         Hologram computation engine.  ``None`` if not needed.
     dvr : QDVRWidget or None
         Video recorder.  ``None`` if not needed.
+    save : QSaveFile or None
+        File-save helper.  ``None`` if not needed.
     delay : int
         Number of rendered frames to skip before ``initialize()``
         is called.  Default: 0.
@@ -113,6 +115,7 @@ class QTask(QtCore.QObject):
                  *,
                  cgh: CGH | None = None,
                  dvr: QDVRWidget | None = None,
+                 save=None,
                  delay: int = 0,
                  duration: int | None = None,
                  parent: QtCore.QObject | None = None) -> None:
@@ -120,6 +123,7 @@ class QTask(QtCore.QObject):
         self.overlay = overlay
         self.cgh = cgh
         self.dvr = dvr
+        self.save = save
         self.delay = int(delay)
         self.duration = (int(duration)
                          if duration is not None else None)
