@@ -456,6 +456,60 @@ class TestQTaskManagerWidgetRemove(unittest.TestCase):
         self.widget._onQueueContextMenu(QtCore.QPoint(0, 0))  # empty list area
 
 
+class TestDraggableQueueListCanDropAt(unittest.TestCase):
+    '''Tests for _DraggableQueueList._canDropAt().
+
+    Row 0 is RUNNING; rows 1 and 2 are PENDING (first_pending=1).
+    Inserts below row 0 are allowed; inserts at row 0 or above are not.
+
+    _canDropAt is pure Python so no Qt event objects are needed.
+    '''
+
+    def setUp(self):
+        from QHOT.lib.tasks.QTaskManagerWidget import _DraggableQueueList
+        screen = MockScreen()
+        manager = QTaskManager(screen)
+        t1, t2, t3 = QTask(), QTask(), QTask()
+        manager.register(t1)   # RUNNING at row 0
+        manager.register(t2)   # PENDING at row 1
+        manager.register(t3)   # PENDING at row 2
+        self.lst = _DraggableQueueList()
+        for task in (t1, t2, t3):
+            item = QtWidgets.QListWidgetItem()
+            item.setData(_ROLE, task)
+            self.lst.addItem(item)
+
+    def test_insert_before_running_rejected(self):
+        # insert_row=0 < first_pending=1 → rejected
+        self.assertFalse(self.lst._canDropAt(0))
+
+    def test_insert_at_first_pending_allowed(self):
+        # insert_row=1 == first_pending=1 → allowed
+        # This is the key fix: old code treated row-under-cursor as the
+        # insert row, which returned 0 (RUNNING) when hovering near the
+        # boundary above row 1, incorrectly rejecting the drop.
+        self.assertTrue(self.lst._canDropAt(1))
+
+    def test_insert_between_pending_allowed(self):
+        # insert_row=2 > first_pending=1 → allowed
+        self.assertTrue(self.lst._canDropAt(2))
+
+    def test_insert_past_end_allowed(self):
+        # insert_row=count=3 > first_pending=1 → allowed
+        self.assertTrue(self.lst._canDropAt(self.lst.count()))
+
+    def test_all_pending_any_insert_allowed(self):
+        # When no RUNNING/COMPLETED tasks exist, first_pending=0 → always allowed
+        from QHOT.lib.tasks.QTaskManagerWidget import _DraggableQueueList
+        lst = _DraggableQueueList()
+        for _ in range(3):
+            task = QTask()          # state = PENDING (never registered)
+            item = QtWidgets.QListWidgetItem()
+            item.setData(_ROLE, task)
+            lst.addItem(item)
+        self.assertTrue(lst._canDropAt(0))
+
+
 class TestQTaskManagerWidgetDragReorder(unittest.TestCase):
 
     def setUp(self):

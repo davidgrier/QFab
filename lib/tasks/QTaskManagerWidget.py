@@ -29,15 +29,30 @@ class _DraggableQueueList(QtWidgets.QListWidget):
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         index = self.indexAt(event.position().toPoint())
-        target_row = index.row() if index.isValid() else self.count()
+        if not index.isValid():
+            insert_row = self.count()
+        elif (self.dropIndicatorPosition() ==
+              QtWidgets.QAbstractItemView.DropIndicatorPosition.BelowItem):
+            insert_row = index.row() + 1
+        else:  # AboveItem or OnItem
+            insert_row = index.row()
+        if not self._canDropAt(insert_row):
+            event.ignore()
+            return
+        super().dropEvent(event)
+
+    def _canDropAt(self, insert_row: int) -> bool:
+        '''Return True if *insert_row* is within the PENDING section.
+
+        Drops above the first PENDING item are rejected so that completed
+        and running tasks stay anchored at the top of the list.  Extracted
+        as a pure-Python method so it can be tested without Qt event objects.
+        '''
         first_pending = next(
             (i for i in range(self.count())
              if self.item(i).data(_ROLE).state is QTask.State.PENDING),
             self.count())
-        if target_row < first_pending:
-            event.ignore()
-            return
-        super().dropEvent(event)
+        return insert_row >= first_pending
 
 
 class QTaskManagerWidget(QtWidgets.QWidget):
