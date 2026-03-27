@@ -47,7 +47,7 @@ class QHOTScreen(QVideoScreen):
         '''Add the trap overlay to the inherited video view.'''
         super()._setupUi()
         self.overlay = QTrapOverlay()
-        self.view.addItem(self.overlay)
+        self.addOverlay(self.overlay)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
                            QtWidgets.QSizePolicy.Policy.Expanding)
 
