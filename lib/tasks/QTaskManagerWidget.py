@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets

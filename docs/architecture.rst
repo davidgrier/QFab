@@ -119,6 +119,136 @@ screen and exposes a ``setData`` slot that accepts a uint8 phase array.
 :class:`~QHOT.lib.QSLMWidget.QSLMWidget` shows a preview of the current
 hologram inside the main window.
 
+Task framework — ``QHOT.lib.tasks`` / ``QHOT.tasks``
+-----------------------------------------------------
+
+The task framework provides a frame-synchronised automation layer that
+sits alongside the trapping system.  Tasks are Python objects that run
+one step per video frame, driven by the same ``QHOTScreen.rendered``
+signal that updates the CGH.
+
+**QTask** is the abstract base for all tasks.  Each subclass overrides
+up to three lifecycle hooks:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Hook
+     - When called
+   * - ``initialize()``
+     - Once on the first active frame (after any optional delay).
+       Use it to set up trajectories, start recordings, or perform
+       a one-shot action.  The previously completed blocking task is
+       available via ``self.previous``.
+   * - ``process(frame)``
+     - Once per frame while the task is running.  ``frame`` is a
+       zero-based counter.  Call ``self.finish()`` to end early.
+       Never called when ``duration == 0``.
+   * - ``complete()``
+     - Once after the last ``process()`` call, or immediately after
+       ``initialize()`` when ``duration == 0``.  Use it to store
+       results for the next task.
+
+Every task progresses through four states — ``PENDING``, ``RUNNING``,
+``COMPLETED``, ``FAILED`` — and emits ``started``, ``finished``, or
+``failed`` at each transition.
+
+**QTaskManager** schedules and dispatches tasks.  It maintains two
+separate execution channels:
+
+* **Blocking queue** — tasks run one at a time in registration order.
+  When a blocking task finishes, the completed task object is passed to
+  the next task's ``initialize()`` via ``task.previous``, allowing
+  results to flow down the queue.  The full ordered list
+  (``scheduled``) is retained even after tasks complete so the
+  sequence can be inspected and re-run; call ``clear()`` to discard it
+  or ``restart()`` to rerun it from fresh instances.
+
+* **Background tasks** — non-blocking tasks start immediately and run
+  in parallel with the blocking queue until they finish or are stopped.
+  Register with ``blocking=False``::
+
+      manager.register(Record(dvr=dvr, nframes=300), blocking=False)
+      manager.register(Move(overlay, trap, target))
+
+If a blocking task fails, the remaining pending tasks are cleared and
+logged.  Background tasks fail independently without affecting the
+queue.
+
+**Loop control.**  ``BeginRepeat`` and ``Repeat`` are bracket tasks
+that repeat an arbitrary sub-sequence of the blocking queue a
+configurable number of times::
+
+    manager.register(BeginRepeat())
+    manager.register(Move(overlay, trap, target))
+    manager.register(SaveTraps(overlay=overlay, path='frame.json'))
+    manager.register(Repeat(n=10))
+
+When ``Repeat`` runs, it scans the schedule backwards to find its
+matching ``BeginRepeat`` (handling nesting via a depth counter),
+serialises the intervening tasks, and prepends ``n − 1`` fresh copies
+to the front of the queue via ``manager.inject()``.  Injected tasks
+are ephemeral: they are not added to ``scheduled``, so they do not
+persist across ``stop()`` / ``restart()`` calls.
+
+**Serialisation.**  ``QTask.to_dict()`` returns a plain dict with a
+``'type'`` key (the class name), ``'delay'``, and all declared
+parameter values.  ``QTask.from_dict()`` looks up the class name in
+``QTask._registry`` and reconstructs the task.  New subclasses are
+registered automatically via ``__init_subclass__``.  ``QTaskManager``
+uses this for ``load()``, ``restart()``, and loop injection.
+
+**UI widgets.**
+
+* :class:`~QHOT.lib.tasks.QTaskManagerWidget.QTaskManagerWidget` — the
+  main control panel.  Shows the blocking queue (active task in bold
+  with a violet tint; completed tasks greyed; failed tasks in red) and
+  a separate background-task list.  Clicking any task reveals its
+  editable parameters in a
+  :class:`~QHOT.lib.tasks.QTaskTree.QTaskTree` below.  Pending tasks
+  can be reordered by dragging and removed via right-click or
+  Delete / Backspace.  Provides Play / Pause, Stop, and Clear buttons.
+
+* :class:`~QHOT.lib.tasks.QueueMenu.QueueMenu` — a submenu that
+  populates itself from ``QTask._registry`` and calls
+  ``manager.register()`` when the user picks a task type.
+
+**Concrete task types** (``QHOT.tasks``):
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Class
+     - Description
+   * - :class:`~QHOT.tasks.Delay.Delay`
+     - Wait a fixed number of frames before the next task starts.
+   * - :class:`~QHOT.tasks.BeginRepeat.BeginRepeat`
+     - Marks the start of a repeating block; paired with ``Repeat``.
+   * - :class:`~QHOT.tasks.Repeat.Repeat`
+     - Closes a ``BeginRepeat`` block and repeats it ``n`` times.
+   * - :class:`~QHOT.tasks.AddTweezer.AddTweezer`
+     - Add a tweezer at a specified position.
+   * - :class:`~QHOT.tasks.ClearTraps.ClearTraps`
+     - Remove all traps from the overlay.
+   * - :class:`~QHOT.tasks.LoadTraps.LoadTraps`
+     - Load a trap configuration from a JSON file.
+   * - :class:`~QHOT.tasks.SaveTraps.SaveTraps`
+     - Save the current trap configuration to a JSON file.
+   * - :class:`~QHOT.tasks.Move.Move`
+     - Move a single trap along a path over a number of frames.
+   * - :class:`~QHOT.tasks.MoveTraps.MoveTraps`
+     - Move all traps in the overlay by a common displacement.
+   * - :class:`~QHOT.tasks.Snapshot.Snapshot`
+     - Capture a single camera frame to a file.
+   * - :class:`~QHOT.tasks.Record.Record`
+     - Record a fixed number of frames as a background task.
+   * - :class:`~QHOT.tasks.StartRecording.StartRecording`
+     - Start the DVR as a blocking task; pairs with ``StopRecording``.
+   * - :class:`~QHOT.tasks.StopRecording.StopRecording`
+     - Stop the DVR; ends recording started by ``StartRecording``.
+
 Application layer — ``QHOT.qhot``
 ----------------------------------
 

@@ -13,6 +13,7 @@ traps in real time using a live camera feed.
    api/lib
    api/holograms
    api/traps
+   api/tasks
 
 Indices
 -------
