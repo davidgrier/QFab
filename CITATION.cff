@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: 'If you use this software, please cite it using the metadata below.'
+title: QHOT
+abstract: >-
+  A Python framework for holographic optical trapping — controlling
+  spatial light modulators (SLMs) to create, move, and reconfigure
+  optical traps in real time using a live camera feed.
+authors:
+  - family-names: Grier
+    given-names: David G.
+    orcid: 'https://orcid.org/0000-0002-4382-5139'
+license: GPL-3.0-or-later
+repository-code: 'https://github.com/davidgrier/QHOT'
+doi: 10.5281/zenodo.19254265
+identifiers:
+  - description: 'Concept DOI (all versions)'
+    type: doi
+    value: 10.5281/zenodo.19254265

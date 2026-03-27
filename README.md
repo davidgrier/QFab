@@ -5,6 +5,7 @@
 [![Tests](https://github.com/davidgrier/QHOT/actions/workflows/tests.yml/badge.svg)](https://github.com/davidgrier/QHOT/actions/workflows/tests.yml)
 [![Documentation](https://readthedocs.org/projects/qhot/badge/?version=latest)](https://qhot.readthedocs.io/en/latest/)
 [![License](https://img.shields.io/github/license/davidgrier/QHOT.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19254265.svg)](https://doi.org/10.5281/zenodo.19254265)
 
 ![QHOT screenshot](docs/_static/screenshot.png)
 
