@@ -502,8 +502,8 @@ class TestDraggableQueueListCanDropAt(unittest.TestCase):
         # When no RUNNING/COMPLETED tasks exist, first_pending=0 → always allowed
         from QHOT.lib.tasks.QTaskManagerWidget import _DraggableQueueList
         lst = _DraggableQueueList()
-        for _ in range(3):
-            task = QTask()          # state = PENDING (never registered)
+        tasks = [QTask() for _ in range(3)]  # keep alive: setData holds only a Qt-level ref
+        for task in tasks:
             item = QtWidgets.QListWidgetItem()
             item.setData(_ROLE, task)
             lst.addItem(item)
