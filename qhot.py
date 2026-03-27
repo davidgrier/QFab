@@ -254,8 +254,7 @@ class QHOT(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def toggleOverlay(self) -> None:
         '''Toggle the visibility of the trap overlay.'''
-        overlay = self.screen.overlay
-        overlay.setVisible(not overlay.isVisible())
+        self.screen.overlaysVisible = not self.screen.overlaysVisible
 
     @QtCore.pyqtSlot()
     def openTraps(self) -> None:
